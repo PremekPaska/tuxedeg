@@ -5,6 +5,7 @@
 from datetime import datetime
 
 import pandas as pd
+from pandas import DataFrame
 
 
 def eu_str_to_date(date_string: str) -> datetime:
@@ -33,22 +34,32 @@ def import_transactions(file_name: str):
 
     df['DateTime'] = df.apply(lambda row: merge_date_time(row['Datum'], row['Čas']), axis=1)
 
-    df_roku = df[df['Produkt'].str.startswith('ROKU')]
-    print("Roku")
-    print(df_roku.shape[0])
-    print(df_roku.sort_values('DateTime').head(5))
+    return df
 
 
+def calculate_current_count(transactions: DataFrame, product_prefix: str) -> int:
+
+    df_product = transactions[transactions['Produkt'].str.startswith(product_prefix)]
+
+    print(product_prefix)
+    print(df_product.shape[0])
+
+    df_sorted = df_product.sort_values('DateTime').reset_index()
+    print(df_sorted.head(5))
+
+    count = 0
+    for i, row in df_sorted.iterrows():
+        count += row['Počet']
+
+    return count
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+def main():
+    transactions = import_transactions("Transactions.csv")
+
+    count = calculate_current_count(transactions, "ROKU")
+    print(f"Roku current count: {count}")
 
 
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
-    import_transactions("Transactions.csv")
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    main()
