@@ -3,9 +3,12 @@
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 from datetime import datetime
+from typing import List
 
 import pandas as pd
 from pandas import DataFrame
+
+from transaction import Transaction
 
 
 def eu_str_to_date(date_string: str) -> datetime:
@@ -37,8 +40,33 @@ def import_transactions(file_name: str):
     return df
 
 
-def calculate_current_count(transactions: DataFrame, product_prefix: str) -> int:
+# maybe take ISIN as product selector
+def convert_to_transactions(df_trans: DataFrame, product_prefix: str) -> List[Transaction]:
+    # Maybe inefficient
+    isin = df_trans[df_trans['Produkt'].str.startswith(product_prefix)].iloc[0]['ISIN']
 
+    df_product = df_trans[df_trans['ISIN'] == isin].sort_values('DateTime')
+    product_names = df_product['Produkt'].unique()
+    if product_names.size != 1:
+        raise ValueError("Different product names under the ISIN (maybe change to warning")
+
+    print(f"Filtered {df_product.shape[0]} transaction(s) of product {product_names[0]}, based on ISIN: {isin}")
+
+    transactions = []
+    for _, row in df_product.reset_index().iterrows():
+        transactions.append(Transaction(
+            date=row['DateTime'],
+            product=row['Produkt'],
+            isin=row['ISIN'],
+            count=row['Počet'],
+            share_price=row['Cena']  # Local currency
+            # share_price=row['Hodnota v domácí měně']  # Local currency, the whole transaction
+        ))
+
+    return transactions
+
+
+def calculate_current_count(transactions: DataFrame, product_prefix: str) -> int:
     df_product = transactions[transactions['Produkt'].str.startswith(product_prefix)]
 
     print(product_prefix)
@@ -55,10 +83,17 @@ def calculate_current_count(transactions: DataFrame, product_prefix: str) -> int
 
 
 def main():
-    transactions = import_transactions("Transactions.csv")
+    df_transactions = import_transactions("Transactions.csv")
 
-    count = calculate_current_count(transactions, "ROKU")
-    print(f"Roku current count: {count}")
+    product = "SEA"
+    count = calculate_current_count(df_transactions, product)
+    print(f"{product} current count: {count}")
+
+    transactions = convert_to_transactions(df_transactions, "ROKU")
+    print(transactions[0])
+    print(transactions[1])
+    print(transactions[2])
+    print(len(transactions))
 
 
 if __name__ == '__main__':
