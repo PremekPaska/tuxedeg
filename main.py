@@ -8,7 +8,7 @@ from typing import List
 import pandas as pd
 from pandas import DataFrame
 
-from transaction import Transaction
+from transaction import Transaction, Sale
 
 
 def eu_str_to_date(date_string: str) -> datetime:
@@ -55,7 +55,7 @@ def convert_to_transactions(df_trans: DataFrame, product_prefix: str) -> List[Tr
     transactions = []
     for _, row in df_product.reset_index().iterrows():
         transactions.append(Transaction(
-            date=row['DateTime'],
+            time=row['DateTime'],
             product=row['Produkt'],
             isin=row['ISIN'],
             count=row['Počet'],
@@ -64,6 +64,18 @@ def convert_to_transactions(df_trans: DataFrame, product_prefix: str) -> List[Tr
         ))
 
     return transactions
+
+
+def optimize_product(df_trans: DataFrame, product_prefix: str) -> List[Sale]:
+
+    trans = convert_to_transactions(df_trans, product_prefix)
+
+    report = []
+    for sale_t in [t for t in trans if t.is_sale]:
+        sale_record = Sale(sale_t)
+        report.append(sale_record)
+
+    return report
 
 
 def calculate_current_count(transactions: DataFrame, product_prefix: str) -> int:
@@ -91,9 +103,11 @@ def main():
 
     transactions = convert_to_transactions(df_transactions, "ROKU")
     print(transactions[0])
-    print(transactions[1])
-    print(transactions[2])
     print(len(transactions))
+
+    report = optimize_product(df_transactions, "ROKU")
+    print(len(report))
+    print(report[0].sale_t)
 
 
 if __name__ == '__main__':
