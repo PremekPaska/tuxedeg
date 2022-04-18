@@ -1,6 +1,7 @@
 import decimal
 from collections import namedtuple
 from datetime import datetime
+from typing import List
 
 
 class Transaction:
@@ -9,6 +10,7 @@ class Transaction:
         self.product = product
         self.isin = isin
         self._count = int(count)
+        self._remaining_count = self._count
         self.share_price = share_price  # TODO: use decimal!
         # TODO: add currency, fees, etc.
 
@@ -24,14 +26,30 @@ class Transaction:
         return self._count
 
     @property
+    def remaining_count(self) -> int:
+        return self._remaining_count
+
+    @property
     def time(self) -> datetime:
         return self._time
 
+    def consume_shares(self, number_sold: int) -> None:
+        if number_sold < 1:
+            raise ValueError(f"Number sold < 1: {number_sold}")
 
-Buy = namedtuple('trans', 'count_consumed')
+        if self._remaining_count < 1:
+            raise ValueError(f"Remaining count is 0 (or less): {self._remaining_count}")
+
+        if number_sold > self._remaining_count:
+            raise ValueError(f"Cannot mark {number_sold} shares as sold, only {self._remaining_count} remaining!")
+
+        self._remaining_count -= number_sold
+
+
+Buy = namedtuple('Buy', 'trans count_consumed')
 
 
 class Sale:
-    def __init__(self, sale_t: Transaction):
+    def __init__(self, sale_t: Transaction, buy_trans: List[Buy]):
         self.sale_t = sale_t
-        self.buys = []  # pairs of buy transaction and how many shares are consumed as cost for this sale (named tuple?)
+        self.buys = buy_trans
