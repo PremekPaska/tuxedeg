@@ -10,7 +10,7 @@ class Transaction:
         self.product = product
         self.isin = isin
         self._count = int(count)
-        self._remaining_count = self._count
+        self._remaining_count = self._count  # This is only valid for buy transactions.
         self.share_price = share_price  # TODO: use decimal!
         # TODO: add currency, fees, etc.
 
@@ -27,6 +27,8 @@ class Transaction:
 
     @property
     def remaining_count(self) -> int:
+        if self.is_sale:
+            raise ValueError("Remaining count not applicable to sell transactions.")
         return self._remaining_count
 
     @property
