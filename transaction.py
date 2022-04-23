@@ -1,21 +1,26 @@
 import decimal
-from collections import namedtuple
+from decimal import Decimal
 from datetime import datetime
 from typing import List
 
+from currency import unified_fx_rate
+
 
 class Transaction:
-    def __init__(self, time: datetime, product: str, isin: str, count: int, share_price: decimal):
+    def __init__(self, time: datetime, product: str, isin: str, count: int, share_price: decimal, currency: str):
         self._time = time
         self.product = product
         self.isin = isin
         self._count = int(count)
         self._remaining_count = self._count  # This is only valid for buy transactions.
-        self.share_price = share_price  # TODO: use decimal!
-        # TODO: add currency, fees, etc.
+        self._share_price = Decimal(share_price)
+        if currency not in ['USD', 'EUR']:
+            raise ValueError(f"Unexpected currency: {currency}")
+        self._currency = currency
+        # TODO: fees, etc.
 
     def __str__(self):
-        return f"{self._time}, {self.product}, {self._count}, {self.isin}, {self.share_price}"
+        return f"{self._time}, {self.product}, {self._count}, {self.isin}, {self._share_price}"
 
     @property
     def is_sale(self) -> bool:
@@ -35,6 +40,14 @@ class Transaction:
     def time(self) -> datetime:
         return self._time
 
+    @property
+    def share_price(self) -> decimal:
+        return self._share_price
+
+    @property
+    def currency(self) -> str:
+        return self._currency
+
     def consume_shares(self, number_sold: int) -> None:
         if number_sold < 1:
             raise ValueError(f"Number sold < 1: {number_sold}")
@@ -48,10 +61,32 @@ class Transaction:
         self._remaining_count -= number_sold
 
 
-Buy = namedtuple('Buy', 'trans count_consumed')
+class BuyRecord:
+    def __init__(self, buy_t: Transaction, count_consumed: int):
+        self.buy_t = buy_t
+        self.count_consumed = count_consumed
+
+        self._fx_rate = None
+        self._cost_tc = None  # In the target currency (CZK).
+
+    @property
+    def trans(self):
+        return self.buy_t
+
+    @property
+    def fx_rate(self):
+        return self._fx_rate
+
+    @property
+    def cost_tc(self):
+        return self._cost_tc
+
+    def calculate_cost(self):
+        self._fx_rate = unified_fx_rate(self.buy_t.time.year, self.buy_t.currency)
+        self._cost_tc = self.buy_t.share_price * self._fx_rate * Decimal(self.count_consumed)
 
 
-class Sale:
-    def __init__(self, sale_t: Transaction, buy_trans: List[Buy]):
+class SaleRecord:
+    def __init__(self, sale_t: Transaction, buy_records: List[BuyRecord]):
         self.sale_t = sale_t
-        self.buys = buy_trans
+        self.buys = buy_records

@@ -4,7 +4,7 @@ from typing import List
 import pandas as pd
 from pandas import DataFrame
 
-from transaction import Transaction, Sale, Buy
+from transaction import Transaction, SaleRecord, BuyRecord
 
 
 def eu_str_to_date(date_string: str) -> datetime:
@@ -48,6 +48,7 @@ def convert_to_transactions(df_trans: DataFrame, product_prefix: str) -> List[Tr
 
     print(f"Filtered {df_product.shape[0]} transaction(s) of product {product_names[0]}, based on ISIN: {isin}")
 
+    currency_idx = df_product.columns.get_loc('Cena') + 1
     transactions = []
     for _, row in df_product.reset_index().iterrows():
         transactions.append(Transaction(
@@ -55,7 +56,8 @@ def convert_to_transactions(df_trans: DataFrame, product_prefix: str) -> List[Tr
             product=row['Produkt'],
             isin=row['ISIN'],
             count=row['Počet'],
-            share_price=row['Cena']  # Local currency
+            share_price=row['Cena'],  # Local currency
+            currency=row[currency_idx]
             # share_price=row['Hodnota v domácí měně']  # Local currency, the whole transaction
         ))
 

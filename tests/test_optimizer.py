@@ -2,11 +2,11 @@ import datetime
 import decimal
 import unittest
 
-from optimizer import optimize_product
+from optimizer import optimize_transaction_pairing
 from transaction import Transaction
 
 
-class MyTestCase(unittest.TestCase):
+class OptimizerTestCase(unittest.TestCase):
     TAX_YEAR = 2021
 
     def create_t(self, count: int, price: decimal, day: int, month: int = 3, year_offset: int = 0) -> Transaction:
@@ -15,12 +15,13 @@ class MyTestCase(unittest.TestCase):
             "Foo",
             "X123",
             count=count,
-            share_price=price
+            share_price=price,
+            currency='USD'
         )
 
     def test_empty_report_for_buys_only(self):
         trans = [self.create_t(count=5, price=420.0, day=2)]
-        report = optimize_product(trans)
+        report = optimize_transaction_pairing(trans)
         self.assertEqual(0, len(report))  # add assertion here
 
     def test_sell_in_two_parts(self):
@@ -29,7 +30,7 @@ class MyTestCase(unittest.TestCase):
             self.create_t(-2, price=150.0, day=10),
             self.create_t(-8, price=150.0, day=20, month=11)
         ]
-        report = optimize_product(trans)
+        report = optimize_transaction_pairing(trans)
 
         self.assertEqual(2, len(report))
         self.assertEqual(0, trans[0].remaining_count)
@@ -45,7 +46,7 @@ class MyTestCase(unittest.TestCase):
             self.create_t(3, price=120.0, day=3),
             self.create_t(-10, price=200.0, day=10)
         ]
-        report = optimize_product(trans)
+        report = optimize_transaction_pairing(trans)
 
         self.assertEqual(1, len(report))
         self.assertEqual(3, len(report[0].buys))

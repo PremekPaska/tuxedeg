@@ -8,7 +8,7 @@ import pandas as pd
 from pandas import DataFrame
 
 from import_deg import convert_to_transactions, import_transactions
-from optimizer import optimize_product
+from optimizer import optimize_transaction_pairing
 
 
 def calculate_current_count(transactions: DataFrame, product_prefix: str) -> int:
@@ -29,7 +29,7 @@ def calculate_current_count(transactions: DataFrame, product_prefix: str) -> int
 
 def filter_and_optimize_product(df_trans: DataFrame, product_prefix: str):
 
-    return optimize_product(convert_to_transactions(df_trans, product_prefix))
+    return optimize_transaction_pairing(convert_to_transactions(df_trans, product_prefix))
 
 
 def main():
