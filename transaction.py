@@ -5,6 +5,8 @@ from typing import List
 
 from currency import unified_fx_rate
 
+IMPORT_PRECISION = Decimal('0.000001')  # Prices have up to 4 decimal digits, plus some extra.
+
 
 class Transaction:
     def __init__(self, time: datetime, product: str, isin: str, count: int, share_price: decimal, currency: str):
@@ -13,7 +15,7 @@ class Transaction:
         self.isin = isin
         self._count = int(count)
         self._remaining_count = self._count  # This is only valid for buy transactions.
-        self._share_price = Decimal(share_price)
+        self._share_price = Decimal(share_price).quantize(IMPORT_PRECISION)  # 'cause pandas stores it in doubles (TODO)
         if currency not in ['USD', 'EUR']:
             raise ValueError(f"Unexpected currency: {currency}")
         self._currency = currency
