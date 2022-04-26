@@ -83,10 +83,27 @@ class BuyRecord:
 
     def calculate_cost(self):
         self._fx_rate = unified_fx_rate(self.buy_t.time.year, self.buy_t.currency)
-        self._cost_tc = self.buy_t.share_price * self._fx_rate * Decimal(self.count_consumed)
+        self._cost_tc = self.buy_t.share_price * self._fx_rate * self.count_consumed
 
 
 class SaleRecord:
     def __init__(self, sale_t: Transaction, buy_records: List[BuyRecord]):
         self.sale_t = sale_t
         self.buys = buy_records
+        self._fx_rate = None
+        self._income_tc = None
+
+    @property
+    def fx_rate(self) -> decimal:
+        return self._fx_rate
+
+    @property
+    def income_tc(self) -> decimal:
+        return self._income_tc
+
+    def calculate_income(self) -> None:
+        self._fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)
+        if not self.sale_t.is_sale:
+            raise ValueError("Expected a sale transaction.")
+        self._income_tc = (-self.sale_t.count) * self.sale_t.share_price * self._fx_rate
+

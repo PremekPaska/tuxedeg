@@ -3,7 +3,7 @@ from decimal import Decimal
 import unittest
 from datetime import datetime
 
-from transaction import Transaction, BuyRecord
+from transaction import Transaction, BuyRecord, SaleRecord
 
 TAX_YEAR = 2021
 
@@ -30,4 +30,12 @@ class TransactionTestCase(unittest.TestCase):
         buy_record.calculate_cost()
         self.assertEqual(Decimal('21.72'), buy_record.fx_rate)
         self.assertEqual(Decimal('21720.0'), buy_record.cost_tc)
+
+    def test_sale_income_calculation(self):
+        sale_t = create_t(-10, 100.0)
+        sale_record = SaleRecord(sale_t, [])
+        sale_record.calculate_income()
+        
+        self.assertEqual(Decimal('21.72'), sale_record.fx_rate)
+        self.assertEqual(Decimal('21720.0'), sale_record.income_tc)
 

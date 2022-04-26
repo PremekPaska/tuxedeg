@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import List
 
 from transaction import Transaction, BuyRecord, SaleRecord
@@ -36,4 +37,8 @@ def optimize_transaction_pairing(trans: List[Transaction]) -> List[SaleRecord]:
 def calculate_tax(sale_records: List[SaleRecord], tax_year: int):
 
     for sale in [sale for sale in sale_records if sale.sale_t.time.year == tax_year]:
-        pass
+        income = sale.calculate_income()
+        cost = Decimal(0)
+        for buy_record in sale.buys:
+            buy_record.calculate_cost()
+            cost += buy_record.cost_tc
