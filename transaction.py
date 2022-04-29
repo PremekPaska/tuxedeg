@@ -94,6 +94,8 @@ class SaleRecord:
         self.buys = buy_records
         self._fx_rate = None
         self._income_tc = None
+        self._cost_tc = None
+        self._profit_tc = None
 
     @property
     def fx_rate(self) -> decimal:
@@ -103,9 +105,30 @@ class SaleRecord:
     def income_tc(self) -> decimal:
         return self._income_tc
 
-    def calculate_income(self) -> None:
+    @property
+    def cost_tc(self) -> decimal:
+        return self._cost_tc
+
+    @property
+    def profit_tc(self) -> decimal:
+        return self._profit_tc
+
+    def _calculate_income(self) -> decimal:
         self._fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)
         if not self.sale_t.is_sale:
             raise ValueError("Expected a sale transaction.")
         self._income_tc = (-self.sale_t.count) * self.sale_t.share_price * self._fx_rate
+        return self._income_tc
+
+    def _calculate_cost(self) -> None:
+        cost = Decimal(0)
+        for buy_record in self.buys:
+            buy_record.calculate_cost()
+            cost += buy_record.cost_tc
+        self._cost_tc = cost
+
+    def calculate_profit(self) -> None:
+        self._calculate_income()
+        self._calculate_cost()
+        self._profit_tc = self.income_tc - self.cost_tc
 
