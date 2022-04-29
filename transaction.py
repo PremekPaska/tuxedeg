@@ -95,7 +95,6 @@ class SaleRecord:
         self._fx_rate = None
         self._income_tc = None
         self._cost_tc = None
-        self._profit_tc = None
 
     @property
     def fx_rate(self) -> decimal:
@@ -111,7 +110,9 @@ class SaleRecord:
 
     @property
     def profit_tc(self) -> decimal:
-        return self._profit_tc
+        if self._income_tc is None or self._cost_tc is None:
+            return None
+        return self._income_tc - self._cost_tc
 
     def _calculate_income(self) -> decimal:
         self._fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)
@@ -130,5 +131,4 @@ class SaleRecord:
     def calculate_profit(self) -> None:
         self._calculate_income()
         self._calculate_cost()
-        self._profit_tc = self.income_tc - self.cost_tc
 

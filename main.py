@@ -8,7 +8,7 @@ import pandas as pd
 from pandas import DataFrame
 
 from import_deg import convert_to_transactions, import_transactions
-from optimizer import optimize_transaction_pairing, optimize_product
+from optimizer import optimize_transaction_pairing, optimize_product, print_report
 
 
 def calculate_current_count(transactions: DataFrame, product_prefix: str) -> int:
@@ -41,7 +41,8 @@ def main():
 
     report = filter_and_optimize_product(df_transactions, "ROKU", 2021)
     print(len(report))
-    print(report[0].sale_t)
+
+    print_report(report)
 
 
 if __name__ == '__main__':

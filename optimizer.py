@@ -45,3 +45,27 @@ def optimize_product(trans: List[Transaction], tax_year: int) -> List[SaleRecord
 
     return sale_records
 
+
+def print_report(sale_records: List[SaleRecord], tax_year: int = 2021):
+    total_income = 0
+    total_cost = 0
+#    for sale in [sale for sale in sale_records if sale.sale_t.time.year == tax_year]:
+    for sale in sale_records:
+        print(sale.sale_t)
+
+        for buy_record in sale.buys:
+            print(f"-  {buy_record.buy_t}, consumed: {buy_record.count_consumed}")
+
+        if sale.income_tc is None:
+            continue
+
+        print(f"  income: {sale.income_tc}")
+        print(f"    cost: {sale.cost_tc}")
+        print(f"  profit: {sale.profit_tc}")
+
+        total_income += sale.income_tc
+        total_cost += sale.cost_tc
+
+    print(f"*** total income: {total_income}")
+    print(f"***   total cost: {total_cost}")
+    print(f"*** total profit: {total_income - total_cost}")
