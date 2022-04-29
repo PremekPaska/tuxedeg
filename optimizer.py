@@ -35,6 +35,13 @@ def optimize_transaction_pairing(trans: List[Transaction]) -> List[SaleRecord]:
 
 
 def calculate_tax(sale_records: List[SaleRecord], tax_year: int):
-
     for sale in [sale for sale in sale_records if sale.sale_t.time.year == tax_year]:
         sale.calculate_profit()
+
+
+def optimize_product(trans: List[Transaction], tax_year: int) -> List[SaleRecord]:
+    sale_records = optimize_transaction_pairing(trans)
+    calculate_tax(sale_records, tax_year)
+
+    return sale_records
+
