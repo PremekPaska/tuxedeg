@@ -48,7 +48,7 @@ def convert_to_transactions(df_trans: DataFrame, product_prefix: str) -> List[Tr
 
     print(f"Filtered {df_product.shape[0]} transaction(s) of product {product_names[0]}, based on ISIN: {isin}")
 
-    currency_idx = df_product.columns.get_loc('Cena') + 1
+    currency_idx = df_product.columns.get_loc('Cena') + 2  # row has one more column ("index") at the beginning
     transactions = []
     for _, row in df_product.reset_index().iterrows():
         transactions.append(Transaction(
