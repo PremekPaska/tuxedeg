@@ -9,8 +9,29 @@ from tests.test_transaction import create_t
 from transaction import Transaction
 
 
+def scenario_sell_in_two_parts():
+    return [
+        create_t(10, price=100.0, day=1),
+        create_t(-2, price=150.0, day=10),
+        create_t(-8, price=150.0, day=20, month=11)
+    ]
+
+
+def scenario_sell_multiple_buys():
+    return [
+        create_t(5, price=100.0, day=1),
+        create_t(4, price=110.0, day=2),
+        create_t(3, price=120.0, day=3),
+        create_t(-10, price=200.0, day=10)
+    ]
+
+
 class OptimizerTestCase(unittest.TestCase):
     TAX_YEAR = 2021
+
+    @property
+    def fx_rate(self) -> decimal:
+        return unified_fx_rate(self.TAX_YEAR, 'USD')
 
     def test_empty_report_for_buys_only(self):
         trans = [create_t(count=5, price=420.0, day=2)]
@@ -18,11 +39,7 @@ class OptimizerTestCase(unittest.TestCase):
         self.assertEqual(0, len(report))  # add assertion here
 
     def test_sell_in_two_parts(self):
-        trans = [
-            create_t(10, price=100.0, day=1),
-            create_t(-2, price=150.0, day=10),
-            create_t(-8, price=150.0, day=20, month=11)
-        ]
+        trans = scenario_sell_in_two_parts()
         report = optimize_transaction_pairing(trans)
 
         self.assertEqual(2, len(report))
@@ -33,12 +50,7 @@ class OptimizerTestCase(unittest.TestCase):
         self.assertEqual(-8, report[1].sale_t.count)
 
     def test_sell_multiple_buys(self):
-        trans = [
-            create_t(5, price=100.0, day=1),
-            create_t(4, price=110.0, day=2),
-            create_t(3, price=120.0, day=3),
-            create_t(-10, price=200.0, day=10)
-        ]
+        trans = scenario_sell_multiple_buys()
         report = optimize_transaction_pairing(trans)
 
         self.assertEqual(1, len(report))
@@ -57,7 +69,15 @@ class OptimizerTestCase(unittest.TestCase):
         sale_record = report[0]
         sale_record.calculate_profit()
 
-        self.assertEqual(Decimal('60.0') * unified_fx_rate(self.TAX_YEAR, 'USD'), sale_record.profit_tc)
+        self.assertEqual(Decimal('60.0') * self.fx_rate, sale_record.profit_tc)
+
+    def test_calculate_profit_multiple_buys(self):
+        trans = scenario_sell_multiple_buys()
+        report = optimize_transaction_pairing(trans)
+
+        sale_record = report[0]
+        sale_record.calculate_profit()
+        self.assertEqual(Decimal('940') * self.fx_rate, sale_record.profit_tc)
 
 
 if __name__ == '__main__':
