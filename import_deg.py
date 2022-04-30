@@ -37,7 +37,7 @@ def import_transactions(file_name: str):
 
 
 # maybe take ISIN as product selector
-def convert_to_transactions(df_trans: DataFrame, product_prefix: str) -> List[Transaction]:
+def convert_to_transactions(df_trans: DataFrame, product_prefix: str, tax_year: int) -> List[Transaction]:
     # Maybe inefficient
     isin = df_trans[df_trans['Produkt'].str.startswith(product_prefix)].iloc[0]['ISIN']
 
@@ -51,6 +51,8 @@ def convert_to_transactions(df_trans: DataFrame, product_prefix: str) -> List[Tr
     currency_idx = df_product.columns.get_loc('Cena') + 2  # row has one more column ("index") at the beginning
     transactions = []
     for _, row in df_product.reset_index().iterrows():
+        if row['DateTime'].year > tax_year:
+            break
         transactions.append(Transaction(
             time=row['DateTime'],
             product=row['Produkt'],

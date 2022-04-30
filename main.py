@@ -29,7 +29,7 @@ def calculate_current_count(transactions: DataFrame, product_prefix: str) -> int
 
 def filter_and_optimize_product(df_trans: DataFrame, product_prefix: str, tax_year: int):
 
-    return optimize_product(convert_to_transactions(df_trans, product_prefix), tax_year)
+    return optimize_product(convert_to_transactions(df_trans, product_prefix, tax_year), tax_year)
 
 
 def main():
