@@ -1,3 +1,4 @@
+import decimal
 from decimal import Decimal
 from typing import List
 
@@ -59,7 +60,7 @@ def find_buys_max_cost(sale_t: Transaction, trans: List[Transaction]) -> List[Bu
         max_price = Decimal(0)
         # TODO: this is slow and dumb (but works!)
         for t in reversed([t for t in trans if not t.is_sale and t.remaining_count > 0 and t.time < sale_t.time]):
-            if t.share_price > max_price:
+            if t.share_price > max_price * Decimal('1.15'):  # TODO: check this param, only apply with time diff > T?
                 max_price = t.share_price
                 buy_t = t
         if buy_t is None:
@@ -106,10 +107,20 @@ def optimize_product(trans: List[Transaction], tax_year: int) -> List[SaleRecord
     return sale_records
 
 
-def print_report(sale_records: List[SaleRecord], tax_year: int = 2021):
-    total_income = 0
-    total_cost = 0
-#    for sale in [sale for sale in sale_records if sale.sale_t.time.year == tax_year]:
+def calculate_totals(sale_records: List[SaleRecord], tax_year: int) -> (decimal, decimal):
+    total_income = Decimal(0)
+    total_cost = Decimal(0)
+
+    for sale in [s for s in sale_records if s.sale_t.time.year == tax_year]:
+        total_income += sale.income_tc
+        total_cost += sale.cost_tc
+
+    return total_income, total_cost
+
+
+def print_report(sale_records: List[SaleRecord]):
+    total_income = Decimal(0)
+    total_cost = Decimal(0)
     for sale in sale_records:
         print(sale.sale_t)
 
