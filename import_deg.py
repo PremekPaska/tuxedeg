@@ -37,16 +37,17 @@ def import_transactions(file_name: str):
 
 
 # maybe take ISIN as product selector
-def convert_to_transactions(df_trans: DataFrame, product_prefix: str, tax_year: int) -> List[Transaction]:
-    # Maybe inefficient
-    isin = df_trans[df_trans['Produkt'].str.startswith(product_prefix)].iloc[0]['ISIN']
-
-    df_product = df_trans[df_trans['ISIN'] == isin].sort_values('DateTime')
+def convert_to_transactions(df_trans: DataFrame, product_isin: str, tax_year: int) -> List[Transaction]:
+    df_product = df_trans[df_trans['ISIN'] == product_isin].sort_values('DateTime')
     product_names = df_product['Produkt'].unique()
-    if product_names.size != 1:
-        raise ValueError("Different product names under the ISIN (maybe change to warning")
+    if product_names.size == 0:
+        raise ValueError(f"Could not find ISIN: {product_isin}")
+    elif product_names.size != 1:
+        print("*** Different product names under the ISIN! ***")
+        for product in product_names:
+            print(product)
 
-    print(f"Filtered {df_product.shape[0]} transaction(s) of product {product_names[0]}, based on ISIN: {isin}")
+    print(f"Filtered {df_product.shape[0]} transaction(s) of product {product_names[0]}, based on ISIN: {product_isin}")
 
     currency_idx = df_product.columns.get_loc('Cena') + 2  # row has one more column ("index") at the beginning
     transactions = []

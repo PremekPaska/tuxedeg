@@ -35,7 +35,7 @@ def filter_and_optimize_product(df_trans: DataFrame, product_prefix: str, tax_ye
 
 
 def optimize_all(df_trans: DataFrame, tax_year: int) -> decimal:
-    products = get_unique_products(df_trans, tax_year)
+    products = get_unique_product_ids(df_trans, tax_year)
     print(f"Found {products.shape[0]} products with some transactions in {tax_year}.")
 
     total_income = Decimal(0)
@@ -57,13 +57,12 @@ def optimize_all(df_trans: DataFrame, tax_year: int) -> decimal:
     print(f"(tax)       : {(total_income - total_cost) * Decimal('0.15')}")
 
 
-
-def get_unique_products(df_trans, tax_year):
+def get_unique_product_ids(df_trans, tax_year):
     df_products = df_trans
     df_products['TaxYear'] = df_products.apply(lambda row: row['DateTime'].year, axis=1)
-    products = df_trans[df_trans['TaxYear'] == tax_year]['Produkt'].unique()
-    products.sort()
-    return products
+    product_ids = df_trans[df_trans['TaxYear'] == tax_year]['ISIN'].unique()
+    product_ids.sort()
+    return product_ids
 
 
 def manual_debug(df_transactions: DataFrame):
@@ -73,13 +72,16 @@ def manual_debug(df_transactions: DataFrame):
     count = calculate_current_count(df_transactions, product)
     print(f"{product} current count: {count}")
 
-    report = filter_and_optimize_product(df_transactions, "ROKU", 2021)
+    report = filter_and_optimize_product(df_transactions, "US77543R1023", 2021)  # Roku
     print(len(report))
 
     print_report(report)
-
     income, cost = calculate_totals(report, 2021)
     print(f"income: {income}, cost: {cost}, profit: {income - cost}")
+
+    products = get_unique_product_ids(df_transactions, 2021)
+    # print(products)
+    print(f"Found {products.shape[0]} unique ISINs.")
 
 
 def main():
