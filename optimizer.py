@@ -60,7 +60,7 @@ def find_buys_max_cost(sale_t: Transaction, trans: List[Transaction]) -> List[Bu
         max_price = Decimal(0)
         # TODO: this is slow and dumb (but works!)
         for t in reversed([t for t in trans if not t.is_sale and t.remaining_count > 0 and t.time < sale_t.time]):
-            if t.share_price > max_price * Decimal('1.15'):  # TODO: check this param, only apply with time diff > T?
+            if t.share_price > max_price * Decimal('1.1'):  # TODO: check this param, only apply with time diff > T?
                 max_price = t.share_price
                 buy_t = t
         if buy_t is None:
