@@ -29,6 +29,14 @@ def unified_fx_rate(year: int, from_curr: str, to_curr: str = 'CZK') -> decimal:
             Decimal('26.50'),  # 2020
             Decimal('25.65')
         ]
+    elif from_curr == 'CAD':
+        rates = [
+            Decimal('17.87'),  # 2017
+            Decimal('16.74'),
+            Decimal('17.32'),
+            Decimal('17.23'),  # 2020
+            Decimal('17.33')
+        ]
     else:
         raise ValueError(f"Unsupported source currency: {from_curr}")
 
@@ -36,3 +44,8 @@ def unified_fx_rate(year: int, from_curr: str, to_curr: str = 'CZK') -> decimal:
         raise ValueError(f"Year {year} is out of supported range ({FIRST_YEAR} to {LAST_YEAR}).")
 
     return rates[year - 2017]
+
+
+def check_currency(currency: str):
+    unified_fx_rate(LAST_YEAR, currency)
+    return currency
