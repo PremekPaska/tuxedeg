@@ -35,12 +35,12 @@ class OptimizerTestCase(unittest.TestCase):
 
     def test_empty_report_for_buys_only(self):
         trans = [create_t(count=5, price=420.0, day=2)]
-        report = optimize_transaction_pairing(trans)
+        report = optimize_transaction_pairing(trans, self.TAX_YEAR)
         self.assertEqual(0, len(report))  # add assertion here
 
     def test_sell_in_two_parts(self):
         trans = scenario_sell_in_two_parts()
-        report = optimize_transaction_pairing(trans)
+        report = optimize_transaction_pairing(trans, self.TAX_YEAR)
 
         self.assertEqual(2, len(report))
         self.assertEqual(0, trans[0].remaining_count)
@@ -51,7 +51,7 @@ class OptimizerTestCase(unittest.TestCase):
 
     def test_sell_multiple_buys(self):
         trans = scenario_sell_multiple_buys()
-        report = optimize_transaction_pairing(trans)
+        report = optimize_transaction_pairing(trans, self.TAX_YEAR)
 
         self.assertEqual(1, len(report))
         self.assertEqual(3, len(report[0].buys))
@@ -63,7 +63,7 @@ class OptimizerTestCase(unittest.TestCase):
             create_t(-3, 120.0, day=5)
         ]
 
-        report = optimize_transaction_pairing(transactions)
+        report = optimize_transaction_pairing(transactions, tax_year=self.TAX_YEAR)
         self.assertEqual(1, len(report))
 
         sale_record = report[0]
@@ -73,7 +73,7 @@ class OptimizerTestCase(unittest.TestCase):
 
     def test_calculate_profit_multiple_buys(self):
         trans = scenario_sell_multiple_buys()
-        report = optimize_transaction_pairing(trans)
+        report = optimize_transaction_pairing(trans, tax_year=self.TAX_YEAR)
 
         sale_record = report[0]
         sale_record.calculate_profit()
