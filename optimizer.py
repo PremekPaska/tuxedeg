@@ -75,9 +75,9 @@ def add_buy_record(buy_records, buy_t, remaining_sold_count):
         raise ValueError(f"Unexpected count_used: {count_used}")
 
     remaining_sold_count -= count_used
-    buy_t.consume_shares(count_used)
+    did_consume_fee = buy_t.consume_shares(count_used)
 
-    buy_records.append(BuyRecord(buy_t, count_used))
+    buy_records.append(BuyRecord(buy_t, count_used, did_consume_fee))
 
     return remaining_sold_count
 
@@ -123,7 +123,7 @@ def print_report(sale_records: List[SaleRecord]):
         print(sale.sale_t)
 
         for buy_record in sale.buys:
-            print(f"-  {buy_record.buy_t}, consumed: {buy_record.count_consumed}")
+            print(f"-  {buy_record.buy_t}, consumed: {buy_record._count_consumed}")
 
         if sale.income_tc is None:
             continue

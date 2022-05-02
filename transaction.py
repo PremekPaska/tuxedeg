@@ -19,6 +19,8 @@ class Transaction:
         self._currency = check_currency(currency)
         # TODO: fees, etc.
 
+        self._fee_available = True
+
     def __str__(self):
         return f"{self._time}, {self.product}, {self._count}, {self.isin}, {self._share_price}"
 
@@ -48,7 +50,7 @@ class Transaction:
     def currency(self) -> str:
         return self._currency
 
-    def consume_shares(self, number_sold: int) -> None:
+    def consume_shares(self, number_sold: int) -> bool:
         if number_sold < 1:
             raise ValueError(f"Number sold < 1: {number_sold}")
 
@@ -60,11 +62,18 @@ class Transaction:
 
         self._remaining_count -= number_sold
 
+        if self._fee_available:
+            self._fee_available = False
+            return True
+        else:
+            return False
+
 
 class BuyRecord:
-    def __init__(self, buy_t: Transaction, count_consumed: int):
+    def __init__(self, buy_t: Transaction, count_consumed: int, fee_consumed: bool):
         self.buy_t = buy_t
-        self.count_consumed = count_consumed
+        self._count_consumed = count_consumed
+        self._fee_consumed = fee_consumed
 
         self._fx_rate = None
         self._cost_tc = None  # In the target currency (CZK).
@@ -83,7 +92,7 @@ class BuyRecord:
 
     def calculate_cost(self):
         self._fx_rate = unified_fx_rate(self.buy_t.time.year, self.buy_t.currency)
-        self._cost_tc = self.buy_t.share_price * self._fx_rate * self.count_consumed
+        self._cost_tc = self.buy_t.share_price * self._fx_rate * self._count_consumed
 
 
 class SaleRecord:

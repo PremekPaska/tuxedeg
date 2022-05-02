@@ -46,8 +46,15 @@ class OptimizerTestCase(unittest.TestCase):
         self.assertEqual(0, trans[0].remaining_count)
 
         self.assertEqual(-2, report[0].sale_t.count)
-        self.assertEqual(2, report[0].buys[0].count_consumed)
+        self.assertEqual(2, report[0].buys[0]._count_consumed)
         self.assertEqual(-8, report[1].sale_t.count)
+
+    def test_greedy_fee_consumption(self):
+        trans = scenario_sell_in_two_parts()
+        report = optimize_transaction_pairing(trans, self.TAX_YEAR)
+
+        self.assertTrue(report[0].buys[0]._fee_consumed)
+        self.assertFalse(report[1].buys[0]._fee_consumed)
 
     def test_sell_multiple_buys(self):
         trans = scenario_sell_multiple_buys()
