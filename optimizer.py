@@ -51,17 +51,23 @@ def find_buys_lifo(sale_t: Transaction, trans: List[Transaction]) -> List[BuyRec
     return buy_records
 
 
+def is_better_cost_pair(buy_t: Transaction, t: Transaction) -> bool:
+    if t is None:
+        raise ValueError("Transaction parameter 't' must not be None!")
+    if buy_t is None:
+        return True
+    return (abs((buy_t.time - t.time).days) < 60 and t.share_price > buy_t.share_price * Decimal('1.04')) \
+        or t.share_price > buy_t.share_price * Decimal('1.15')
+
+
 def find_buys_max_cost(sale_t: Transaction, trans: List[Transaction]) -> List[BuyRecord]:
     remaining_sold_count = -sale_t.count
 
     buy_records = []
     while remaining_sold_count > 0:
         buy_t = None
-        max_price = Decimal(0)
-        # TODO: this is slow and dumb (but works!)
         for t in reversed([t for t in trans if not t.is_sale and t.remaining_count > 0 and t.time < sale_t.time]):
-            if t.share_price > max_price * Decimal('1.1'):  # TODO: check this param, only apply with time diff > T?
-                max_price = t.share_price
+            if is_better_cost_pair(buy_t, t):
                 buy_t = t
         if buy_t is None:
             raise ValueError("No buy transaction found!")
@@ -88,7 +94,7 @@ def optimize_transaction_pairing(trans: List[Transaction], tax_year: int) -> Lis
     sale_records = []
     for sale_t in [t for t in trans if t.is_sale]:
         buy_records = find_buys_fifo(sale_t, trans) if sale_t.time.year < tax_year else \
-                      find_buys_max_cost(sale_t, trans)
+            find_buys_max_cost(sale_t, trans)
         sale_record = SaleRecord(sale_t, buy_records)
         sale_records.append(sale_record)
 
