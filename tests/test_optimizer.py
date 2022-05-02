@@ -4,7 +4,7 @@ from decimal import Decimal
 import unittest
 
 from currency import unified_fx_rate
-from optimizer import optimize_transaction_pairing
+from optimizer import optimize_transaction_pairing, is_better_cost_pair
 from tests.test_transaction import create_t
 from transaction import Transaction
 
@@ -77,7 +77,12 @@ class OptimizerTestCase(unittest.TestCase):
 
         sale_record = report[0]
         sale_record.calculate_profit()
-        self.assertEqual(Decimal('940') * self.fx_rate, sale_record.profit_tc)
+        self.assertEqual(Decimal('900') * self.fx_rate, sale_record.profit_tc)  # FIFO would be $940
+
+    def test_is_better_cost_pair(self):
+        buy_t = create_t(1, 100.0, day=30, month=10)
+        t_same = create_t(1, 100.0, day=5, month=10)
+        self.assertFalse(is_better_cost_pair(buy_t=buy_t, t=t_same))
 
 
 if __name__ == '__main__':
