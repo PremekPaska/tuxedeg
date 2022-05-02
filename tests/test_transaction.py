@@ -15,7 +15,8 @@ def create_t(count: int, price: decimal, day: int = 1, month: int = 3, year_offs
         "X123",
         count=count,
         share_price=price,
-        currency='USD'
+        currency='USD',
+        fee_eur=-0.5
     )
 
 
@@ -34,7 +35,7 @@ class TransactionTestCase(unittest.TestCase):
         buy_t = create_t(20, 100.0)
         self.assertEqual(Decimal('100.0'), buy_t.share_price)
 
-        buy_record = BuyRecord(buy_t, 10)
+        buy_record = BuyRecord(buy_t, 10, fee_consumed=True)
         self.assertEqual(None, buy_record.cost_tc)
 
         buy_record.calculate_cost()

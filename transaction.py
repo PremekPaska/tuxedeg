@@ -1,4 +1,5 @@
 import decimal
+import math
 from decimal import Decimal
 from datetime import datetime
 from typing import List
@@ -6,10 +7,12 @@ from typing import List
 from currency import unified_fx_rate, check_currency
 
 IMPORT_PRECISION = Decimal('0.000001')  # Prices have up to 4 decimal digits, plus some extra.
+FEE_CURRENCY = 'EUR'  # Hack for now
 
 
 class Transaction:
-    def __init__(self, time: datetime, product: str, isin: str, count: int, share_price: decimal, currency: str):
+    def __init__(self, time: datetime, product: str, isin: str, count: int, share_price: decimal, currency: str,
+                 fee_eur: decimal):
         self._time = time
         self.product = product
         self.isin = isin
@@ -17,12 +20,13 @@ class Transaction:
         self._remaining_count = self._count  # This is only valid for buy transactions.
         self._share_price = Decimal(share_price).quantize(IMPORT_PRECISION)  # 'cause pandas stores it in doubles (TODO)
         self._currency = check_currency(currency)
-        # TODO: fees, etc.
+        # Fee is usually negative
+        self._fee_eur = -Decimal(fee_eur).quantize(IMPORT_PRECISION) if not math.isnan(fee_eur) else Decimal(0)
 
-        self._fee_available = True
+        self._fee_available = True  # Not used for sale transactions
 
     def __str__(self):
-        return f"{self._time}, {self.product}, {self._count}, {self.isin}, {self._share_price}"
+        return f"{self._time}, {self.product}, {self._count}, {self.isin}, {self._share_price}, fee: {self._fee_eur}"
 
     @property
     def is_sale(self) -> bool:
@@ -49,6 +53,10 @@ class Transaction:
     @property
     def currency(self) -> str:
         return self._currency
+
+    @property
+    def fee(self) -> decimal:
+        return self._fee_eur
 
     def consume_shares(self, number_sold: int) -> bool:
         if number_sold < 1:
@@ -77,6 +85,7 @@ class BuyRecord:
 
         self._fx_rate = None
         self._cost_tc = None  # In the target currency (CZK).
+        self._fees_tc = None
 
     @property
     def trans(self):
@@ -90,9 +99,16 @@ class BuyRecord:
     def cost_tc(self):
         return self._cost_tc
 
+    @property
+    def fees_tc(self):
+        return self._fees_tc
+
     def calculate_cost(self):
         self._fx_rate = unified_fx_rate(self.buy_t.time.year, self.buy_t.currency)
         self._cost_tc = self.buy_t.share_price * self._fx_rate * self._count_consumed
+
+        self._fees_tc = self.buy_t.fee * unified_fx_rate(self.buy_t.time.year, FEE_CURRENCY) if self._fee_consumed \
+            else Decimal(0)
 
 
 class SaleRecord:
@@ -102,6 +118,7 @@ class SaleRecord:
         self._fx_rate = None
         self._income_tc = None
         self._cost_tc = None
+        self._fees_tc = None
 
     @property
     def fx_rate(self) -> decimal:
@@ -121,6 +138,10 @@ class SaleRecord:
             return None
         return self._income_tc - self._cost_tc
 
+    @property
+    def fees_tc(self) -> decimal:
+        return self._fees_tc
+
     def _calculate_income(self) -> decimal:
         self._fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)
         if not self.sale_t.is_sale:
@@ -128,14 +149,19 @@ class SaleRecord:
         self._income_tc = (-self.sale_t.count) * self.sale_t.share_price * self._fx_rate
         return self._income_tc
 
-    def _calculate_cost(self) -> None:
+    def _calculate_cost_and_fees(self) -> None:
         cost = Decimal(0)
+        fees = Decimal(0)
         for buy_record in self.buys:
             buy_record.calculate_cost()
             cost += buy_record.cost_tc
+            fees += buy_record.fees_tc
         self._cost_tc = cost
+
+        sale_fee = self.sale_t.fee * unified_fx_rate(self.sale_t.time.year, FEE_CURRENCY)
+        self._fees_tc = fees + sale_fee
 
     def calculate_profit(self) -> None:
         self._calculate_income()
-        self._calculate_cost()
+        self._calculate_cost_and_fees()
 

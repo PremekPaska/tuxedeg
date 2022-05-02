@@ -10,7 +10,7 @@ import pandas as pd
 from pandas import DataFrame
 
 from import_deg import convert_to_transactions, import_transactions
-from optimizer import optimize_transaction_pairing, optimize_product, print_report, calculate_totals
+from optimizer import optimize_product, print_report, calculate_totals
 
 
 def calculate_current_count(transactions: DataFrame, product_prefix: str) -> int:
@@ -40,21 +40,27 @@ def optimize_all(df_trans: DataFrame, tax_year: int) -> decimal:
 
     total_income = Decimal(0)
     total_cost = Decimal(0)
+    total_fees = Decimal(0)
     for product in products:
         print()
         report = filter_and_optimize_product(df_trans, product, tax_year)
         # print_report(report)
 
-        income, cost = calculate_totals(report, tax_year)
-        print(f"income: {income}, cost: {cost}, profit: {income - cost}")
+        income, cost, fees = calculate_totals(report, tax_year)
+        print(f"income: {income}, cost: {cost}, profit: {income - cost}, fees: {fees}")
 
         total_income += income
         total_cost += cost
+        total_fees += fees
 
-    print(f"\nTotal income: {total_income}")
+    print()
+    print(f"Total income: {total_income}")
     print(f"Total cost  : {total_cost}")
-    print(f"! Profit !  : {total_income - total_cost}")
-    print(f"(tax)       : {(total_income - total_cost) * Decimal('0.15')}")
+    print(f"Total fees  : {total_fees}")
+
+    total_profit = total_income - total_cost - total_fees
+    print(f"! Profit !  : {total_income - total_cost}, after fees: {total_profit}")
+    print(f"(tax est.)  : {total_profit * Decimal('0.15')}")
 
 
 def get_unique_product_ids(df_trans, tax_year):
@@ -65,18 +71,23 @@ def get_unique_product_ids(df_trans, tax_year):
     return product_ids
 
 
-def manual_debug(df_transactions: DataFrame):
-    df_transactions = import_transactions("Transactions.csv")
+def get_isin(transactions: DataFrame, product_prefix: str) -> str:
+    df_product = transactions[transactions['Produkt'].str.startswith(product_prefix)]
+    if df_product.shape[0] == 0:
+        raise ValueError(f"Didn't find product with prefix {product_prefix}")
+    return df_product.iloc[0]['ISIN']
 
+
+def manual_debug(df_transactions: DataFrame):
     product = "SEA"
     count = calculate_current_count(df_transactions, product)
     print(f"{product} current count: {count}")
 
-    report = filter_and_optimize_product(df_transactions, "US77543R1023", 2021)  # Roku
+    report = filter_and_optimize_product(df_transactions, get_isin(df_transactions, "ROKU"), 2021)
     print(len(report))
 
     print_report(report)
-    income, cost = calculate_totals(report, 2021)
+    income, cost, fees = calculate_totals(report, 2021)
     print(f"income: {income}, cost: {cost}, profit: {income - cost}")
 
     products = get_unique_product_ids(df_transactions, 2021)

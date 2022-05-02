@@ -4,7 +4,7 @@ from decimal import Decimal
 import unittest
 
 from currency import unified_fx_rate
-from optimizer import optimize_transaction_pairing, is_better_cost_pair
+from optimizer import optimize_transaction_pairing, is_better_cost_pair, calculate_tax
 from tests.test_transaction import create_t
 from transaction import Transaction
 
@@ -55,6 +55,11 @@ class OptimizerTestCase(unittest.TestCase):
 
         self.assertTrue(report[0].buys[0]._fee_consumed)
         self.assertFalse(report[1].buys[0]._fee_consumed)
+
+        calculate_tax(report, self.TAX_YEAR)
+        # There's always the sale transaction fee
+        self.assertEqual(Decimal('1.00') * unified_fx_rate(self.TAX_YEAR, 'EUR'), report[0].fees_tc)
+        self.assertEqual(Decimal('0.50') * unified_fx_rate(self.TAX_YEAR, 'EUR'), report[1].fees_tc)
 
     def test_sell_multiple_buys(self):
         trans = scenario_sell_multiple_buys()

@@ -1,3 +1,4 @@
+import math
 from datetime import datetime
 from typing import List
 
@@ -50,18 +51,21 @@ def convert_to_transactions(df_trans: DataFrame, product_isin: str, tax_year: in
     print(f"Filtered {df_product.shape[0]} transaction(s) of product {product_names[0]}, based on ISIN: {product_isin}")
 
     currency_idx = df_product.columns.get_loc('Cena') + 2  # row has one more column ("index") at the beginning
+    fee_curr_idx = df_product.columns.get_loc('Transaction and/or third') + 2
     transactions = []
     for _, row in df_product.reset_index().iterrows():
         if row['DateTime'].year > tax_year:
             break
+        if row[fee_curr_idx] != 'EUR' and not math.isnan(row[fee_curr_idx]):
+            raise ValueError("Unexpected fee currency!")
         transactions.append(Transaction(
             time=row['DateTime'],
             product=row['Produkt'],
             isin=row['ISIN'],
             count=row['Počet'],
             share_price=row['Cena'],  # Local currency
-            currency=row[currency_idx]
-            # share_price=row['Hodnota v domácí měně']  # Local currency, the whole transaction
+            currency=row[currency_idx],
+            fee_eur=row['Transaction and/or third']
         ))
 
     return transactions

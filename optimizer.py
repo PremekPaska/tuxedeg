@@ -108,33 +108,39 @@ def optimize_product(trans: List[Transaction], tax_year: int) -> List[SaleRecord
 def calculate_totals(sale_records: List[SaleRecord], tax_year: int) -> (decimal, decimal):
     total_income = Decimal(0)
     total_cost = Decimal(0)
+    total_fees = Decimal(0)
 
     for sale in [s for s in sale_records if s.sale_t.time.year == tax_year]:
         total_income += sale.income_tc
         total_cost += sale.cost_tc
+        total_fees += sale.fees_tc
 
-    return total_income, total_cost
+    return total_income, total_cost, total_fees
 
 
 def print_report(sale_records: List[SaleRecord]):
     total_income = Decimal(0)
     total_cost = Decimal(0)
+    total_fees = Decimal(0)
     for sale in sale_records:
         print(sale.sale_t)
 
         for buy_record in sale.buys:
-            print(f"-  {buy_record.buy_t}, consumed: {buy_record._count_consumed}")
+            print(f"-  {buy_record.buy_t}, consumed: {buy_record._count_consumed}, fee con.: {buy_record._fee_consumed}")
 
         if sale.income_tc is None:
             continue
 
         print(f"  income: {sale.income_tc}")
-        print(f"    cost: {sale.cost_tc}")
+        print(f"  cost  : {sale.cost_tc}")
         print(f"  profit: {sale.profit_tc}")
+        print(f"  fees  : {sale.fees_tc}")
 
         total_income += sale.income_tc
         total_cost += sale.cost_tc
+        total_fees += sale.fees_tc
 
     print(f"*** total income: {total_income}")
-    print(f"***   total cost: {total_cost}")
-    print(f"*** total profit: {total_income - total_cost}")
+    print(f"*** total cost : {total_cost}")
+    print(f"*** total fees : {total_fees}")
+    print(f"*** total profit: {total_income - total_cost}, after fees: {total_income - total_cost - total_fees}")
