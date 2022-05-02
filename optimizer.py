@@ -56,7 +56,9 @@ def is_better_cost_pair(buy_t: Transaction, t: Transaction) -> bool:
         raise ValueError("Transaction parameter 't' must not be None!")
     if buy_t is None:
         return True
-    return (abs((buy_t.time - t.time).days) < 60 and t.share_price > buy_t.share_price * Decimal('1.04')) \
+    day_diff = abs((buy_t.time - t.time).days)
+    return (day_diff < 20 and t.share_price > buy_t.share_price * Decimal('1.02')) \
+        or (day_diff < 75 and t.share_price > buy_t.share_price * Decimal('1.08')) \
         or t.share_price > buy_t.share_price * Decimal('1.15')
 
 

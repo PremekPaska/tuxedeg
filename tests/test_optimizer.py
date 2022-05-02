@@ -83,6 +83,14 @@ class OptimizerTestCase(unittest.TestCase):
         buy_t = create_t(1, 100.0, day=30, month=10)
         t_same = create_t(1, 100.0, day=5, month=10)
         self.assertFalse(is_better_cost_pair(buy_t=buy_t, t=t_same))
+        self.assertTrue(is_better_cost_pair(buy_t, create_t(1, 135, day=29, month=10)))
+
+        self.assertFalse(is_better_cost_pair(buy_t, create_t(1, 107, day=30, month=9)))
+        self.assertTrue(is_better_cost_pair(buy_t, create_t(1, 110, day=30, month=9)))
+
+        self.assertFalse(is_better_cost_pair(buy_t, create_t(1, 112, day=27, month=2)))
+        self.assertFalse(is_better_cost_pair(buy_t, create_t(1, 112, day=27, month=10, year_offset=-1)))
+        self.assertTrue(is_better_cost_pair(buy_t, create_t(1, 112, day=27, month=8)))
 
 
 if __name__ == '__main__':
