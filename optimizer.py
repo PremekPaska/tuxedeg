@@ -10,15 +10,7 @@ def find_buys_fifo(sale_t: Transaction, trans: List[Transaction]) -> List[BuyRec
 
     buy_records = []
     for buy_t in [t for t in trans if not t.is_sale and t.remaining_count > 0 and t.time < sale_t.time]:
-        count_used = min(remaining_sold_count, buy_t.remaining_count)
-        if count_used < 1:
-            raise ValueError(f"Unexpected count_used: {count_used}")
-
-        remaining_sold_count -= count_used
-        buy_t.consume_shares(count_used)
-
-        buy_records.append(BuyRecord(buy_t, count_used))
-
+        remaining_sold_count = add_buy_record(buy_records, buy_t, remaining_sold_count)
         if remaining_sold_count == 0:
             break
 
@@ -33,15 +25,7 @@ def find_buys_lifo(sale_t: Transaction, trans: List[Transaction]) -> List[BuyRec
 
     buy_records = []
     for buy_t in reversed([t for t in trans if not t.is_sale and t.remaining_count > 0 and t.time < sale_t.time]):
-        count_used = min(remaining_sold_count, buy_t.remaining_count)
-        if count_used < 1:
-            raise ValueError(f"Unexpected count_used: {count_used}")
-
-        remaining_sold_count -= count_used
-        buy_t.consume_shares(count_used)
-
-        buy_records.append(BuyRecord(buy_t, count_used))
-
+        remaining_sold_count = add_buy_record(buy_records, buy_t, remaining_sold_count)
         if remaining_sold_count == 0:
             break
 
@@ -71,18 +55,8 @@ def find_buys_max_cost(sale_t: Transaction, trans: List[Transaction]) -> List[Bu
         for t in reversed([t for t in trans if not t.is_sale and t.remaining_count > 0 and t.time < sale_t.time]):
             if is_better_cost_pair(buy_t, t):
                 buy_t = t
-        if buy_t is None:
-            raise ValueError("No buy transaction found!")
 
-        count_used = min(remaining_sold_count, buy_t.remaining_count)
-        if count_used < 1:
-            raise ValueError(f"Unexpected count_used: {count_used}")
-
-        remaining_sold_count -= count_used
-        buy_t.consume_shares(count_used)
-
-        buy_records.append(BuyRecord(buy_t, count_used))
-
+        remaining_sold_count = add_buy_record(buy_records, buy_t, remaining_sold_count)
         if remaining_sold_count == 0:
             break
 
@@ -92,11 +66,27 @@ def find_buys_max_cost(sale_t: Transaction, trans: List[Transaction]) -> List[Bu
     return buy_records
 
 
+def add_buy_record(buy_records, buy_t, remaining_sold_count):
+    if buy_t is None:
+        raise ValueError("No buy transaction found!")
+
+    count_used = min(remaining_sold_count, buy_t.remaining_count)
+    if count_used < 1:
+        raise ValueError(f"Unexpected count_used: {count_used}")
+
+    remaining_sold_count -= count_used
+    buy_t.consume_shares(count_used)
+
+    buy_records.append(BuyRecord(buy_t, count_used))
+
+    return remaining_sold_count
+
+
 def optimize_transaction_pairing(trans: List[Transaction], tax_year: int) -> List[SaleRecord]:
     sale_records = []
     for sale_t in [t for t in trans if t.is_sale]:
         buy_records = find_buys_fifo(sale_t, trans) if sale_t.time.year < tax_year else \
-            find_buys_max_cost(sale_t, trans)
+                      find_buys_max_cost(sale_t, trans)
         sale_record = SaleRecord(sale_t, buy_records)
         sale_records.append(sale_record)
 
