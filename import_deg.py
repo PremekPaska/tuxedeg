@@ -48,7 +48,8 @@ def do_skip_transaction(row: object) -> bool:
         product = row['Produkt']
         if product.startswith('NANOXPLORE') \
                 or product.startswith('VOYAGER DIGITAL') \
-                or product.startswith('VIRTUOSO ACQUISITION') or product.startswith('WEJO'):
+                or product.startswith('VIRTUOSO ACQUISITION') or product.startswith('WEJO') \
+                or product.startswith('PEAK FINTECH GROUP') or product.startswith('TENET FINTECH GROUP'):
             return True
 
     return False
