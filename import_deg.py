@@ -45,7 +45,9 @@ def do_skip_transaction(row: object) -> bool:
     # Empty order ID usually means some SPAC merger, acquisition, or a move to another exchange
     order_id = row['ID objednávky']
     if isinstance(order_id, numbers.Real) and math.isnan(order_id):  # Empty values represented as NaN in Pandas
-        if row['Produkt'].startswith('NANOXPLORE'):
+        product = row['Produkt']
+        if product.startswith('NANOXPLORE') \
+                or product.startswith('VOYAGER DIGITAL'):
             return True
 
     return False
