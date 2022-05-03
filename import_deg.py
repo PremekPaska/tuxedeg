@@ -47,7 +47,8 @@ def do_skip_transaction(row: object) -> bool:
     if isinstance(order_id, numbers.Real) and math.isnan(order_id):  # Empty values represented as NaN in Pandas
         product = row['Produkt']
         if product.startswith('NANOXPLORE') \
-                or product.startswith('VOYAGER DIGITAL'):
+                or product.startswith('VOYAGER DIGITAL') \
+                or product.startswith('VIRTUOSO ACQUISITION') or product.startswith('WEJO'):
             return True
 
     return False
