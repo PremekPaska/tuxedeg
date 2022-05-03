@@ -1,11 +1,12 @@
 import math
+import numbers
 from datetime import datetime
 from typing import List
 
 import pandas as pd
 from pandas import DataFrame
 
-from transaction import Transaction, SaleRecord, BuyRecord
+from transaction import Transaction
 
 
 def eu_str_to_date(date_string: str) -> datetime:
@@ -37,6 +38,19 @@ def import_transactions(file_name: str):
     return df
 
 
+def do_skip_transaction(row: object) -> bool:
+    if row['DateTime'].year != 2021:  # These exceptions are intended just for the tax year 2021 (check them otherwise)
+        return False
+
+    # Empty order ID usually means some SPAC merger, acquisition, or a move to another exchange
+    order_id = row['ID objednávky']
+    if isinstance(order_id, numbers.Real) and math.isnan(order_id):  # Empty values represented as NaN in Pandas
+        if row['Produkt'].startswith('NANOXPLORE'):
+            return True
+
+    return False
+
+
 # maybe take ISIN as product selector
 def convert_to_transactions(df_trans: DataFrame, product_isin: str, tax_year: int) -> List[Transaction]:
     df_product = df_trans[df_trans['ISIN'] == product_isin].sort_values('DateTime')
@@ -56,8 +70,14 @@ def convert_to_transactions(df_trans: DataFrame, product_isin: str, tax_year: in
     for _, row in df_product.reset_index().iterrows():
         if row['DateTime'].year > tax_year:
             break
+
+        if do_skip_transaction(row):
+            print(f"!! Skipping transaction: {row['DateTime']}, {row['Produkt']}, {row['ISIN']}")
+            continue
+
         if row[fee_curr_idx] != 'EUR' and not math.isnan(row[fee_curr_idx]):
             raise ValueError("Unexpected fee currency!")
+
         transactions.append(Transaction(
             time=row['DateTime'],
             product=row['Produkt'],
