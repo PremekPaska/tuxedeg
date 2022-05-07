@@ -14,7 +14,7 @@ from optimizer import optimize_product, print_report, calculate_totals
 
 
 def calculate_current_count(transactions: DataFrame, product_prefix: str) -> int:
-    df_product = transactions[transactions['Produkt'].str.startswith(product_prefix)]
+    df_product = transactions[transactions['Product'].str.startswith(product_prefix)]
 
     print(product_prefix)
     print(df_product.shape[0])
@@ -24,7 +24,7 @@ def calculate_current_count(transactions: DataFrame, product_prefix: str) -> int
 
     count = 0
     for i, row in df_sorted.iterrows():
-        count += row['Počet']
+        count += row['Quantity']
 
     return count
 
@@ -72,7 +72,7 @@ def get_unique_product_ids(df_trans, tax_year):
 
 
 def get_isin(transactions: DataFrame, product_prefix: str) -> str:
-    df_product = transactions[transactions['Produkt'].str.startswith(product_prefix)]
+    df_product = transactions[transactions['Product'].str.startswith(product_prefix)]
     if df_product.shape[0] == 0:
         raise ValueError(f"Didn't find product with prefix {product_prefix}")
     return df_product.iloc[0]['ISIN']
