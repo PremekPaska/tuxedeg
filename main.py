@@ -96,7 +96,7 @@ def manual_debug(df_transactions: DataFrame):
 
 
 def main():
-    df_transactions = import_transactions("Transactions.csv")
+    df_transactions = import_transactions("Transactions-ie.csv")
 
     # manual_debug(df_transactions)
 
