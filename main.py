@@ -99,7 +99,7 @@ def manual_debug(df_transactions: DataFrame):
 
 
 def main():
-    df_transactions = import_transactions("data/deg1-en.csv")
+    df_transactions = import_transactions("data/deg2-en.csv")
 
     # manual_debug(df_transactions)
 
