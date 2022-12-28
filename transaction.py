@@ -9,6 +9,8 @@ from currency import unified_fx_rate, check_currency
 IMPORT_PRECISION = Decimal('0.000001')  # Prices have up to 4 decimal digits, plus some extra.
 FEE_CURRENCY = 'EUR'  # Hack for now
 
+TSLA_SPLIT = datetime(2022, 8, 25)
+
 
 class Transaction:
     def __init__(self, time: datetime, product: str, isin: str, count: int, share_price: decimal, currency: str,
@@ -16,6 +18,9 @@ class Transaction:
         self._time = time
         self.product = product
         self.isin = isin
+        if isin == 'US88160R1014' and time < TSLA_SPLIT:
+            count = count * 3
+            share_price = share_price / 3
         self._count = int(count)
         self._remaining_count = self._count  # This is only valid for buy transactions.
         self._share_price = Decimal(share_price).quantize(IMPORT_PRECISION)  # 'cause pandas stores it in doubles (TODO)
