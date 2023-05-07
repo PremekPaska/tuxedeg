@@ -43,7 +43,9 @@ def optimize_all(df_trans: DataFrame, tax_year: int) -> decimal:
     total_fees = Decimal(0)
     for product in products:
         print()
-        if product in ('IE00B53SZB19', 'US9344231041'):
+        if product in ():
+            # IE: ('IE00B53SZB19', 'US9344231041'):
+            # CZ: ('IE00B53SZB19', 'US9344231041', 'BMG9525W1091', 'CA88035N1033', 'CA92919V4055', 'KYG851581069'):
             print(f"Skipping {product}")
             continue
         report = filter_and_optimize_product(df_trans, product, tax_year)
@@ -99,7 +101,7 @@ def manual_debug(df_transactions: DataFrame):
 
 
 def main():
-    df_transactions = import_transactions("data/deg1-en.csv")
+    df_transactions = import_transactions("data/Transactions.csv")
 
     # manual_debug(df_transactions)
 
