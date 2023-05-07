@@ -86,7 +86,7 @@ def optimize_transaction_pairing(trans: List[Transaction], tax_year: int) -> Lis
     sale_records = []
     for sale_t in [t for t in trans if t.is_sale]:
         buy_records = find_buys_fifo(sale_t, trans) if sale_t.time.year < tax_year else \
-                      find_buys_fifo(sale_t, trans)
+                      find_buys_max_cost(sale_t, trans)
         sale_record = SaleRecord(sale_t, buy_records)
         sale_records.append(sale_record)
 

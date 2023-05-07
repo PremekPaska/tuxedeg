@@ -89,7 +89,7 @@ class OptimizerTestCase(unittest.TestCase):
 
         sale_record = report[0]
         sale_record.calculate_profit()
-        self.assertEqual(Decimal('900') * self.fx_rate, sale_record.profit_tc)  # FIFO would be $940
+        self.assertEqual(Decimal('900') * self.fx_rate, sale_record.profit_tc)  # assumes max_cost, FIFO would be $940
 
     def test_is_better_cost_pair(self):
         buy_t = create_t(1, 100.0, day=30, month=10)

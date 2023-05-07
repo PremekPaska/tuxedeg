@@ -103,7 +103,7 @@ def main():
 
     # manual_debug(df_transactions)
 
-    optimize_all(df_transactions, 2022)
+    optimize_all(df_transactions, 2021)
 
 
 if __name__ == '__main__':
