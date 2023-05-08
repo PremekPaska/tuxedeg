@@ -17,6 +17,29 @@ def merge_date_time(date_string: str, time_string: str) -> datetime:
     return datetime.strptime(date_string + ' ' + time_string, '%d-%m-%Y %H:%M')
 
 
+# English: Date,Time,Product,ISIN,Reference,Venue,Quantity,Price,,Local value,,Value,,Exchange rate,
+#   Transaction and/or third,,Total,,Order ID
+# Czech: Datum,Čas,Produkt,ISIN,Reference,Venue,Počet,Cena,,Hodnota v domácí měně,,Hodnota,,Směnný kurz,
+#   Transaction and/or third,,Celkem,,ID objednávky
+def rename_columns_to_english(df: DataFrame):
+    # Detect language, rename all columns to English
+    if 'Datum' in df.columns:
+        print("Renaming Czech columns to English.")
+        df.rename(columns={
+            'Datum': 'Date',
+            'Čas': 'Time',
+            'Produkt': 'Product',
+            'Venue': 'Venue',
+            'Počet': 'Quantity',
+            'Cena': 'Price',
+            'Hodnota v domácí měně': 'Local value',
+            'Hodnota': 'Value',
+            'Směnný kurz': 'Exchange rate',
+            'Celkem': 'Total',
+            'ID objednávky': 'Order ID'
+        }, inplace=True)
+
+
 def import_transactions(file_name: str):
     df = pd.read_csv(file_name, encoding="utf8")
     print(df.columns)
@@ -26,6 +49,8 @@ def import_transactions(file_name: str):
 
     pd.set_option('display.max_columns', 12)
     pd.set_option('display.width', 200)
+
+    rename_columns_to_english(df)
 
     # To be dropped
     df_nan = df[df['Date'].isnull()]
