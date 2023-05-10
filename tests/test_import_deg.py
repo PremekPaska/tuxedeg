@@ -2,8 +2,7 @@ import unittest
 
 from decimal import Decimal
 
-from import_deg import import_transactions, convert_to_transactions
-from main import get_isin
+from import_deg import import_transactions, convert_to_transactions, get_isin
 from optimizer import optimize_product, calculate_totals
 
 

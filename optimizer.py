@@ -82,11 +82,23 @@ def add_buy_record(buy_records, buy_t, remaining_sold_count):
     return remaining_sold_count
 
 
-def optimize_transaction_pairing(trans: List[Transaction], tax_year: int) -> List[SaleRecord]:
+def find_buys(sale_t: Transaction, trans: List[Transaction], strategies: dict[int, str]) -> List[BuyRecord]:
+    # The strategy must be specified for every year since the first year is specified
+    if sale_t.time.year > max(strategies.keys()):
+        raise ValueError("No strategy specified for this year!")
+
+    method_suffix = 'fifo' if sale_t.time.year < min(strategies.keys()) else \
+                    strategies[sale_t.time.year]
+
+    # use reflection to call the correct method
+    method = globals()['find_buys_' + method_suffix]
+    return method(sale_t, trans)
+
+
+def optimize_transaction_pairing(trans: List[Transaction], strategies: dict[int,str]) -> List[SaleRecord]:
     sale_records = []
     for sale_t in [t for t in trans if t.is_sale]:
-        buy_records = find_buys_fifo(sale_t, trans) if sale_t.time.year < tax_year else \
-                      find_buys_max_cost(sale_t, trans)
+        buy_records = find_buys(sale_t, trans, strategies)
         sale_record = SaleRecord(sale_t, buy_records)
         sale_records.append(sale_record)
 
@@ -98,8 +110,11 @@ def calculate_tax(sale_records: List[SaleRecord], tax_year: int):
         sale.calculate_profit()
 
 
-def optimize_product(trans: List[Transaction], tax_year: int) -> List[SaleRecord]:
-    sale_records = optimize_transaction_pairing(trans, tax_year)
+def optimize_product(trans: List[Transaction], tax_year: int, strategies: dict[int,str] = None) -> List[SaleRecord]:
+    if not strategies:
+        strategies = {tax_year: 'max_cost'}  # This fallback is just for testing (TODO: remove)
+
+    sale_records = optimize_transaction_pairing(trans, strategies)
     calculate_tax(sale_records, tax_year)
 
     return sale_records

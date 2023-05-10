@@ -118,3 +118,18 @@ def convert_to_transactions(df_trans: DataFrame, product_isin: str, tax_year: in
         ))
 
     return transactions
+
+
+def get_unique_product_ids(df_trans, tax_year):
+    df_products = df_trans
+    df_products['TaxYear'] = df_products.apply(lambda row: row['DateTime'].year, axis=1)
+    product_ids = df_trans[df_trans['TaxYear'] == tax_year]['ISIN'].unique()
+    product_ids.sort()
+    return product_ids
+
+
+def get_isin(transactions: DataFrame, product_prefix: str) -> str:
+    df_product = transactions[transactions['Product'].str.startswith(product_prefix)]
+    if df_product.shape[0] == 0:
+        raise ValueError(f"Didn't find product with prefix {product_prefix}")
+    return df_product.iloc[0]['ISIN']

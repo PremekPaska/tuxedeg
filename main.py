@@ -4,13 +4,12 @@
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 import decimal
 from decimal import Decimal
-from typing import List
 
-import pandas as pd
 from pandas import DataFrame
 
-from import_deg import convert_to_transactions, import_transactions
+from import_deg import convert_to_transactions, import_transactions, get_unique_product_ids, get_isin
 from optimizer import optimize_product, print_report, calculate_totals
+from transaction import SaleRecord
 
 
 def calculate_current_count(transactions: DataFrame, product_prefix: str) -> int:
@@ -29,12 +28,13 @@ def calculate_current_count(transactions: DataFrame, product_prefix: str) -> int
     return count
 
 
-def filter_and_optimize_product(df_trans: DataFrame, product_prefix: str, tax_year: int):
+def filter_and_optimize_product(df_trans: DataFrame, product_prefix: str, tax_year: int,
+                                strategies: dict[int,str] = None) -> list[SaleRecord]:
 
-    return optimize_product(convert_to_transactions(df_trans, product_prefix, tax_year), tax_year)
+    return optimize_product(convert_to_transactions(df_trans, product_prefix, tax_year), tax_year, strategies)
 
 
-def optimize_all(df_trans: DataFrame, tax_year: int) -> decimal:
+def optimize_all(df_trans: DataFrame, tax_year: int, strategies: dict[int,str] = None) -> decimal:
     products = get_unique_product_ids(df_trans, tax_year)
     print(f"Found {products.shape[0]} products with some transactions in {tax_year}.")
 
@@ -48,7 +48,7 @@ def optimize_all(df_trans: DataFrame, tax_year: int) -> decimal:
             # CZ: ('IE00B53SZB19', 'US9344231041', 'BMG9525W1091', 'CA88035N1033', 'CA92919V4055', 'KYG851581069'):
             print(f"Skipping {product}")
             continue
-        report = filter_and_optimize_product(df_trans, product, tax_year)
+        report = filter_and_optimize_product(df_trans, product, tax_year, strategies)
         # print_report(report)
 
         income, cost, fees = calculate_totals(report, tax_year)
@@ -66,21 +66,6 @@ def optimize_all(df_trans: DataFrame, tax_year: int) -> decimal:
     total_profit = total_income - total_cost - total_fees
     print(f"! Profit !  : {total_income - total_cost}, after fees: {total_profit}")
     print(f"(tax est.)  : {total_profit * Decimal('0.15')}")
-
-
-def get_unique_product_ids(df_trans, tax_year):
-    df_products = df_trans
-    df_products['TaxYear'] = df_products.apply(lambda row: row['DateTime'].year, axis=1)
-    product_ids = df_trans[df_trans['TaxYear'] == tax_year]['ISIN'].unique()
-    product_ids.sort()
-    return product_ids
-
-
-def get_isin(transactions: DataFrame, product_prefix: str) -> str:
-    df_product = transactions[transactions['Product'].str.startswith(product_prefix)]
-    if df_product.shape[0] == 0:
-        raise ValueError(f"Didn't find product with prefix {product_prefix}")
-    return df_product.iloc[0]['ISIN']
 
 
 def manual_debug(df_transactions: DataFrame):
@@ -101,11 +86,17 @@ def manual_debug(df_transactions: DataFrame):
 
 
 def main():
-    df_transactions = import_transactions("data/Transactions.csv")
+    df_transactions = import_transactions("data/Transactions-cz-to-05-2023-adj.csv")
 
     # manual_debug(df_transactions)
 
-    optimize_all(df_transactions, 2021)
+    # pairing strategies for each tax year
+    strategies = {
+        2021: 'max_cost',
+        2022: 'fifo',
+    }
+
+    optimize_all(df_transactions, 2022, strategies)
 
 
 if __name__ == '__main__':

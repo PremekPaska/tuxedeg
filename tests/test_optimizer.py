@@ -4,9 +4,10 @@ from decimal import Decimal
 import unittest
 
 from currency import unified_fx_rate
-from optimizer import optimize_transaction_pairing, is_better_cost_pair, calculate_tax
+from import_deg import import_transactions, get_isin, convert_to_transactions
+from optimizer import optimize_transaction_pairing, is_better_cost_pair, calculate_tax, optimize_product, \
+    calculate_totals
 from tests.test_transaction import create_t
-from transaction import Transaction
 
 
 def scenario_sell_in_two_parts():
@@ -28,6 +29,7 @@ def scenario_sell_multiple_buys():
 
 class OptimizerTestCase(unittest.TestCase):
     TAX_YEAR = 2021
+    STRATEGIES = {2021: 'max_cost'}
 
     @property
     def fx_rate(self) -> decimal:
@@ -35,12 +37,12 @@ class OptimizerTestCase(unittest.TestCase):
 
     def test_empty_report_for_buys_only(self):
         trans = [create_t(count=5, price=420.0, day=2)]
-        report = optimize_transaction_pairing(trans, self.TAX_YEAR)
+        report = optimize_transaction_pairing(trans, self.STRATEGIES)
         self.assertEqual(0, len(report))  # add assertion here
 
     def test_sell_in_two_parts(self):
         trans = scenario_sell_in_two_parts()
-        report = optimize_transaction_pairing(trans, self.TAX_YEAR)
+        report = optimize_transaction_pairing(trans, self.STRATEGIES)
 
         self.assertEqual(2, len(report))
         self.assertEqual(0, trans[0].remaining_count)
@@ -51,7 +53,7 @@ class OptimizerTestCase(unittest.TestCase):
 
     def test_greedy_fee_consumption(self):
         trans = scenario_sell_in_two_parts()
-        report = optimize_transaction_pairing(trans, self.TAX_YEAR)
+        report = optimize_transaction_pairing(trans, self.STRATEGIES)
 
         self.assertTrue(report[0].buys[0]._fee_consumed)
         self.assertFalse(report[1].buys[0]._fee_consumed)
@@ -63,7 +65,7 @@ class OptimizerTestCase(unittest.TestCase):
 
     def test_sell_multiple_buys(self):
         trans = scenario_sell_multiple_buys()
-        report = optimize_transaction_pairing(trans, self.TAX_YEAR)
+        report = optimize_transaction_pairing(trans, self.STRATEGIES)
 
         self.assertEqual(1, len(report))
         self.assertEqual(3, len(report[0].buys))
@@ -75,7 +77,7 @@ class OptimizerTestCase(unittest.TestCase):
             create_t(-3, 120.0, day=5)
         ]
 
-        report = optimize_transaction_pairing(transactions, tax_year=self.TAX_YEAR)
+        report = optimize_transaction_pairing(transactions, self.STRATEGIES)
         self.assertEqual(1, len(report))
 
         sale_record = report[0]
@@ -85,7 +87,7 @@ class OptimizerTestCase(unittest.TestCase):
 
     def test_calculate_profit_multiple_buys(self):
         trans = scenario_sell_multiple_buys()
-        report = optimize_transaction_pairing(trans, tax_year=self.TAX_YEAR)
+        report = optimize_transaction_pairing(trans, self.STRATEGIES)
 
         sale_record = report[0]
         sale_record.calculate_profit()
@@ -103,6 +105,42 @@ class OptimizerTestCase(unittest.TestCase):
         self.assertFalse(is_better_cost_pair(buy_t, create_t(1, 112, day=27, month=2)))
         self.assertFalse(is_better_cost_pair(buy_t, create_t(1, 112, day=27, month=10, year_offset=-1)))
         self.assertTrue(is_better_cost_pair(buy_t, create_t(1, 112, day=27, month=8)))
+
+
+class PairingStrategiesTestCase(unittest.TestCase):
+    @staticmethod
+    def import_test_transactions_cz():
+        return import_transactions('test_data/Transactions-deg-cz-2019.csv')
+
+    def import_product_transactions(self, product_prefix: str, tax_year: int):
+        df_trans = self.import_test_transactions_cz()
+        product_id = get_isin(df_trans, product_prefix)
+        return convert_to_transactions(df_trans, product_id, tax_year)
+
+    def optimize_product_amd(self, tax_year: int, strategies: dict[int,str]):
+        transactions = self.import_product_transactions('ADVANCED MICRO DEVICES', tax_year)
+
+        report = optimize_product(transactions, tax_year, strategies)
+        self.assertEqual(38, len(report))
+        return report
+
+    def test_pairing_strategy_max_cost(self):
+        tax_year = 2019
+        report = self.optimize_product_amd(tax_year, {tax_year: 'max_cost'})
+
+        income, cost, fees = calculate_totals(report, tax_year)
+        self.assertEqual(Decimal('93774.7573'), income)
+        self.assertEqual(Decimal('76584.4204'), cost)
+        self.assertEqual(Decimal('593.3456'), fees)
+
+    def test_pairing_strategy_fifo(self):
+        tax_year = 2019
+        report = self.optimize_product_amd(tax_year, {tax_year: 'fifo'})
+
+        income, cost, fees = calculate_totals(report, tax_year)
+        self.assertEqual(Decimal('93774.7573'), income)
+        self.assertEqual(Decimal('58947.2520'), cost)
+        self.assertEqual(Decimal('487.6372'), fees)
 
 
 if __name__ == '__main__':
