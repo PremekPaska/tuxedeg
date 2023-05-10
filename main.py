@@ -92,7 +92,7 @@ def main():
 
     # pairing strategies for each tax year
     strategies = {
-        2021: 'max_cost',
+        2021: 'fifo',  # 'max_cost',
         2022: 'fifo',
     }
 
