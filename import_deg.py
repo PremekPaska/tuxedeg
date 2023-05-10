@@ -123,8 +123,8 @@ def convert_to_transactions(df_trans: DataFrame, product_isin: str, tax_year: in
 def get_unique_product_ids(df_trans, tax_year):
     df_products = df_trans
     df_products['TaxYear'] = df_products.apply(lambda row: row['DateTime'].year, axis=1)
-    product_ids = df_trans[df_trans['TaxYear'] == tax_year]['ISIN'].unique()
-    product_ids.sort()
+    df_tax_year_products = df_products[df_products['TaxYear'] == tax_year].sort_values('Product')
+    product_ids = df_tax_year_products['ISIN'].unique()
     return product_ids
 
 
