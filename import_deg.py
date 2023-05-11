@@ -109,7 +109,7 @@ def convert_to_transactions(df_trans: DataFrame, product_isin: str, tax_year: in
 
         transactions.append(Transaction(
             time=row['DateTime'],
-            product=row['Product'],
+            product_name=row['Product'],
             isin=row['ISIN'],
             count=row['Quantity'],
             share_price=row['Price'],  # Local currency

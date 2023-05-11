@@ -8,7 +8,7 @@ from decimal import Decimal
 from pandas import DataFrame
 
 from import_deg import convert_to_transactions, import_transactions, get_unique_product_ids, get_isin
-from optimizer import optimize_product, print_report, calculate_totals
+from optimizer import optimize_product, print_report, calculate_totals, get_product_name
 from transaction import SaleRecord
 
 
@@ -38,21 +38,29 @@ def optimize_all(df_trans: DataFrame, tax_year: int, strategies: dict[int,str] =
     products = get_unique_product_ids(df_trans, tax_year)
     print(f"Found {products.shape[0]} products with some transactions in {tax_year}.")
 
+    # Create new dataframe with products and their income, cost, profit, and fees
+    df_results = DataFrame(columns=['Product', 'ISIN', 'Income', 'Cost', 'Profit', 'Fees'])
+
     total_income = Decimal(0)
     total_cost = Decimal(0)
     total_fees = Decimal(0)
-    for product in products:
+    for product_id in products:
         print()
-        if product in ():
+        if product_id in ():
             # IE: ('IE00B53SZB19', 'US9344231041'):
             # CZ: ('IE00B53SZB19', 'US9344231041', 'BMG9525W1091', 'CA88035N1033', 'CA92919V4055', 'KYG851581069'):
-            print(f"Skipping {product}")
+            print(f"Skipping {product_id}")
             continue
-        report = filter_and_optimize_product(df_trans, product, tax_year, strategies)
+        report = filter_and_optimize_product(df_trans, product_id, tax_year, strategies)
         # print_report(report)
 
         income, cost, fees = calculate_totals(report, tax_year)
         print(f"income: {income}, cost: {cost}, profit: {income - cost}, fees: {fees}")
+
+        # Add to dataframe (TODO: append is deprecated)
+        df_results = df_results.append({'Product': get_product_name(report), 'ISIN': product_id,
+                                        'Income': income, 'Cost': cost, 'Profit': income - cost, 'Fees': fees},
+                                       ignore_index=True)
 
         total_income += income
         total_cost += cost

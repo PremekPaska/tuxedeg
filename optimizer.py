@@ -159,3 +159,10 @@ def print_report(sale_records: List[SaleRecord]):
     print(f"*** total cost : {total_cost}")
     print(f"*** total fees : {total_fees}")
     print(f"*** total profit: {total_income - total_cost}, after fees: {total_income - total_cost - total_fees}")
+
+
+def get_product_name(report: List[SaleRecord]):
+    if len(report) == 0:
+        return '<no sale records>'
+
+    return report[0].sale_t.product_name

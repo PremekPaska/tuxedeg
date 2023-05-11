@@ -13,10 +13,10 @@ TSLA_SPLIT = datetime(2022, 8, 25)
 
 
 class Transaction:
-    def __init__(self, time: datetime, product: str, isin: str, count: int, share_price: decimal, currency: str,
+    def __init__(self, time: datetime, product_name: str, isin: str, count: int, share_price: decimal, currency: str,
                  fee_eur: decimal):
         self._time = time
-        self.product = product
+        self._product_name = product_name
         self.isin = isin
         if isin == 'US88160R1014' and time < TSLA_SPLIT:
             count = count * 3
@@ -31,7 +31,11 @@ class Transaction:
         self._fee_available = True  # Not used for sale transactions
 
     def __str__(self):
-        return f"{self._time}, {self.product}, {self._count}, {self.isin}, {self._share_price}, fee: {self._fee_eur}"
+        return f"{self._time}, {self._product_name}, {self._count}, {self.isin}, {self._share_price}, fee: {self._fee_eur}"
+
+    @property
+    def product_name(self) -> str:
+        return self._product_name
 
     @property
     def is_sale(self) -> bool:
