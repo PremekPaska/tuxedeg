@@ -5,6 +5,7 @@
 import decimal
 from decimal import Decimal
 
+import pandas as pd
 from pandas import DataFrame
 
 from import_deg import convert_to_transactions, import_transactions, get_unique_product_ids, get_isin
@@ -57,14 +58,20 @@ def optimize_all(df_trans: DataFrame, tax_year: int, strategies: dict[int,str] =
         income, cost, fees = calculate_totals(report, tax_year)
         print(f"income: {income}, cost: {cost}, profit: {income - cost}, fees: {fees}")
 
-        # Add to dataframe (TODO: append is deprecated)
-        df_results = df_results.append({'Product': get_product_name(report), 'ISIN': product_id,
-                                        'Income': income, 'Cost': cost, 'Profit': income - cost, 'Fees': fees},
-                                       ignore_index=True)
+        # Add to dataframe
+        row = {'Product': get_product_name(report), 'ISIN': product_id, 'Income': income, 'Cost': cost,
+               'Profit': income - cost, 'Fees': fees}
+        df_results = pd.concat([df_results, DataFrame(row, index=[0])], ignore_index=True)
 
         total_income += income
         total_cost += cost
         total_fees += fees
+
+    print()
+    print(df_results)
+
+    # Export df_results to CSV
+    df_results.to_csv(f"results-{tax_year}.csv", index=False)
 
     print()
     print(f"Total income: {total_income}")
