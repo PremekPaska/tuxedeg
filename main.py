@@ -1,7 +1,3 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 import decimal
 from decimal import Decimal
 
@@ -71,7 +67,7 @@ def optimize_all(df_trans: DataFrame, tax_year: int, strategies: dict[int,str] =
     print(df_results)
 
     # Export df_results to CSV
-    df_results.to_csv(f"results-{tax_year}.csv", index=False)
+    df_results.to_csv(f"outputs/results-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}.csv", index=False)
 
     print()
     print(f"Total income: {total_income}")
@@ -107,8 +103,8 @@ def main():
 
     # pairing strategies for each tax year
     strategies = {
-        2021: 'fifo',  # 'max_cost',
-        2022: 'fifo',
+        2021: 'max_cost',
+        2022: 'min_cost',
     }
 
     optimize_all(df_transactions, 2022, strategies)

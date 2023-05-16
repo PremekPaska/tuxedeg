@@ -142,6 +142,24 @@ class PairingStrategiesTestCase(unittest.TestCase):
         self.assertEqual(Decimal('58947.2520'), cost)
         self.assertEqual(Decimal('487.6372'), fees)
 
+    def test_pairing_strategy_lifo(self):
+        tax_year = 2019
+        report = self.optimize_product_amd(tax_year, {tax_year: 'lifo'})
+
+        income, cost, fees = calculate_totals(report, tax_year)
+        self.assertEqual(Decimal('93774.7573'), income)
+        self.assertEqual(Decimal('75028.2394'), cost)
+        self.assertEqual(Decimal('593.3456'), fees)
+
+    def test_pairing_strategy_min_cost(self):
+        tax_year = 2019
+        report = self.optimize_product_amd(tax_year, {tax_year: 'min_cost'})
+
+        income, cost, fees = calculate_totals(report, tax_year)
+        self.assertEqual(Decimal('93774.7573'), income)
+        self.assertEqual(Decimal('60565.7172'), cost)
+        self.assertEqual(Decimal('500.4564'), fees)
+
 
 if __name__ == '__main__':
     unittest.main()

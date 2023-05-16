@@ -4,3 +4,5 @@ Transactions.csv
 __pycache__/
 
 data/
+
+outputs/

@@ -1,6 +1,6 @@
 import decimal
 from decimal import Decimal
-from typing import List
+from typing import List, Callable
 
 from transaction import Transaction, BuyRecord, SaleRecord
 
@@ -46,14 +46,27 @@ def is_better_cost_pair(buy_t: Transaction, t: Transaction) -> bool:
         or t.share_price > buy_t.share_price * Decimal('1.15')
 
 
-def find_buys_max_cost(sale_t: Transaction, trans: List[Transaction]) -> List[BuyRecord]:
+def is_lower_cost_pair(buy_t: Transaction, t: Transaction) -> bool:
+    if t is None:
+        raise ValueError("Transaction parameter 't' must not be None!")
+    if buy_t is None:
+        return True
+    day_diff = abs((buy_t.time - t.time).days)
+    return (day_diff < 20 and t.share_price < buy_t.share_price * Decimal('0.97')) \
+        or (day_diff < 75 and t.share_price < buy_t.share_price * Decimal('0.90')) \
+        or t.share_price < buy_t.share_price * Decimal('0.75')
+
+
+# Take cost function as a parameter.
+def find_buys_generic_lifo(sale_t: Transaction, trans: List[Transaction],
+                           is_better_pair: Callable[[Transaction, Transaction], bool]) -> List[BuyRecord]:
     remaining_sold_count = -sale_t.count
 
     buy_records = []
     while remaining_sold_count > 0:
         buy_t = None
         for t in reversed([t for t in trans if not t.is_sale and t.remaining_count > 0 and t.time < sale_t.time]):
-            if is_better_cost_pair(buy_t, t):
+            if is_better_pair(buy_t, t):
                 buy_t = t
 
         remaining_sold_count = add_buy_record(buy_records, buy_t, remaining_sold_count)
@@ -64,6 +77,14 @@ def find_buys_max_cost(sale_t: Transaction, trans: List[Transaction]) -> List[Bu
         raise ValueError("Could not pair transactions!")
 
     return buy_records
+
+
+def find_buys_max_cost(sale_t: Transaction, trans: List[Transaction]) -> List[BuyRecord]:
+    return find_buys_generic_lifo(sale_t, trans, is_better_cost_pair)
+
+
+def find_buys_min_cost(sale_t: Transaction, trans: List[Transaction]) -> List[BuyRecord]:
+    return find_buys_generic_lifo(sale_t, trans, is_lower_cost_pair)
 
 
 def add_buy_record(buy_records, buy_t, remaining_sold_count):
