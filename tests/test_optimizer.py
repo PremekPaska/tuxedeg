@@ -1,3 +1,4 @@
+import os
 import datetime
 import decimal
 from decimal import Decimal
@@ -110,6 +111,8 @@ class OptimizerTestCase(unittest.TestCase):
 class PairingStrategiesTestCase(unittest.TestCase):
     @staticmethod
     def import_test_transactions_cz():
+        if not os.path.exists('test_data'):
+            os.chdir(os.path.dirname(__file__))
         return import_transactions('test_data/Transactions-deg-cz-2019.csv')
 
     def import_product_transactions(self, product_prefix: str, tax_year: int):

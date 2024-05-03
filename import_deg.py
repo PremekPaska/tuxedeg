@@ -104,7 +104,7 @@ def convert_to_transactions(df_trans: DataFrame, product_isin: str, tax_year: in
             print(f"!! Skipping transaction: {row['DateTime']}, {row['Product']}, {row['ISIN']}")
             continue
 
-        if row[fee_curr_idx] != 'EUR' and not math.isnan(row[fee_curr_idx]):
+        if row.iloc[fee_curr_idx] != 'EUR' and not math.isnan(row.iloc[fee_curr_idx]):
             raise ValueError("Unexpected fee currency!")
 
         transactions.append(Transaction(
@@ -113,7 +113,7 @@ def convert_to_transactions(df_trans: DataFrame, product_isin: str, tax_year: in
             isin=row['ISIN'],
             count=row['Quantity'],
             share_price=row['Price'],  # Local currency
-            currency=row[currency_idx],
+            currency=row.iloc[currency_idx],
             fee_eur=row['Transaction and/or third']
         ))
 

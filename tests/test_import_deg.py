@@ -1,4 +1,5 @@
 import unittest
+import os
 
 from decimal import Decimal
 
@@ -11,6 +12,8 @@ class ImportTestCase(unittest.TestCase):
 
     @staticmethod
     def import_test_transactions_en():
+        if not os.path.exists('test_data'):
+            os.chdir(os.path.dirname(__file__))
         return import_transactions("test_data/Transactions-deg-en-2021.csv")
 
     def convert_to_transactions(self, df_transactions, product_prefix: str):
