@@ -1,3 +1,4 @@
+import os
 import decimal
 from decimal import Decimal
 
@@ -31,7 +32,7 @@ def filter_and_optimize_product(df_trans: DataFrame, product_prefix: str, tax_ye
     return optimize_product(convert_to_transactions(df_trans, product_prefix, tax_year), tax_year, strategies)
 
 
-def optimize_all(df_trans: DataFrame, tax_year: int, strategies: dict[int,str] = None) -> decimal:
+def optimize_all(df_trans: DataFrame, tax_year: int, strategies: dict[int,str], output_path: str = "outputs") -> decimal:
     products = get_unique_product_ids(df_trans, tax_year)
     print(f"Found {products.shape[0]} products with some transactions in {tax_year}.")
 
@@ -67,7 +68,9 @@ def optimize_all(df_trans: DataFrame, tax_year: int, strategies: dict[int,str] =
     print(df_results)
 
     # Export df_results to CSV
-    df_results.to_csv(f"outputs/results-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}.csv", index=False)
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+    df_results.to_csv(f"{output_path}/results-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}.csv", index=False)
 
     print()
     print(f"Total income: {total_income}")
@@ -97,7 +100,8 @@ def manual_debug(df_transactions: DataFrame):
 
 
 def main():
-    df_transactions = import_transactions("data/Transactions-cz-to-05-2023-adj.csv")
+    base_path = "/teamspace/studios/this_studio/tuxedeg/"
+    df_transactions = import_transactions(base_path + "data/Transactions-cz-to-05-2023-adj.csv")
 
     # manual_debug(df_transactions)
 
@@ -107,7 +111,7 @@ def main():
         2022: 'min_cost',
     }
 
-    optimize_all(df_transactions, 2022, strategies)
+    optimize_all(df_transactions, 2022, strategies, base_path + "outputs")
 
 
 if __name__ == '__main__':
