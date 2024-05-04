@@ -15,6 +15,7 @@ def find_buys_fifo(sale_t: Transaction, trans: List[Transaction]) -> List[BuyRec
             break
 
     if remaining_sold_count != 0:
+        print(f"Still remaining sold count to pair: {remaining_sold_count} for {sale_t}")
         raise ValueError("Could not pair transactions!")
 
     return buy_records
@@ -68,6 +69,10 @@ def find_buys_generic_lifo(sale_t: Transaction, trans: List[Transaction],
         for t in reversed([t for t in trans if not t.is_sale and t.remaining_count > 0 and t.time < sale_t.time]):
             if is_better_pair(buy_t, t):
                 buy_t = t
+
+        if buy_t is None:
+            print(f"Could not find a buy transaction for {sale_t}")
+            raise ValueError("Could not pair transactions!")
 
         remaining_sold_count = add_buy_record(buy_records, buy_t, remaining_sold_count)
         if remaining_sold_count == 0:
