@@ -75,6 +75,8 @@ def optimize_all(df_trans: DataFrame, tax_year: int, strategies: dict[int,str], 
     df_results.to_csv(f"{output_path}/results-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}.csv", index=False)
 
     print()
+    print(f"Pairing strategies: {strategies}")
+    print()
     print(f"Total income: {total_income}")
     print(f"Total cost  : {total_cost}")
     print(f"Total fees  : {total_fees}")
@@ -103,7 +105,7 @@ def manual_debug(df_transactions: DataFrame):
 
 def main():
     base_path = "/teamspace/studios/this_studio/tuxedeg/"
-    df_transactions = import_transactions(base_path + "data/Transactions-cz-to-12-2023-adj.csv")
+    df_transactions = import_transactions(base_path + "data/Transactions-ie-to-12-2023.csv")
 
     # manual_debug(df_transactions)
 
