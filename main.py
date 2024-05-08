@@ -32,7 +32,7 @@ def filter_and_optimize_product(df_trans: DataFrame, product_isin: str, tax_year
     return optimize_product(convert_to_transactions(df_trans, product_isin, tax_year), tax_year, strategies)
 
 
-def optimize_all(df_trans: DataFrame, tax_year: int, strategies: dict[int,str], output_path: str = "outputs") -> decimal:
+def optimize_all(df_trans: DataFrame, tax_year: int, strategies: dict[int,str], account_code: str) -> decimal:
     products = get_unique_product_ids(df_trans, tax_year)
     print(f"Found {products.shape[0]} products with some transactions in {tax_year}.")
 
@@ -70,9 +70,12 @@ def optimize_all(df_trans: DataFrame, tax_year: int, strategies: dict[int,str], 
     print(df_results)
 
     # Export df_results to CSV
+    output_path = f"outputs/"
     if not os.path.exists(output_path):
         os.makedirs(output_path)
-    df_results.to_csv(f"{output_path}/results-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}.csv", index=False)
+    df_results.to_csv(
+        f"{output_path}results-{account_code}-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}.csv",
+        index=False)
 
     print()
     print(f"Pairing strategies: {strategies}")
@@ -104,8 +107,9 @@ def manual_debug(df_transactions: DataFrame):
 
 
 def main():
-    base_path = "/teamspace/studios/this_studio/tuxedeg/"
-    df_transactions = import_transactions(base_path + "data/Transactions-ie-to-12-2023.csv")
+    os.chdir(os.path.dirname(__file__))
+    account_code = "cz"
+    df_transactions = import_transactions(f"data/Transactions-{account_code}-to-12-2023-adj.csv")
 
     # manual_debug(df_transactions)
 
@@ -116,7 +120,7 @@ def main():
         2023: 'min_cost'
     }
 
-    optimize_all(df_transactions, 2023, strategies, base_path + "outputs")
+    optimize_all(df_transactions, 2023, strategies, account_code)
 
 
 if __name__ == '__main__':
