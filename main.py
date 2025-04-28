@@ -1,3 +1,4 @@
+import os
 import decimal
 from decimal import Decimal
 
@@ -25,13 +26,13 @@ def calculate_current_count(transactions: DataFrame, product_prefix: str) -> int
     return count
 
 
-def filter_and_optimize_product(df_trans: DataFrame, product_prefix: str, tax_year: int,
+def filter_and_optimize_product(df_trans: DataFrame, product_isin: str, tax_year: int,
                                 strategies: dict[int,str] = None) -> list[SaleRecord]:
 
-    return optimize_product(convert_to_transactions(df_trans, product_prefix, tax_year), tax_year, strategies)
+    return optimize_product(convert_to_transactions(df_trans, product_isin, tax_year), tax_year, strategies)
 
 
-def optimize_all(df_trans: DataFrame, tax_year: int, strategies: dict[int,str] = None) -> decimal:
+def optimize_all(df_trans: DataFrame, tax_year: int, strategies: dict[int,str], account_code: str) -> decimal:
     products = get_unique_product_ids(df_trans, tax_year)
     print(f"Found {products.shape[0]} products with some transactions in {tax_year}.")
 
@@ -41,21 +42,23 @@ def optimize_all(df_trans: DataFrame, tax_year: int, strategies: dict[int,str] =
     total_income = Decimal(0)
     total_cost = Decimal(0)
     total_fees = Decimal(0)
-    for product_id in products:
+    for product_isin in products:
         print()
-        if product_id in ():
+        if product_isin in ('CA88035N1033'):
             # IE: ('IE00B53SZB19', 'US9344231041'):
-            # CZ: ('IE00B53SZB19', 'US9344231041', 'BMG9525W1091', 'CA88035N1033', 'CA92919V4055', 'KYG851581069'):
-            print(f"Skipping {product_id}")
+            # CZ: ('IE00B53SZB19', 'US9344231041', 'BMG9525W1091', 'CA88035N1033', 'CA92919V4055', 'KYG851581069', 'US37611X1000'):
+            # 'CA88035N1033' is TENET FINTECH
+            product_name = df_trans.query(f"ISIN == '{product_isin}'").head(1)['Product'].iloc[0]
+            print(f"Skipping product {product_isin}: {product_name}")
             continue
-        report = filter_and_optimize_product(df_trans, product_id, tax_year, strategies)
+        report = filter_and_optimize_product(df_trans, product_isin, tax_year, strategies)
         # print_report(report)
 
         income, cost, fees = calculate_totals(report, tax_year)
         print(f"income: {income}, cost: {cost}, profit: {income - cost}, fees: {fees}")
 
         # Add to dataframe
-        row = {'Product': get_product_name(report), 'ISIN': product_id, 'Income': income, 'Cost': cost,
+        row = {'Product': get_product_name(report), 'ISIN': product_isin, 'Income': income, 'Cost': cost,
                'Profit': income - cost, 'Fees': fees}
         df_results = pd.concat([df_results, DataFrame(row, index=[0])], ignore_index=True)
 
@@ -67,8 +70,15 @@ def optimize_all(df_trans: DataFrame, tax_year: int, strategies: dict[int,str] =
     print(df_results)
 
     # Export df_results to CSV
-    df_results.to_csv(f"outputs/results-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}.csv", index=False)
+    output_path = f"outputs/"
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+    df_results.to_csv(
+        f"{output_path}results-{account_code}-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}.csv",
+        index=False)
 
+    print()
+    print(f"Pairing strategies: {strategies}")
     print()
     print(f"Total income: {total_income}")
     print(f"Total cost  : {total_cost}")
@@ -97,7 +107,9 @@ def manual_debug(df_transactions: DataFrame):
 
 
 def main():
-    df_transactions = import_transactions("data/Transactions-cz-to-05-2023-adj.csv")
+    os.chdir(os.path.dirname(__file__))
+    account_code = "cz"
+    df_transactions = import_transactions(f"data/Transactions-{account_code}-to-12-2023-adj.csv")
 
     # manual_debug(df_transactions)
 
@@ -105,9 +117,10 @@ def main():
     strategies = {
         2021: 'max_cost',
         2022: 'min_cost',
+        2023: 'min_cost'
     }
 
-    optimize_all(df_transactions, 2022, strategies)
+    optimize_all(df_transactions, 2023, strategies, account_code)
 
 
 if __name__ == '__main__':
