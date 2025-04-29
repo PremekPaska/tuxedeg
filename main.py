@@ -109,7 +109,7 @@ def manual_debug(df_transactions: DataFrame):
 def main():
     os.chdir(os.path.dirname(__file__))
     account_code = "cz"
-    df_transactions = import_transactions(f"data/Transactions-{account_code}-to-12-2023-adj.csv")
+    df_transactions = import_transactions(f"data/Transactions-{account_code}-to-12-2024-adj.csv")
 
     # manual_debug(df_transactions)
 
@@ -117,10 +117,11 @@ def main():
     strategies = {
         2021: 'max_cost',
         2022: 'min_cost',
-        2023: 'min_cost'
+        2023: 'min_cost',
+        2024: 'max_cost'
     }
 
-    optimize_all(df_transactions, 2023, strategies, account_code)
+    optimize_all(df_transactions, 2024, strategies, account_code)
 
 
 if __name__ == '__main__':
