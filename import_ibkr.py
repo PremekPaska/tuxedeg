@@ -80,7 +80,7 @@ def _parse_one_csv(path: Path) -> pd.DataFrame:
         usecols=KEEP_COLS,
         thousands=",",
         dtype={
-            "Quantity": "float64",  # Could be Int64, but this would handle franctional shares.
+            "Quantity": "float64",  # Could be Int64, but floats would handle fractional shares.
             "T. Price": "float64",
             "Comm/Fee": "float64"},
     )
@@ -99,10 +99,16 @@ def load_stock_transactions(paths: Iterable[str | Path]) -> pd.DataFrame:
     return pd.concat(frames, ignore_index=True)[KEEP_COLS]
 
 
+def filter_by_symbol(df: pd.DataFrame, symbol: str) -> pd.DataFrame:
+    """Filter trades DataFrame by symbol."""
+    return df[df["Symbol"] == symbol]
+
+
 # === CLI ===
 def _cli() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Import IBKR stock trades")
     p.add_argument("csv", nargs="+", help="CSV file(s) or glob(s)")
+    p.add_argument("-s", "--symbol", help="Filter trades by symbol", default=None)
     return p.parse_args()
 
 
@@ -122,12 +128,17 @@ def main() -> None:
 
     try:
         df = load_stock_transactions(files)
+        if args.symbol:
+            original_count = len(df)
+            df = filter_by_symbol(df, args.symbol)
+            logging.info("Filtered trades by symbol '%s': %d of %d trades retained", args.symbol, len(df), original_count)
     except ValueError as exc:
         raise SystemExit(str(exc)) from None
 
     logging.info("imported %d trades from %d file(s)", len(df), len(files))
-    logging.info("First n trades:\n%s", df.head(10).to_markdown(index=False))
-    logging.info("Last m trades:\n%s", df.tail(10).to_markdown(index=False))
+    n = 10
+    logging.info("First %d trades:\n%s", n, df.head(n).to_markdown(index=False))
+    logging.info("Last %d trades:\n%s", n, df.tail(n).to_markdown(index=False))
     
 #    df.to_parquet("ibkr_trades.parquet", index=False)
 #    logging.info("saved ibkr_trades.parquet")
