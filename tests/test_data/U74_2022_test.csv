@@ -1,0 +1,363 @@
+﻿Statement,Header,Field Name,Field Value
+Statement,Data,Title,Activity Statement
+Collateral for Customer Borrowing,Header,Asset Category,Currency,Symbol,Settled Quantity,Collateral Price,Value,Securities Segregated Quantity,Securities Segregated Value,Securities Not Segregated Quantity,Securities Not Segregated Value,Securities Not Segregated: Third Party "Right to Use"  Quantity,Securities Not Segregated: Third Party "Right to Use"  Value,Securities Not Segregated: Subject to Stock Yield Enhancement Program Quantity,Securities Not Segregated: Subject to Stock Yield Enhancement Program Value
+Forex Balances,Header,Asset Category,Currency,Description,Quantity,Cost Price,Cost Basis in CZK,Close Price,Value in CZK,Unrealized P/L in CZK,Code
+Forex Balances,Data,Forex,CZK,CAD,-183.516034,17.828618615,3271.837379846,16.666,-3058.478223,213.359156846,
+Forex Balances,Data,Forex,CZK,CZK,-1296.224847628,0,1296.224847628,1,-1296.224847628,0,
+Forex Balances,Data,Total,,,,,-1487462.056167194,,1480255.515190372,-7206.540976822,
+Trades,Header,DataDiscriminator,Asset Category,Currency,Symbol,Date/Time,Quantity,T. Price,C. Price,Proceeds,Comm/Fee,Basis,Realized P/L,MTM P/L,Code
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-03-15, 11:48:34",-2,688.4,690.3,1376.8,-6,-1370.8,0,-3.8,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-03-15, 11:51:43",-2,689,690.3,1378,-6,-1372,0,-2.6,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-03-15, 13:19:36",-2,686.5,690.3,1373,-6,-1367,0,-7.6,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-03-16, 07:12:28",2,703,707.9,-1406,-6,1370.8,-41.2,9.8,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-03-17, 14:26:43",-2,714,710.7,1428,-6,-1422,0,6.6,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-03-23, 08:13:38",-2,748.9,750.7,1497.8,-6,-1491.8,0,-3.6,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-03-25, 09:17:43",2,760.3,753.9,-1520.6,-6,1372,-154.6,-12.8,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-03-28, 10:08:27",3,765.4,760.6,-2296.2,-6,2078,-224.2,-14.4,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-03-31, 10:13:24",-3,765.7,765.8,2297.1,-6,-2291.1,0,-0.3,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-04-01, 11:07:23",3,762.1,757.7,-2286.3,-6,2202.8,-89.5,-13.2,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-04-06, 09:27:58",-3,755,749.9,2265,-6,-2259,0,15.3,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-04-11, 09:29:51",-3,735,731.7,2205,-6,-2199,0,9.9,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-04-11, 10:05:35",3,733.7,731.7,-2201.1,-6,2291.1,84,-6,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-04-19, 10:55:44",3,740.5,741.9,-2221.5,-6,2259,31.5,4.2,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-04-21, 07:44:03",3,736.8,731.8,-2210.4,-6,2199,-17.4,-15,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-04-22, 12:24:03",-3,708.6,712.5,2125.8,-6,-2119.8,0,-11.7,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-04-25, 09:24:05",-5,699.9,705.1,3499.5,-6,-3493.5,0,-26,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-05-10, 10:26:47",4,666.6,655.8,-2666.4,-6,2818.5,146.1,-43.2,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-05-11, 09:10:38",-8,654.5,659.1,5236,-6.2832,-5229.7168,0,-36.8,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-05-11, 10:52:01",4,659.9,659.1,-2639.6,-6,2794.8,149.2,-3.2,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-05-13, 08:33:12",4,664.2,670.6,-2656.8,-6,2614.8584,-47.9416,25.6,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-05-18, 10:27:12",-4,663.4,654.2,2653.6,-6,-2647.6,0,36.8,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-05-19, 05:16:54",-6,632.7,640.9,3796.2,-6,-3790.2,0,-49.2,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-05-19, 05:19:04",-2,632.5,640.9,1265,-6,-1259,0,-16.8,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-05-19, 12:32:14",4,641.4,640.9,-2565.6,-6,2614.8584,43.2584,-2,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-05-23, 10:23:07",-4,629.6,635.5,2518.4,-6,-2512.4,0,-23.6,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-05-25, 12:15:49",-4,629.1,626.4,2516.4,-6,-2510.4,0,10.8,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-05-27, 05:36:01",4,650.3,664.6,-2601.2,-6,2647.6,40.4,57.2,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-05-27, 09:20:49",4,654.3,664.6,-2617.2,-6,2526.8,-96.4,41.2,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-05-31, 09:37:53",-8,664.1,664.6,5312.8,-6.37536,-5306.42464,0,-4,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-06-02, 09:49:28",4,663.9,667.8,-2655.6,-6,2522.4,-139.2,15.6,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-06-03, 11:00:53",-8,662.5,662.8,5300,-6.36,-5293.64,0,-2.4,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-06-10, 08:48:43",-8,649.4,636.8,5195.2,-6.23424,-5188.96576,0,100.8,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-06-13, 11:28:20",8,618,618.8,-4944,-6,5022.8,72.8,6.4,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-06-21, 05:42:06",16,615,622.2,-9840,-11.808,10600.06464,748.25664,115.2,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-06-22, 09:51:26",8,615.2,623.4,-4921.6,-6,5188.96576,261.36576,65.6,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-06-29, 09:33:40",-10,623.5,631.2,6235,-7.482,-6227.518,0,-77,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-06-30, 03:42:51",-10,622.7,623,6227,-7.4724,-6219.5276,0,-3,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-07-08, 10:13:55",10,670.1,676.4,-6701,-8.0412,6227.518,-481.5232,63,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-07-12, 10:05:06",-10,664.1,668.3,6641,-7.9692,-6633.0308,0,-42,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-07-13, 08:32:10",-30,654.4,657.6,19632,-23.5584,-19608.4416,0,-96,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-07-13, 10:44:03",20,661.1,657.6,-13222,-15.8664,12852.5584,-385.308,-70,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-07-19, 09:20:33",10,664,672.6,-6640,-7.968,6536.1472,-111.8208,86,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-07-20, 04:27:12",10,678.7,691.1,-6787,-8.1444,6536.1472,-258.9972,124,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-07-21, 05:22:19",-10,691.3,694.6,6913,-8.2956,-6904.7044,0,-33,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-07-21, 10:41:07",-10,689.5,694.6,6895,-8.274,-6886.726,0,-51,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-07-27, 04:37:32",20,686.2,692.9,-13724,-16.4688,13440.8516,-299.6172,134,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-07-27, 11:51:51",-10,694.7,692.9,6947,-8.3364,-6938.6636,0,18,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-07-27, 12:25:15",10,697.3,692.9,-6973,-8.3676,6886.726,-94.6416,-44,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-07-29, 11:52:25",-10,711.3,710,7113,-8.5356,-7104.4644,0,13,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-08-03, 10:02:42",10,731.1,735.2,-7311,-8.7732,6938.6636,-381.1096,41,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-08-09, 09:27:14",-10,722.8,721.3,7228,-8.6736,-7219.3264,0,15,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-08-10, 08:32:23",10,732.6,730,-7326,-8.7912,7104.4644,-230.3268,-26,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-08-12, 14:56:52",10,746,743.6,-7460,-8.952,7219.3264,-249.6256,-24,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-08-16, 09:37:06",-10,758.4,757.9,7584,-9.1008,-7574.8992,0,5,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-08-17, 10:38:25",-10,746.84,747.8,7468.4,-8.96208,-7459.43792,0,-9.6,O;P
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-08-29, 03:09:37",-10,711.6,707.6,7116,-8.5392,-7107.4608,0,40,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-09-09, 10:43:47",10,708.2,709,-7082,-8.4984,7574.8992,484.4008,8,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-09-13, 08:42:28",-10,701.2,691.5,7012,-8.4144,-7003.5856,0,97,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-09-14, 07:51:25",-10,682.5,686.8,6825,-8.19,-6816.81,0,-43,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-09-21, 12:09:26",10,683.1,682.5,-6831,-8.1972,7459.43792,620.24072,-6,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-09-21, 14:05:02",-10,674.8,682.5,6748,-8.0976,-6739.9024,0,-77,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-09-21, 14:44:03",10,688.4,682.5,-6884,-8.2608,7107.4608,215.2,-59,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-09-23, 06:24:06",-10,659.5,659.9,6595,-7.914,-6587.086,0,-4,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-09-29, 09:41:25",-10,654.7,647,6547,-7.8564,-6539.1436,0,77,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-10-04, 10:00:45",10,660.3,658.6,-6603,-7.9236,7003.5856,392.662,-17,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-10-05, 13:22:23",10,663.5,654.2,-6635,-7.962,6816.81,173.848,-93,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-10-10, 10:55:54",-10,635.4,638.5,6354,-7.6248,-6346.3752,0,-31,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-10-13, 08:30:10",-10,625,632.4,6250,-7.5,-6242.5,0,-74,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-10-13, 15:00:29",15,640.3,632.4,-9604.5,-11.5254,10033.4454,417.42,-118.5,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-10-14, 08:47:32",15,645.5,630.3,-9682.5,-11.619,9832.6866,138.5676,-228,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-10-14, 12:12:31",-10,625.7,630.3,6257,-7.5084,-6249.4916,0,-46,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-10-18, 07:42:28",10,651,637.7,-6510,-7.812,6346.3752,-171.4368,-133,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-10-26, 14:43:41",-10,641.4,654.4,6414,-7.6968,-6406.3032,0,-130,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-10-28, 03:05:27",-15,629.03,650.2,9435.45,-11.32254,-9424.12746,0,-317.55,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-10-28, 08:30:32",5,636.4,650.2,-3182,-6,3121.25,-66.75,69,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-10-28, 10:45:12",10,648.4,650.2,-6484,-7.7808,6245.9958,-245.785,18,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-11-02, 15:26:20",-10,632.7,641.2,6327,-7.5924,-6319.4076,0,-85,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-11-03, 09:45:11",-10,624.69,625.8,6246.9,-7.49628,-6239.40372,0,-11.1,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-11-03, 12:53:44",10,629.1,625.8,-6291,-7.5492,6327.8974,29.3482,-33,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-11-04, 12:03:16",-10,610.93,612.8,6109.3,-7.33116,-6101.96884,0,-18.7,O;P
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-11-10, 08:30:13",10,623,637.8,-6230,-7.476,6344.52742,107.05142,148,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-11-10, 08:39:00",10,629.2,637.8,-6292,-7.5504,6282.75164,-16.79876,86,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-11-10, 10:02:55",10,637.8,637.8,-6378,-7.6536,6319.4076,-66.246,0,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-11-16, 09:48:05",-10,640.3,639.8,6403,-7.6836,-6395.3164,0,5,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-11-29, 11:18:01",-10,629.2,629.2,6292,-7.5504,-6284.4496,0,0,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-11-30, 15:34:23",10,651.5,634.8,-6515,-7.818,6239.40372,-283.41428,-167,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-12-01, 10:12:20",-10,648.2,649.6,6482,-7.7784,-6474.2216,0,-14,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-12-06, 09:44:32",-10,632.3,627.1,6323,-7.5876,-6315.4124,0,52,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-12-08, 08:11:46",10,622.6,624.1,-6226,-7.4712,6101.96884,-131.50236,15,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-12-09, 07:31:00",10,628.8,628.4,-6288,-7.5456,6395.3164,99.7708,-4,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-12-13, 08:26:48",10,637.8,640,-6378,-7.6536,6284.4496,-101.204,22,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-12-14, 14:02:26",-10,625.2,634.2,6252,-7.5024,-6244.4976,0,-90,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-12-15, 03:19:47",-10,619.7,607.1,6197,-7.4364,-6189.5636,0,126,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-12-15, 09:57:16",-10,608.4,607.1,6084,-7.3008,-6076.6992,0,13,O
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-12-21, 09:50:35",20,596.8,601.5,-11936,-14.3232,12789.634,839.3108,94,C
+Trades,Data,Order,Stocks,EUR,CNDX,"2022-12-22, 10:12:36",-30,586,584.8,17580,-21.096,-17558.904,0,36,O;P
+Trades,SubTotal,,Stocks,EUR,CNDX,,-60,,,37546.55,-768.73326,-36069.6644,708.15234,-647.65,
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-06-14, 10:11:33",-20,369.8,369.26,7396,-8.8752,-7387.1248,0,10.8,O
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-06-15, 11:40:30",-20,371.07,371.85,7421.4,-8.90568,-7412.49432,0,-15.6,O
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-06-16, 08:39:23",-40,367.04,359.23,14681.6,-17.61792,-14663.98208,0,312.4,O
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-06-27, 05:07:01",20,381.3285,379.25,-7626.57,-9.151884,7387.1248,-248.597084,-41.57,C;P
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-06-30, 09:40:09",-20,370.4,371.19,7408,-8.8896,-7399.1104,0,-15.8,O
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-07-13, 08:36:47",-40,386.551,387.13,15462.04,-18.554448,-15443.485552,0,-23.16,O;P
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-07-19, 04:49:41",20,386.31,392.5,-7726.2,-9.27144,7412.49432,-322.97712,123.8,C
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-07-20, 04:28:38",60,395.94,399.55,-23756.4,-28.50768,22063.09248,-1721.8152,216.6,C
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-08-09, 09:28:10",-20,414.8,415.24,8296,-9.9552,-8286.0448,0,-8.8,O
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-08-10, 10:52:23",20,417.1,417.8,-8342,-10.0104,7721.253015,-630.757385,14,C
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-08-12, 11:02:51",20,425.69,426,-8513.8,-10.21656,7722.232537,-801.784023,6.2,C
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-08-22, 15:32:46",-20,426.8,430.84,8536,-10.2432,-8525.7568,0,-80.8,O
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-08-30, 10:12:02",-20,411.85,410.06,8237,-9.8844,-8227.1156,0,35.8,O
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-09-01, 03:08:23",-20,403.8,406.6,8076,-9.6912,-8066.3088,0,-56,O
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-09-09, 10:29:55",10,415.6,416.49,-4156,-6,4143.0224,-18.9776,8.9,C
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-09-09, 15:14:06",20,418.93,416.49,-8378.6,-10.05432,8405.9008,17.24648,-48.8,C
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-09-13, 08:30:03",10,421.999,410.29,-4219.99,-6,4262.8784,36.8884,-117.09,C;P
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-09-13, 09:59:52",-20,411.83,410.29,8236.6,-9.88392,-8226.71608,0,30.8,O
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-09-14, 15:16:31",-20,403.42,406.61,8068.4,-9.68208,-8058.71792,0,-63.8,O
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-09-21, 14:25:32",20,402.47,404.22,-8049.4,-9.65928,8227.1156,168.05632,35,C
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-09-21, 14:44:25",20,406.7,404.22,-8134,-9.7608,8066.3088,-77.452,-49.6,C
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-09-22, 14:25:28",-20,392.54,394.4,7850.8,-9.42096,-7841.37904,0,-37.2,O
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-09-29, 10:01:06",-20,385.02,383.84,7700.4,-9.24048,-7691.15952,0,23.6,O
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-10-05, 12:28:51",20,393.56,391.23,-7871.2,-9.44544,8226.71608,346.07064,-46.6,C
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-10-13, 13:23:15",20,386.5,382.09,-7730,-9.276,8058.71792,319.44192,-88.2,C
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-11-04, 08:30:13",-20,391.625,388.38,7832.5,-9.399,-7823.101,0,64.9,O;P
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-11-10, 08:30:17",20,399.3,398,-7986,-9.5832,7841.37904,-154.20416,-26,C
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-11-15, 05:38:15",-20,394.62,399.72,7892.4,-9.47088,-7882.92912,0,-102,O
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-11-15, 09:31:45",20,398.98,399.72,-7979.6,-9.57552,7691.15952,-298.016,14.8,C
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-11-16, 15:32:59",-20,392.44,394.25,7848.8,-9.41856,-7839.38144,0,-36.2,O
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-12-13, 08:29:58",20,396.9,393.84,-7938,-9.5256,7823.101,-124.4246,-61.2,C;P
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-12-15, 08:20:13",-20,383.476,378.58,7669.52,-9.203424,-7660.316576,0,97.92,O;P
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-12-19, 11:34:03",-20,372.42,373.04,7448.4,-8.93808,-7439.46192,0,-12.4,O
+Trades,Data,Order,Stocks,EUR,CSPX,"2022-12-21, 09:51:00",20,375.58,378.62,-7511.6,-9.01392,7882.92912,362.3152,60.8,C
+Trades,SubTotal,,Stocks,EUR,CSPX,,-60,,,20142.5,-352.326276,-22939.159936,-3148.986212,125.5,
+Trades,Data,Order,Stocks,EUR,TL0,"2022-05-19, 05:55:27",2,659.8,685.6,-1319.6,-6,1325.6,0,51.6,O
+Trades,Data,Order,Stocks,EUR,TL0,"2022-05-23, 09:40:01",6,602.1,626,-3612.6,-6,3618.6,0,143.4,O
+Trades,Data,Order,Stocks,EUR,TL0,"2022-05-24, 11:45:53",2,596.7,592.1,-1193.4,-6,1199.4,0,-9.2,O
+Trades,Data,Order,Stocks,EUR,TL0,"2022-05-25, 12:13:15",2,617.8,612.8,-1235.6,-6,1241.6,0,-10,O
+Trades,Data,Order,Stocks,EUR,TL0,"2022-06-06, 09:14:15",4,680.6,666,-2722.4,-6,2728.4,0,-58.4,O
+Trades,Data,Order,Stocks,EUR,TL0,"2022-06-10, 10:16:19",2,663.4,653.2,-1326.8,-6,1332.8,0,-20.4,O
+Trades,Data,Order,Stocks,EUR,TL0,"2022-07-21, 05:23:47",2,745.8,782,-1491.6,-6,1497.6,0,72.4,O
+Trades,Data,Order,Stocks,EUR,TL0,"2022-07-27, 07:58:03",2,779.1,796,-1558.2,-6,1564.2,0,33.8,O
+Trades,Data,Order,Stocks,EUR,TL0,"2022-08-16, 11:31:32",2,912.4,911.5,-1824.8,-6,1830.8,0,-1.8,O
+Trades,Data,Order,Stocks,EUR,TL0,"2022-08-23, 10:33:22",2,887.9,887.1,-1775.8,-6,1781.8,0,-1.6,O
+Trades,Data,Order,Stocks,EUR,TL0,"2022-09-09, 07:57:34",3,291.95,297.35,-875.85,-6,881.85,0,16.2,O
+Trades,Data,Order,Stocks,EUR,TL0,"2022-10-17, 07:20:51",5,214.3,223.2,-1071.5,-6,1077.5,0,44.5,O
+Trades,Data,Order,Stocks,EUR,TL0,"2022-10-17, 09:31:14",6,216.25,223.2,-1297.5,-6,1303.5,0,41.7,O
+Trades,Data,Order,Stocks,EUR,TL0,"2022-10-19, 10:28:44",4,227.1,225.65,-908.4,-6,914.4,0,-5.8,O
+Trades,Data,Order,Stocks,EUR,TL0,"2022-10-20, 05:10:28",6,214.3,217.05,-1285.8,-6,1291.8,0,16.5,O
+Trades,Data,Order,Stocks,EUR,TL0,"2022-10-20, 11:06:15",4,217.4,217.05,-869.6,-6,875.6,0,-1.4,O
+Trades,Data,Order,Stocks,EUR,TL0,"2022-11-10, 08:58:12",6,187.38,185.84,-1124.28,-6,1130.28,0,-9.24,O
+Trades,Data,Order,Stocks,EUR,TL0,"2022-11-14, 11:09:49",-6,185.48,184.16,1112.88,-6,-1325.6,-218.72,7.92,C
+Trades,Data,Order,Stocks,EUR,TL0,"2022-11-18, 10:58:26",-6,170.74,172.1,1024.44,-6,-1206.2,-187.76,-8.16,C
+Trades,Data,Order,Stocks,EUR,TL0,"2022-11-21, 09:32:44",-6,170.26,167.16,1021.56,-6,-1206.2,-190.64,18.6,C;P
+Trades,Data,Order,Stocks,EUR,TL0,"2022-11-22, 03:02:01",-6,162.02,163.68,972.12,-6,-1206.2,-240.08,-9.96,C
+Trades,Data,Order,Stocks,EUR,TL0,"2022-11-23, 09:50:04",6,170.34,173.8,-1022.04,-6,1028.04,0,20.76,O
+Trades,Data,Order,Stocks,EUR,TL0,"2022-12-06, 09:58:52",-6,168.44,170.38,1010.64,-6,-1199.4,-194.76,-11.64,C;P
+Trades,Data,Order,Stocks,EUR,TL0,"2022-12-13, 08:30:12",6,163.766666667,152.62,-982.6,-6,988.6,0,-66.88,O;P
+Trades,Data,Order,Stocks,EUR,TL0,"2022-12-19, 09:48:06",-6,144.88,138.78,869.28,-6,-1241.6,-378.32,36.6,C
+Trades,Data,Order,Stocks,EUR,TL0,"2022-12-19, 11:39:47",-12,138,138.78,1656,-6,-2728.4,-1078.4,-9.36,C
+Trades,Data,Order,Stocks,EUR,TL0,"2022-12-19, 12:48:22",-6,140.26,138.78,841.56,-6,-1332.8,-497.24,8.88,C
+Trades,Data,Order,Stocks,EUR,TL0,"2022-12-20, 09:22:51",-10,138.18,134.72,1381.8,-6,-2540.4,-1164.6,34.6,C
+Trades,Data,Order,Stocks,EUR,TL0,"2022-12-22, 12:35:58",-20,116.9,121.9,2338,-6,-5662.35,-3330.35,-100,C
+Trades,Data,Order,Stocks,EUR,TL0,"2022-12-23, 09:52:07",-10,114.2,116.74,1142,-6,-2191.7,-1055.7,-25.4,C
+Trades,Data,Order,Stocks,EUR,TL0,"2022-12-27, 09:59:39",-30,108.64,106.46,3259.2,-6,-5771.52,-2518.32,65.4,C
+Trades,SubTotal,,Stocks,EUR,TL0,,-52,,,-10868.89,-186,-0,-11054.89,263.62,
+Trades,Total,,Stocks,EUR,,,,,,46820.16,-1307.059536,-59008.824336,-13495.723872,-258.53, 
+Trades,Total,,Stocks,CZK,,,,,,1148698.55564,-32034.199114092,-1443962.95843105,-327298.601905139,-6379.9749, 
+Trades,Data,Order,Stocks,USD,AMZN,"2022-10-27, 09:31:21",-10,112.705,110.96,1127.05,-5,-880.175,241.875,17.45,C
+Trades,Data,Order,Stocks,USD,AMZN,"2022-11-09, 09:51:52",-10,87.85,86.14,878.5,-5,-880.175,-6.675,17.1,C;P
+Trades,SubTotal,,Stocks,USD,AMZN,,-20,,,2005.55,-10,-1760.35,235.2,34.55,
+Trades,Data,Order,Stocks,USD,BABA,"2022-06-27, 09:35:31",-8,120.65,118.73,965.2,-5,-1419.084,-458.884,15.36,C
+Trades,SubTotal,,Stocks,USD,BABA,,-8,,,965.2,-5,-1419.084,-458.884,15.36,
+Trades,Data,Order,Stocks,USD,COIN,"2022-05-09, 14:07:31",10,84.35,83.51,-843.5,-5,848.5,0,-8.4,O
+Trades,Data,Order,Stocks,USD,COIN,"2022-10-27, 10:20:53",17,73.91,72.47,-1256.47,-5,1261.47,0,-24.48,O;P
+Trades,SubTotal,,Stocks,USD,COIN,,27,,,-2099.97,-10,2109.97,0,-32.88,
+Trades,Data,Order,Stocks,USD,CRWD,"2022-09-20, 15:45:12",7,175.2,173.87,-1226.4,-5,1231.4,0,-9.31,O
+Trades,Data,Order,Stocks,USD,CRWD,"2022-10-03, 10:47:26",7,167.01,169.31,-1169.07,-5,1174.07,0,16.1,O
+Trades,Data,Order,Stocks,USD,CRWD,"2022-12-27, 08:45:03",-10,101.4,100.66,1014,-5,-1734.572857,-725.572857,7.4,C
+Trades,SubTotal,,Stocks,USD,CRWD,,4,,,-1381.47,-15,670.897143,-725.572857,14.19,
+Trades,Data,Order,Stocks,USD,FB,"2022-02-22, 09:32:17",-5,203.78,202.08,1018.9,-5,-953.35,60.55,8.5,C
+Trades,Data,Order,Stocks,USD,FB,"2022-02-23, 09:21:32",-4,204.84,198.45,819.36,-5,-772.82,41.54,25.56,C
+Trades,SubTotal,,Stocks,USD,FB,,-9,,,1838.26,-10,-1726.17,102.09,34.06,
+Trades,Data,Order,Stocks,USD,GOOG,"2022-04-27, 09:30:47",1,2288.45,2300.41,-2288.45,-5,2293.45,0,11.96,O
+Trades,Data,Order,Stocks,USD,GOOG,"2022-11-22, 09:53:08",-10,94.74,97.33,947.4,-5,-818.365,124.035,-25.9,C
+Trades,Data,Order,Stocks,USD,GOOG,"2022-12-22, 13:18:57",-15,87.18,88.26,1307.7,-5,-1391.7275,-89.0275,-16.2,C
+Trades,SubTotal,,Stocks,USD,GOOG,,-24,,,-33.35,-15,83.3575,35.0075,-30.14,
+Trades,Data,Order,Stocks,USD,IAU,"2022-12-23, 11:26:04",-30,34.2,34.11,1026,-5,-766,255,2.7,C
+Trades,SubTotal,,Stocks,USD,IAU,,-30,,,1026,-5,-766,255,2.7,
+Trades,Data,Order,Stocks,USD,LMND,"2022-08-08, 16:54:55",15,27.45,25.11,-411.75,-5,416.75,0,-35.1,O
+Trades,Data,Order,Stocks,USD,LMND,"2022-08-08, 16:55:57",15,28.58,25.11,-428.7,-5,433.7,0,-52.05,O
+Trades,Data,Order,Stocks,USD,LMND,"2022-10-17, 09:16:33",50,21.1414,21.45,-1057.07,-5,1062.07,0,15.43,O;P
+Trades,Data,Order,Stocks,USD,LMND,"2022-11-08, 16:41:13",-40,17.6155,19.15,704.62,-5,-1066.919999,-367.299999,-61.38,C;P
+Trades,Data,Order,Stocks,USD,LMND,"2022-11-08, 16:44:47",-40,16.61,19.15,664.4,-5,-845.6,-186.2,-101.6,C
+Trades,Data,Order,Stocks,USD,LMND,"2022-11-08, 17:01:11",90,17.95,19.15,-1615.5,-5,1620.5,0,108,O
+Trades,Data,Order,Stocks,USD,LMND,"2022-11-09, 05:18:20",-60,18.47,18.38,1108.2,-5,-1080.333333,22.866667,5.4,C;P
+Trades,SubTotal,,Stocks,USD,LMND,,30,,,-1035.8,-35,540.166668,-530.633332,-121.3,
+Trades,Data,Order,Stocks,USD,MELI,"2022-05-09, 13:03:58",2,805.1,770.99,-1610.2,-5,1615.2,0,-68.22,O
+Trades,Data,Order,Stocks,USD,MELI,"2022-05-11, 12:56:00",1,714.535,679.68,-714.535,-5,719.535,0,-34.855,O
+Trades,Data,Order,Stocks,USD,MELI,"2022-05-18, 15:58:52",1,750.03,749.3,-750.03,-5,755.03,0,-0.73,O
+Trades,Data,Order,Stocks,USD,MELI,"2022-08-04, 15:58:34",-1,1033.81,1034.83,1033.81,-5,-807.6,221.21,-1.02,C
+Trades,Data,Order,Stocks,USD,MELI,"2022-11-09, 15:54:40",-1,897.05,897.62,897.05,-5,-807.6,84.45,-0.57,C
+Trades,Data,Order,Stocks,USD,MELI,"2022-12-27, 10:04:37",-1,853.24,854.3,853.24,-5,-719.535,128.705,-1.06,C
+Trades,SubTotal,,Stocks,USD,MELI,,1,,,-290.665,-30,755.03,434.365,-106.455,
+Trades,Data,Order,Stocks,USD,MSFT,"2022-04-05, 10:04:37",5,313.7,310.88,-1568.5,-5,1573.5,0,-14.1,O
+Trades,Data,Order,Stocks,USD,MSFT,"2022-06-01, 10:04:02",-5,277.19,272.42,1385.95,-5,-1573.5,-192.55,23.85,C
+Trades,SubTotal,,Stocks,USD,MSFT,,0,,,-182.55,-10,0,-192.55,9.75,
+Trades,Data,Order,Stocks,USD,NET,"2022-09-15, 13:20:08",16,61.9373,60.95,-990.9968,-5,995.9968,0,-15.7968,O
+Trades,Data,Order,Stocks,USD,NET,"2022-09-26, 12:57:05",18,55.072222222,53.78,-991.3,-5,996.3,0,-23.26,O;P
+Trades,Data,Order,Stocks,USD,NET,"2022-10-07, 12:48:06",12,55.38,55.39,-664.56,-5,669.56,0,0.12,O
+Trades,Data,Order,Stocks,USD,NET,"2022-11-03, 16:16:09",-20,47.33,50.37,946.6,-5,-1217.705371,-276.105371,-60.8,C
+Trades,Data,Order,Stocks,USD,NET,"2022-11-04, 09:29:50",24,47,41.09,-1128,-5,1133,0,-141.84,O
+Trades,Data,Order,Stocks,USD,NET,"2022-12-20, 09:28:27",-30,44.58,46.51,1337.4,-5,-1632.984762,-300.584762,-57.9,C;P
+Trades,Data,Order,Stocks,USD,NET,"2022-12-27, 08:44:46",-20,43.45,42.58,869,-5,-944.166666,-80.166666,17.4,C;P
+Trades,SubTotal,,Stocks,USD,NET,,0,,,-621.8568,-35,0.000001,-656.856799,-282.0768,
+Trades,Data,Order,Stocks,USD,PATH,"2022-05-10, 10:03:56",60,15.96,15.67,-957.6,-5,962.6,0,-17.4,O
+Trades,Data,Order,Stocks,USD,PATH,"2022-09-28, 10:21:27",80,12.63,12.94,-1010.4,-5,1015.4,0,24.8,O
+Trades,SubTotal,,Stocks,USD,PATH,,140,,,-1968,-10,1978,0,7.4,
+Trades,Data,Order,Stocks,USD,PLNHF,"2022-02-23, 09:30:32",350,2.72,2.58,-952,-5,957,0,-49,O
+Trades,Data,Order,Stocks,USD,PLNHF,"2022-03-14, 15:37:01",150,2,1.99,-300,-5,305,0,-1.5,O;P
+Trades,Data,Order,Stocks,USD,PLNHF,"2022-07-25, 11:36:30",350,1.72,1.73,-602,-5,607,0,3.5,O
+Trades,Data,Order,Stocks,USD,PLNHF,"2022-07-28, 15:56:10",250,1.929,1.9,-482.25,-5,487.25,0,-7.25,O;P
+Trades,Data,Order,Stocks,USD,PLNHF,"2022-11-02, 15:29:42",-350,1.2,1.22,420,-5,-588.863636,-173.863637,-7,C
+Trades,Data,Order,Stocks,USD,PLNHF,"2022-11-07, 08:00:40",-900,1.233777778,1.18,1110.4,-9,-2747.081364,-1645.681364,48.4,C;P
+Trades,Data,Order,Stocks,USD,PLNHF,"2022-11-07, 15:43:16",-900,1.18,1.18,1062,-9,-2639.578571,-1586.578571,0,C;P
+Trades,Data,Order,Stocks,USD,PLNHF,"2022-11-08, 09:50:30",-500,1.19,1.2,595,-5,-920.821429,-330.821429,-5,C
+Trades,SubTotal,,Stocks,USD,PLNHF,,-1550,,,851.15,-48,-4540.095,-3736.945001,-17.85,
+Trades,Data,Order,Stocks,USD,PLTR,"2022-05-25, 10:47:15",150,7.79,7.96,-1168.5,-5,1173.5,0,25.5,O
+Trades,Data,Order,Stocks,USD,PLTR,"2022-08-08, 08:33:00",-5,9.82,9.82,49.1,-5,-39.116667,4.983333,0,C
+Trades,Data,Order,Stocks,USD,PLTR,"2022-08-08, 08:33:21",-45,9.8,9.82,441,-5,-352.05,83.95,-0.9,C
+Trades,Data,Order,Stocks,USD,PLTR,"2022-11-07, 11:41:37",-100,6.935,7.02,693.5,-5,-782.333333,-93.833333,-8.5,C
+Trades,Data,Order,Stocks,USD,PLTR,"2022-11-11, 12:30:30",120,8.16,8.41,-979.2,-5,984.2,0,30,O;P
+Trades,SubTotal,,Stocks,USD,PLTR,,120,,,-964.1,-25,984.2,-4.9,46.1,
+Trades,Data,Order,Stocks,USD,ROKU,"2022-04-21, 09:10:10",20,110.822,99.55,-2216.44,-5,2221.44,0,-225.44,O;P
+Trades,Data,Order,Stocks,USD,ROKU,"2022-05-25, 10:57:36",10,82.84,84.79,-828.4,-5,833.4,0,19.5,O
+Trades,Data,Order,Stocks,USD,ROKU,"2022-07-28, 17:40:15",10,63.95,85.17,-639.5,-5,644.5,0,212.2,O
+Trades,Data,Order,Stocks,USD,ROKU,"2022-07-29, 07:22:52",-20,65.92,65.52,1318.4,-5,-2221.44,-908.04,8,C;P
+Trades,Data,Order,Stocks,USD,ROKU,"2022-08-01, 10:00:28",10,68.26,71.69,-682.6,-5,687.6,0,34.3,O
+Trades,Data,Order,Stocks,USD,ROKU,"2022-11-02, 16:03:02",-10,51.25,54.32,512.5,-5,-833.4,-325.9,-30.7,C
+Trades,Data,Order,Stocks,USD,ROKU,"2022-11-02, 16:03:10",-15,49,54.32,735,-5,-988.3,-258.3,-79.8,C
+Trades,Data,Order,Stocks,USD,ROKU,"2022-11-02, 16:06:36",15,42.09,54.32,-631.35,-5,636.35,0,183.45,O
+Trades,Data,Order,Stocks,USD,ROKU,"2022-11-02, 16:07:28",10,42.67,54.32,-426.7,-5,431.7,0,116.5,O
+Trades,Data,Order,Stocks,USD,ROKU,"2022-11-02, 16:14:41",13,44.33,54.32,-576.29,-5,581.29,0,129.87,O
+Trades,Data,Order,Stocks,USD,ROKU,"2022-11-08, 09:46:39",-13,49.753,51.14,646.789,-5,-683.186667,-41.397667,-18.031,C
+Trades,Data,Order,Stocks,USD,ROKU,"2022-12-16, 10:13:23",-30,45.73,45.85,1371.9,-5,-1309.953333,56.946667,-3.6,C;P
+Trades,SubTotal,,Stocks,USD,ROKU,,0,,,-1416.691,-60,0,-1476.691,346.249,
+Trades,Data,Order,Stocks,USD,SHOP,"2022-04-26, 09:35:17",3,440.14,428.09,-1320.42,-5,1325.42,0,-36.15,O
+Trades,Data,Order,Stocks,USD,SHOP,"2022-05-05, 11:18:09",3,403.115,413.09,-1209.345,-5,1214.345,0,29.925,O
+Trades,Data,Order,Stocks,USD,SHOP,"2022-08-11, 10:47:30",-20,43.552,40.42,871.04,-5,-883.613333,-17.573333,62.64,C
+Trades,Data,Order,Stocks,USD,SHOP,"2022-10-04, 12:20:13",-20,31.595,31.53,631.9,-5,-846.588334,-219.688334,1.3,C
+Trades,Data,Order,Stocks,USD,SHOP,"2022-10-17, 09:54:45",-20,27.47,27.76,549.4,-5,-809.563333,-265.163333,-5.8,C
+Trades,SubTotal,,Stocks,USD,SHOP,,-54,,,-477.425,-25,0,-502.425,51.915,
+Trades,Data,Order,Stocks,USD,SNOW,"2022-09-29, 09:52:08",5,168.7,170.34,-843.5,-5,848.5,0,8.2,O
+Trades,Data,Order,Stocks,USD,SNOW,"2022-10-03, 10:28:32",7,165.83,172.51,-1160.81,-5,1165.81,0,46.76,O
+Trades,Data,Order,Stocks,USD,SNOW,"2022-11-09, 09:27:13",-12,126.52,126.26,1518.24,-5,-2014.31,-501.07,3.12,C
+Trades,SubTotal,,Stocks,USD,SNOW,,0,,,-486.07,-15,0,-501.07,58.08,
+Trades,Data,Order,Stocks,USD,SOFI,"2022-10-27, 10:13:18",250,5.51,5.35,-1377.5,-5,1382.5,0,-40,O
+Trades,SubTotal,,Stocks,USD,SOFI,,250,,,-1377.5,-5,1382.5,0,-40,
+Trades,Data,Order,Stocks,USD,TCEHY,"2022-06-29, 12:48:54",-25,46.45,46.4,1161.25,-5,-1205.212222,-48.962222,1.25,C
+Trades,Data,Order,Stocks,USD,TCEHY,"2022-07-27, 09:55:29",-30,40.59,41.09,1217.7,-5,-1998.637778,-785.937777,-15,C
+Trades,SubTotal,,Stocks,USD,TCEHY,,-55,,,2378.95,-10,-3203.85,-834.899999,-13.75,
+Trades,Data,Order,Stocks,USD,TDOC,"2022-02-23, 09:20:27",20,65.6,61.46,-1312,-5,1317,0,-82.8,O
+Trades,Data,Order,Stocks,USD,TDOC,"2022-02-23, 10:30:31",20,64.61,61.46,-1292.2,-5,1297.2,0,-63,O
+Trades,Data,Order,Stocks,USD,TDOC,"2022-03-14, 15:31:31",20,50.565,50.79,-1011.3,-5,1016.3,0,4.5,O
+Trades,Data,Order,Stocks,USD,TDOC,"2022-04-27, 09:25:59",20,57.95,55.99,-1159,-5,1164,0,-39.2,O
+Trades,Data,Order,Stocks,USD,TDOC,"2022-04-28, 09:38:36",30,30.75,33.51,-922.5,-5,927.5,0,82.8,O
+Trades,Data,Order,Stocks,USD,TDOC,"2022-07-27, 16:02:43",10,44.75,43.24,-447.5,-5,452.5,0,-15.1,O
+Trades,Data,Order,Stocks,USD,TDOC,"2022-07-27, 16:04:43",-10,41.52,43.24,415.2,-5,-658.5,-248.3,-17.2,C
+Trades,Data,Order,Stocks,USD,TDOC,"2022-07-27, 16:05:16",-20,39.02,43.24,780.4,-5,-1307.1,-531.7,-84.4,C;P
+Trades,Data,Order,Stocks,USD,TDOC,"2022-07-27, 16:07:08",-20,37.58,43.24,751.6,-5,-1156.75,-410.15,-113.2,C
+Trades,Data,Order,Stocks,USD,TDOC,"2022-07-27, 16:07:17",-30,36.86,43.24,1105.8,-5,-1672.15,-571.35,-191.4,C
+Trades,Data,Order,Stocks,USD,TDOC,"2022-07-27, 16:11:14",30,35.39,43.24,-1061.7,-5,1066.7,0,235.5,O
+Trades,Data,Order,Stocks,USD,TDOC,"2022-07-27, 16:12:36",10,35.22,43.24,-352.2,-5,357.2,0,80.2,O
+Trades,Data,Order,Stocks,USD,TDOC,"2022-07-27, 16:15:40",10,37.16,43.24,-371.6,-5,376.6,0,60.8,O
+Trades,Data,Order,Stocks,USD,TDOC,"2022-07-27, 16:55:55",15,35.55,43.24,-533.25,-5,538.25,0,115.35,O
+Trades,Data,Order,Stocks,USD,TDOC,"2022-07-28, 08:52:33",15,34.64,35.6,-519.6,-5,524.6,0,14.4,O
+Trades,Data,Order,Stocks,USD,TDOC,"2022-10-26, 16:09:53",-20,29.67,26.74,593.4,-5,-618.333333,-29.933333,58.6,C
+Trades,Data,Order,Stocks,USD,TDOC,"2022-10-27, 09:36:41",-20,30.28,28.47,605.6,-5,-761.666667,-161.066667,36.2,C
+Trades,Data,Order,Stocks,USD,TDOC,"2022-12-16, 09:29:31",-6,26.73,27.02,160.38,-5,-213.34,-57.96,-1.74,C;P
+Trades,Data,Order,Stocks,USD,TDOC,"2022-12-16, 09:30:01",-24,26.57,27.02,637.68,-5,-853.36,-220.68,-10.8,C
+Trades,SubTotal,,Stocks,USD,TDOC,,50,,,-3932.79,-95,1796.65,-2231.14,69.51,
+Trades,Data,Order,Stocks,USD,TWLO,"2022-05-25, 10:42:09",20,95.96,96.55,-1919.2,-5,1924.2,0,11.8,O
+Trades,Data,Order,Stocks,USD,TWLO,"2022-11-03, 16:05:53",-10,61.45,65.36,614.5,-5,-962.1,-352.6,-39.1,C
+Trades,Data,Order,Stocks,USD,TWLO,"2022-11-03, 16:06:34",-10,58.81,65.36,588.1,-5,-962.1,-379,-65.5,C
+Trades,SubTotal,,Stocks,USD,TWLO,,0,,,-716.6,-15,0,-731.6,-92.8,
+Trades,Data,Order,Stocks,USD,TWTR,"2022-04-27, 11:17:19",40,48.13,48.64,-1925.2,-5,1930.2,0,20.4,O
+Trades,Data,Order,Stocks,USD,TWTR,"2022-04-27, 11:31:47",20,48.38,48.64,-967.6,-5,972.6,0,5.2,O
+Trades,Data,Order,Stocks,USD,TWTR,"2022-05-12, 08:01:13",-30,44.88,45.08,1346.4,-5,-1447.65,-106.25,-6,C;P
+Trades,Data,Order,Stocks,USD,TWTR,"2022-05-12, 10:03:46",-30,43.88,45.08,1316.4,-5,-1455.15,-143.75,-36,C
+Trades,Data,Order,Stocks,USD,TWTR,"2022-05-13, 08:36:10",20,39.13,40.72,-782.6,-5,787.6,0,31.8,O
+Trades,Data,Order,Stocks,USD,TWTR,"2022-05-16, 09:36:40",30,39.07,37.39,-1172.1,-5,1177.1,0,-50.4,O
+Trades,Data,Order,Stocks,USD,TWTR,"2022-05-16, 09:58:17",20,38.74,37.39,-774.8,-5,779.8,0,-27,O
+Trades,Data,Order,Stocks,USD,TWTR,"2022-05-25, 16:31:51",-30,34.6,37.16,1038,-5,-1179.966667,-146.966666,-76.8,C
+Trades,Data,Order,Stocks,USD,TWTR,"2022-07-11, 05:04:51",-40,34.18,32.65,1367.2,-5,-1564.533333,-202.333333,61.2,C;P
+Trades,SubTotal,,Stocks,USD,TWTR,,0,,,-554.3,-45,-0,-599.299999,-77.6,
+Trades,Data,Order,Stocks,USD,U,"2022-06-15, 10:04:26",55,35.47,36.17,-1950.85,-5,1955.85,0,38.5,O
+Trades,Data,Order,Stocks,USD,U,"2022-07-13, 10:03:27",35,34.53,32.82,-1208.55,-5,1213.55,0,-59.85,O
+Trades,Data,Order,Stocks,USD,U,"2022-11-10, 08:39:59",-50,23.35,27.82,1167.5,-5,-1778.045455,-615.545455,-223.5,C
+Trades,Data,Order,Stocks,USD,U,"2022-12-27, 09:03:59",-40,27.47,26.47,1098.8,-5,-1391.354545,-297.554545,40,C
+Trades,SubTotal,,Stocks,USD,U,,0,,,-893.1,-20,0,-913.1,-204.85,
+Trades,Data,Order,Stocks,USD,WEJO,"2022-04-04, 15:40:31",270,3.64,3.68,-982.8,-5,987.8,0,10.8,O
+Trades,Data,Order,Stocks,USD,WEJO,"2022-11-08, 10:56:10",1,0.9848,0.8971,-0.9848,-5,5.9848,0,-0.0877,O
+Trades,Data,Order,Stocks,USD,WEJO,"2022-11-08, 10:56:24","1,099",0.987288899,0.8971,-1085.0305,-10.99,1096.0205,0,-99.1176,O;P
+Trades,SubTotal,,Stocks,USD,WEJO,,1370,,,-2068.8153,-20.99,2089.8053,0,-88.4053,
+Trades,Data,Order,Stocks,USD,XOM,"2022-12-15, 09:45:17",-40,105.85,105.44,4234,-5,-4229,0,16.4,O
+Trades,SubTotal,,Stocks,USD,XOM,,-40,,,4234,-5,-4229,0,16.4,
+Trades,Data,Order,Stocks,USD,XPEV,"2022-06-16, 10:10:20",80,25.62,25.66,-2049.6,-5,2054.6,0,3.2,O
+Trades,Data,Order,Stocks,USD,XPEV,"2022-08-15, 04:07:28",-20,23.63,23.5,472.6,-5,-513.65,-46.05,2.6,C;P
+Trades,SubTotal,,Stocks,USD,XPEV,,60,,,-1577,-10,1540.95,-46.05,5.8,
+Trades,Data,Order,Stocks,USD,ZS,"2022-09-21, 14:45:23",7,179.572,171.88,-1257.004,-5,1262.004,0,-53.844,O
+Trades,SubTotal,,Stocks,USD,ZS,,7,,,-1257.004,-5,1262.004,0,-53.844,
+Trades,Total,,Stocks,USD,,,,,,29421.1503,-858.99,18016.639903,46578.800204,-908.3097, 
+Trades,Total,,Stocks,CZK,,,,,,704445.3927923,-20300.46153,390024.203906482,1074169.135190957,-20511.6372677, 
+Trades,Header,DataDiscriminator,Asset Category,Currency,Symbol,Date/Time,Quantity,T. Price,,Proceeds,Comm in CZK,,,MTM in CZK,Code
+Trades,Data,Order,Forex,USD,EUR.USD,"2022-03-15, 11:53:41","-2,742",1.09825,,3011.4015,-113.775,,,169.459028,
+Trades,Total,,Forex,USD,,,,,,-6529.9675,-937.3,,,-2790.494011, 
+Trades,Total,,Forex,CZK,,,,,,-159685.4100115,-937.3,,,-2790.494011, 
+Corporate Actions,Header,Asset Category,Currency,Report Date,Date/Time,Description,Quantity,Proceeds,Value,Realized P/L,Code
+Corporate Actions,Data,Stocks,EUR,2022-08-25,"2022-08-24, 20:25:00","TL0(US88160R1014) Split 3 for 1 (TL0, TESLA INC, US88160R1014)",52,0,0,0,
+Corporate Actions,Data,Total,,,,,,0,0,0,
+Corporate Actions,Data,Total in CZK,,,,,,0,0,0,
+Corporate Actions,Data,Stocks,USD,2022-06-06,"2022-06-03, 20:25:00","AMZN(US0231351067) Split 20 for 1 (AMZN, AMAZON.COM INC, US0231351067)",19,0,0,0,
+Corporate Actions,Data,Stocks,USD,2022-06-29,"2022-06-28, 20:25:00","SHOP(CA82509L1076) Split 10 for 1 (SHOP, SHOPIFY INC - CLASS A, CA82509L1076)",54,0,0,0,
+Corporate Actions,Data,Stocks,USD,2022-07-18,"2022-07-15, 20:25:00","GOOG(US02079K1079) Split 20 for 1 (GOOG, ALPHABET INC-CL C, US02079K1079)",38,0,0,0,
+Corporate Actions,Data,Stocks,USD,2022-08-25,"2022-08-24, 20:25:00","TSLA(US88160R1014) Split 3 for 1 (TSLA, TESLA INC, US88160R1014)",224,0,0,0,
+Corporate Actions,Data,Total,,,,,,0,0,0,
+Corporate Actions,Data,Total in CZK,,,,,,0,0,0,
+Notes/Legal Notes,Header,Type,Note
+Notes/Legal Notes,Data,Notes,"Most stock exchange transactions settle on the trade date plus two business days. Options, futures and US open-end mutual fund transactions settle on trade date plus one business day. (Some exchanges and other transaction types may have longer or shorter settlement periods.) Ending settled cash reflects the cash that has actually settled.  "
+Notes/Legal Notes,Data,Notes,Initial and maintenance margin requirements are available within the Account Window of the Trader Workstation.
+Notes/Legal Notes,Data,Notes,Quantities preceded by a "-" sign indicate sell transactions. Other transactions are purchases. 
+Notes/Legal Notes,Data,Notes,"For shares traded on US markets, Interactive Brokers Ireland Limited (IBIE) acts as agent in executing the fractional portion of your order. In certain circumstances, IBIE routes that portion to an affiliate, which may execute it either as principal or riskless principal. If an IB affiliate executes as i) principal, the order will be executed at the price displayed for the opposite side of the NBBO from your order (the offer if you are buying and the bid if you are selling) at the time of execution, ii) riskless principal, the affiliate will execute that portion of your order at the price it receives for the execution of the whole share. The way in which the fractional portion of the order is executed is indicated by the codes associated with the trade. For shares traded on European Markets, IBIE will generally act as counterparty for any fractional portion of your order for shares, which it will execute as principal, for a total consideration which is equal to (or better than), the total consideration for the execution of a full share available at the European trading venues and SIs to which IBIE has access. In certain circumstances, IBIE may route a full share order to the available European trading venues acting in an Agency capacity and the fractional portion of the order will be allocated to your account at the price traded in the trading venue and the remaining fractional portion will be allocated to an affiliate. "
+Notes/Legal Notes,Data,Notes,"In case of partial executions, commissions are charged on the total quantity executed on the original order. The commission is displayed on the first partial execution only."
+Notes/Legal Notes,Data,Notes,Each closed lot indicated above with a reference to note (6) was chosen by the end of the trading day to be sold versus the specific opening purchase identified in that row.
+Notes/Legal Notes,Data,Notes,Trade execution times are displayed in Eastern Time.
+Notes/Legal Notes,Data,Notes,Applicable regulatory fees for your transactions are available on the IB website at www.interactivebrokers.com/en/accounts/fees/exchangeAndRegulatoryFees.php.
+Notes/Legal Notes,Data,Notes,"Borrow Fee Rate represents the cost to borrow stock expressed in percent per annum. It is applied to the collateral value on the stock borrow contract and is separate from any interest earned on credit cash balances. Similarly, Loan Fee Rate represents the benefit to lend stock. A positive rate indicates a cost to the borrower/benefit to the lender and a negative rate indicates a benefit to the borrower/cost to the lender. In general, the fee rates for hard-to-borrow stocks are higher than for normal availability stocks."
+Notes/Legal Notes,Data,Notes,Interest Rate on Customer Collateral represents the interest paid on the collateral posted to the customer's account and received from lending stock.  A positive rate indicates a benefit to the lender.
+Notes/Legal Notes,Data,Notes,"The closing prices on this Activity Statement are indicative and may come from third-party sources. Interactive Brokers does not warrant the accuracy of the prices provided by third-party sources. Due to time zone differences, certain non-US mutual funds may deliver closing prices after the Activity Statement has been produced and the closing prices for such funds will reflect the previous day's price."
+Notes/Legal Notes,Data,Notes,All Market Data and Research services are provided through Global Financial Information Services (GmbH).
+Notes/Legal Notes,Data,Notes,"Market data is provided by Global Financial Information Services (GmbH). Your local broker collects amounts owed for fees and tax for such data on behalf of Global Financial Information Services (GmbH). Note, you are responsible for any applicable taxes relating to the provision of these services."
+Notes/Legal Notes,Data,Notes,"Directive 2014/65/EU and its implementing measures (MiFID II) applies to all client funds and client financial instruments (Client Assets) on this statement except those Client Assets that are not classified as segregated assets, namely securities lent under the Stock Yield Enhancement Programme as identified in the IBKR Managed Securities Lent section of this statement and Client Assets noted as Not Segregated in the Collateral for Customer Borrowing section of this statement.  IBIE applies the MiFID II Client Asset protection requirements to funds and instruments that are not subject to MiFID II in the same way as it applies those requirements to Client Assets. IBIE is also subject to the client asset requirements set out in the Central Bank (Supervision and Enforcement) Act 2013 (Section 48(1))(Investment Firms) Regulations 2017."
+Notes/Legal Notes,Data,Mutual Fund Notes,"All purchase and sales of mutual funds are calculated against the published NAV (Net Asset Value) of the underlying fund and is displayed on this confirmation as the ""C. Price"" (Closing Price). Due to any fees charged by a fund and/or any share rounding, the net price you pay may vary from the published NAV and is shown on this confirmation as the ""T. Price"" (Trade Price)."
+Notes/Legal Notes,Data,Fixed Income Notes,"Call features for bonds or preferred stocks may affect the yield. For zero coupon, compound interest and multiplier securities, there are no periodic payments and securities may be callable below maturity value without notice to holder unless registered. For asset-backed securities, the actual yield may vary depending on the speed at which the underlying note is pre-paid. For additional information regarding bond yield, please contact the IB Help Desk at: help@interactivebrokers.com. If this debt security is unrated by a nationally recognized statistical rating organization, it may pose a high risk of default. You should consult a financial advisor to determine whether unrated bonds are appropriate for your portfolio in light of your goals and your financial circumstances. Fees charged by bond trading centers are included in the cost of bond transactions."
+Notes/Legal Notes,Data,Legal Notes,"Please promptly report any inaccuracy or discrepancy in this statement, or in your account to Lynx b.v., using the contact information below. If you report an error by phone, you should re-confirm such oral communication in writing in order to protect your rights, including rights under the Irish Investor Compensation Scheme.Lynx b.v., www.lynx.nl, 00420234262500"
+Notes/Legal Notes,Data,Legal Notes,"Unless otherwise noted, IBIE acted as agent in the execution of the above transactions. IBIE may execute your trades through affiliates or third-party brokers who are members of the relevant exchange or market center. IBIE uses its affiliates Interactive Brokers LLC (""IBLLC"") and Interactive Brokers (U.K.) Limited to custody financial instruments."
+Notes/Legal Notes,Data,Legal Notes,"IBIE acts as agent or riskless principal in foreign currency exchange transactions and CFDs. Such transactions are executed against an IBIE affiliate, which acts as principal in such transactions and may have a long or short position and may have profited or lost in connection with the transaction."
+Notes/Legal Notes,Data,Legal Notes,"IBIE routes orders in US products through its US affiliate, IBLLC. IBLLC accepts liquidity rebates or other order flow payments from Alternative Trading Systems, market makers and exchanges for certain orders in US stocks. IBLLC receives payment for some US option orders pursuant to exchange-mandated marketing fee programs or other arrangements."
+Notes/Legal Notes,Data,Legal Notes,Please promptly notify Lynx b.v. of any material change in your investment objectives or financial situation or circumstances.
+Notes/Legal Notes,Data,Legal Notes,"Interactive Brokers Ireland Limited (""IBIE"") is a member of the Irish Investor Compensation Scheme. IBIE provides execution, clearing and carrying services for your account pursuant to an agreement with Lynx b.v.. As with all securities firms, the Irish Investor Compensation Scheme pays compensation to clients (subject to certain limits) in the event of a failure of a broker-dealer, not against loss of market value of securities. Not all losses will be covered as there are maximum levels of compensation."
+Notes/Legal Notes,Data,Legal Notes,"An up-to-date financial statement of IBIE is available for your personal inspection at www.interactivebrokers.ie or at its offices, or a copy of the financial statement will be mailed to you upon your written request."
+Notes/Legal Notes,Data,Legal Notes,"IBIE is a member of the Investor Compensation Scheme, which provides protection for customers in the event of the failure of IBIE. Further information on the Investor Compensation Scheme can be found at  www.investorcompensation.ie  ."
+Notes/Legal Notes,Data,Legal Notes,IBIE is incorporated under the laws of Ireland and registered with the Irish Companies Registration Office with company registration number 657406.
+Notes/Legal Notes,Data,Legal Notes,IBIE is regulated by the Central Bank of Ireland.
+Notes/Legal Notes,Data,Legal Notes,"IBIE's Registered Office address is 10 Earlsfort Terrace, Dublin, D02 T380, Ireland."
+Notes/Legal Notes,Data,Legal Notes,"IBIE is included in the Central Bank of Ireland's register of authorised firms under number C423427. The CBI's address is New Wapping Street, North Wall Quay, Dublin 1, D01 F7X3. The CBI's website is www.centralbank.ie."

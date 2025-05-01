@@ -9,6 +9,9 @@ from pandas import DataFrame
 from transaction import Transaction
 
 
+FEE_CURRENCY = 'EUR'
+
+
 def eu_str_to_date(date_string: str) -> datetime:
     return datetime.strptime(date_string, '%d-%m-%Y')
 
@@ -80,7 +83,6 @@ def do_skip_transaction(row: object) -> bool:
     return False
 
 
-# maybe take ISIN as product selector
 def convert_to_transactions(df_trans: DataFrame, product_isin: str, tax_year: int) -> List[Transaction]:
     df_product = df_trans[df_trans['ISIN'] == product_isin].sort_values('DateTime')
     product_names = df_product['Product'].unique()
@@ -104,7 +106,7 @@ def convert_to_transactions(df_trans: DataFrame, product_isin: str, tax_year: in
             print(f"!! Skipping transaction: {row['DateTime']}, {row['Product']}, {row['ISIN']}")
             continue
 
-        if row.iloc[fee_curr_idx] != 'EUR' and not math.isnan(row.iloc[fee_curr_idx]):
+        if row.iloc[fee_curr_idx] != FEE_CURRENCY and not math.isnan(row.iloc[fee_curr_idx]):
             raise ValueError("Unexpected fee currency!")
 
         transactions.append(Transaction(
@@ -114,7 +116,8 @@ def convert_to_transactions(df_trans: DataFrame, product_isin: str, tax_year: in
             count=row['Quantity'],
             share_price=row['Price'],  # Local currency
             currency=row.iloc[currency_idx],
-            fee_eur=row['Transaction and/or third']
+            fee=row['Transaction and/or third'],
+            fee_currency=FEE_CURRENCY
         ))
 
     return transactions
