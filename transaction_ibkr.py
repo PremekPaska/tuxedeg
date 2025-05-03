@@ -21,6 +21,10 @@ def convert_to_transactions_ibkr(
         if row["Date/Time"].year > tax_year:
             break
 
+        fee = -row["Comm/Fee"]
+        if fee < 0:
+            raise ValueError("Unexpected negative fee!")
+
         txs.append(Transaction(
             time=row["Date/Time"],
             product_name=symbol,  # For now use symbol as product name
@@ -28,7 +32,7 @@ def convert_to_transactions_ibkr(
             count=row["Quantity"],
             share_price=row["T. Price"],
             currency=row["Currency"],
-            fee=row["Comm/Fee"],
+            fee=fee,
             fee_currency=row["Currency"],
         ))
 
