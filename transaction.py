@@ -17,6 +17,7 @@ class Transaction:
         self._time = time
         self._product_name = product_name
         self.isin = isin
+        # TODO: remove this hack, add proper stock-split handling.
         if isin == 'US88160R1014' and time < TSLA_SPLIT:
             count = count * 3
             share_price = share_price / 3
@@ -87,6 +88,19 @@ class Transaction:
             return True
         else:
             return False
+
+    def apply_split(self, numerator: int, denominator: int) -> None:
+        """Scale share count / price by *numerator/denominator* (in-place)."""
+        if numerator == denominator:
+            return
+        # must stay integral
+        if (self._count * numerator) % denominator:
+            raise ValueError(f"split leaves fractional share in {self}")
+        self._count = self._count * numerator // denominator
+        if not self.is_sale:
+            self._remaining_count = self._remaining_count * numerator // denominator
+        factor = Decimal(denominator) / Decimal(numerator)
+        self._share_price = (self._share_price * factor).quantize(IMPORT_PRECISION)
 
 
 class BuyRecord:
