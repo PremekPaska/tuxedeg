@@ -13,8 +13,8 @@ import io
 import logging
 from pathlib import Path
 from typing import Iterable, Final
-
 import pandas as pd
+import re
 
 # === constants ===
 HEADER_PREFIX: Final[str] = "Trades,Header,"
@@ -90,7 +90,7 @@ def _parse_one_csv(path: Path) -> pd.DataFrame:
     return df
 
 
-def load_stock_transactions(paths: Iterable[str | Path]) -> pd.DataFrame:
+def import_ibkr_stock_transactions(paths: Iterable[str | Path]) -> pd.DataFrame:
     frames: list[pd.DataFrame] = []
     for p in paths:
         path = Path(p).expanduser()
@@ -180,17 +180,41 @@ def _parse_ca_csv(path: Path) -> pd.DataFrame:
     return df[CA_KEEP_COLS + ["Symbol"]]
 
 
-def load_corporate_actions(csv_paths: Iterable[str | Path]) -> pd.DataFrame:
+def import_corporate_actions(csv_paths: Iterable[str | Path]) -> pd.DataFrame:
     """Collect corporate-action rows from all CSVs into one DataFrame."""
     frames = [_parse_ca_csv(Path(p).expanduser()) for p in csv_paths]
     return pd.concat(frames, ignore_index=True)[CA_KEEP_COLS + ["Symbol"]]
 
+
+# === split ratio integer-only extractor ===
+_split_rx = re.compile(r'\bSplit\s+(\d+)\s+for\s+(\d+)\b', flags=re.I)
+
+def extract_split_ratio(text: str) -> tuple[int, int]:
+    """
+    Return (numerator, denominator) from “… Split N for M …”.
+    Raises ValueError if pattern is absent or uses non-integers.
+    """
+    m = _split_rx.search(text or "")
+    if not m:
+        raise ValueError(f"No integer split ratio found in: {text!r}")
+    return int(m.group(1)), int(m.group(2))
+
+
+def process_corporate_actions(csv_paths: Iterable[str | Path]) -> pd.DataFrame:
+    df = import_corporate_actions(csv_paths)
+    df[["Numerator", "Denominator"]] = (
+        df["Description"]
+          .apply(lambda s: pd.Series(extract_split_ratio(s),
+                                     index=["Numerator", "Denominator"]))
+    )
+    return df
 
 # === CLI ===
 def _cli() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Import IBKR stock trades")
     p.add_argument("csv", nargs="+", help="CSV file(s) or glob(s)")
     p.add_argument("-s", "--symbol", help="Filter trades by symbol", default=None)
+    p.add_argument("-e", "--export-ca", help="Export corporate actions", action="store_true")
     return p.parse_args()
 
 
@@ -209,7 +233,7 @@ def main() -> None:
         raise SystemExit("nothing to import")
 
     try:
-        df = load_stock_transactions(files)
+        df = import_ibkr_stock_transactions(files)
         if args.symbol:
             original_count = len(df)
             df = filter_by_symbol(df, args.symbol)
@@ -223,13 +247,14 @@ def main() -> None:
     logging.info("Last %d trades:\n%s", n, df.tail(n).to_markdown(index=False))
     
     # import and print corporate actions
-    ca_df = load_corporate_actions(files)
+    ca_df = process_corporate_actions(files)
     logging.info("imported %d corporate actions from %d file(s)", len(ca_df), len(files))
     logging.info("Corporate Actions:\n%s", ca_df.to_markdown(index=False))
     
-#    df.to_parquet("ibkr_trades.parquet", index=False)
-#    logging.info("saved ibkr_trades.parquet")
-
+    if args.export_ca:
+        out_path = "corporate_actions.csv"
+        ca_df.drop("Quantity", axis=1).to_csv(out_path, index=False)
+        logging.info("exported corporate actions to %s", out_path)
 
 if __name__ == "__main__":
     main()
