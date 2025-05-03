@@ -25,8 +25,7 @@ class Transaction:
         self._share_price = Decimal(share_price).quantize(IMPORT_PRECISION)  # 'cause pandas stores it in doubles (TODO)
         self._currency = check_currency(currency)
         self._fee_currency = check_currency(fee_currency)
-        # Fee is usually negative
-        self._fee = -Decimal(fee).quantize(IMPORT_PRECISION) if not math.isnan(fee) else Decimal(0)
+        self._fee = Decimal(fee).quantize(IMPORT_PRECISION) if not math.isnan(fee) else Decimal(0)
 
         self._fee_available = True  # Not used for sale transactions
 

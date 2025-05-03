@@ -16,7 +16,7 @@ def create_t(count: int, price: decimal, day: int = 1, month: int = 3, year_offs
         count=count,
         share_price=price,
         currency='USD',
-        fee=-0.5,
+        fee=0.5,
         fee_currency='EUR'
     )
 

@@ -31,6 +31,7 @@ class ImportTestCase(unittest.TestCase):
         product_id = get_isin(df_transactions, "CLOUDFLARE")
         transactions = convert_to_transactions(df_transactions, product_id, self.TAX_YEAR)
         self.assertEqual(9, len(transactions))
+        self.assertGreaterEqual(transactions[0].fee, 0)
 
     def test_calculate_tax(self):
         df_transactions = self.import_test_transactions_en()

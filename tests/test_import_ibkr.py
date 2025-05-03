@@ -24,11 +24,12 @@ class ImportTestCase(unittest.TestCase):
         df_transactions = self.import_test_transactions()
         self.assertEqual(278, df_transactions.shape[0])
 
-    def ignore_test_conversion(self):
+    def test_conversion(self):
         df_txs = self.import_test_transactions()
 
         transactions = self.convert_to_transactions(df_txs, "MELI")
-        self.assertEqual(4, len(transactions))
+        self.assertEqual(6, len(transactions))
+        self.assertGreaterEqual(transactions[0].fee, 0)
 
 
 class TestExtractSplitRatio(unittest.TestCase):
@@ -42,6 +43,6 @@ class TestExtractSplitRatio(unittest.TestCase):
             extract_split_ratio(line)
 
     def test_pattern_missing(self):
-        line = "XYZ Unknown action 2 for all (ABC, SOME CORP, XX123)"
+        line = "XYZ Unknown action 2 for me"
         with self.assertRaises(ValueError):
             extract_split_ratio(line)

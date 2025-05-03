@@ -108,6 +108,10 @@ def convert_to_transactions(df_trans: DataFrame, product_isin: str, tax_year: in
 
         if row.iloc[fee_curr_idx] != FEE_CURRENCY and not math.isnan(row.iloc[fee_curr_idx]):
             raise ValueError("Unexpected fee currency!")
+        
+        fee = -row['Transaction and/or third']  # Fee is negative in Degiro exports
+        if fee < 0:
+            raise ValueError("Unexpected negative fee!")
 
         transactions.append(Transaction(
             time=row['DateTime'],
@@ -116,7 +120,7 @@ def convert_to_transactions(df_trans: DataFrame, product_isin: str, tax_year: in
             count=row['Quantity'],
             share_price=row['Price'],  # Local currency
             currency=row.iloc[currency_idx],
-            fee=row['Transaction and/or third'],
+            fee=fee,
             fee_currency=FEE_CURRENCY
         ))
 
