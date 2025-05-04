@@ -1,6 +1,9 @@
 import os
 import decimal
 from decimal import Decimal
+import argparse
+import os
+from import_ibkr import import_ibkr_stock_transactions
 
 import pandas as pd
 from pandas import DataFrame
@@ -106,10 +109,43 @@ def manual_debug(df_transactions: DataFrame):
     print(f"Found {products.shape[0]} unique ISINs.")
 
 
+def detect_account_code(args) -> str:
+    # Determine account code based on flags and filename
+    if args.ibkr:
+        code = "ibkr"
+    else:
+        file_name = os.path.basename(args.files[0]).lower()
+        if "cz" in file_name:
+            code = "cz"
+        elif "ie" in file_name:
+            code = "ie"
+        else:
+            code = "deg"
+    print(f"Using account code: {code}")
+    return code
+
+
 def main():
+    parser = argparse.ArgumentParser(description='Process transactions from Degiro or IBKR')
+    parser.add_argument('--deg', action='store_true', help='Use Degiro data')
+    parser.add_argument('--ibkr', action='store_true', help='Use IBKR data')
+    parser.add_argument('files', nargs='+', help='Files to process')
+    args = parser.parse_args()
+
+    if not (args.deg or args.ibkr):
+        parser.error('At least one of --deg or --ibkr must be specified')
+    if args.deg and args.ibkr:
+        parser.error('Only one of --deg or --ibkr can be specified')
+
     os.chdir(os.path.dirname(__file__))
-    account_code = "cz"
-    df_transactions = import_transactions(f"data/Transactions-{account_code}-to-12-2024-adj.csv")
+    account_code = detect_account_code(args)  # Used in output file names.
+    if args.deg:
+        # Import from one or more Degiro CSV files
+        df_list = [import_transactions(f) for f in args.files]
+        df_transactions = pd.concat(df_list, ignore_index=True)
+    else:
+        # Import from one or more IBKR CSV files
+        df_transactions = import_ibkr_stock_transactions(args.files)
 
     # manual_debug(df_transactions)
 
