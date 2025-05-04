@@ -127,7 +127,7 @@ def convert_to_transactions(df_trans: DataFrame, product_isin: str, tax_year: in
     return transactions
 
 
-def get_unique_product_ids(df_trans, tax_year):
+def get_unique_product_ids_old(df_trans, tax_year):
     df_products = df_trans
     df_products['TaxYear'] = df_products.apply(lambda row: row['DateTime'].year, axis=1)
     df_tax_year_products = df_products[df_products['TaxYear'] == tax_year].sort_values('Product')
