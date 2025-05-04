@@ -177,6 +177,9 @@ def optimize_all(
             pname = df_trans.query(f"ISIN == '{pid}'").iloc[0]["Product"]
             print(f"Skipping product {pid}: {pname}")
             continue
+        elif id_col == "Symbol" and pid in ("CNDX", "CSPX", "VOW3d", "AMD", "CRWD", "NVDA", "PLTR", "TM"):
+            print(f"Skipping product {pid}, shorting not (yet) supported.")
+            continue
 
         txs = build_transactions(df_trans, pid, tax_year, splits_df, id_col=id_col)
         report = optimize_product(txs, tax_year, strategies)
