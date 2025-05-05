@@ -121,7 +121,15 @@ def find_buys(sale_t: Transaction, trans: List[Transaction], strategies: dict[in
     return method(sale_t, trans)
 
 
+def warn_about_default_strategy(trans: List[Transaction], strategies: dict[int,str]) -> None:
+    for sale_t in [t for t in trans if t.is_sale]:
+        if sale_t.time.year < min(strategies.keys()):
+            print(f"Warning: No strategy specified for {sale_t.time.year}, using FIFO.")
+            return
+
+
 def optimize_transaction_pairing(trans: List[Transaction], strategies: dict[int,str]) -> List[SaleRecord]:
+    warn_about_default_strategy(trans, strategies)
     sale_records = []
     for sale_t in [t for t in trans if t.is_sale]:
         buy_records = find_buys(sale_t, trans, strategies)
@@ -136,11 +144,11 @@ def calculate_tax(sale_records: List[SaleRecord], tax_year: int):
         sale.calculate_profit()
 
 
-def optimize_product(trans: List[Transaction], tax_year: int, strategies: dict[int,str] = None) -> List[SaleRecord]:
+def optimize_product(txs: List[Transaction], tax_year: int, strategies: dict[int,str] = None) -> List[SaleRecord]:
     if not strategies:
         strategies = {tax_year: 'max_cost'}  # This fallback is just for testing (TODO: remove)
 
-    sale_records = optimize_transaction_pairing(trans, strategies)
+    sale_records = optimize_transaction_pairing(txs, strategies)
     calculate_tax(sale_records, tax_year)
 
     return sale_records
