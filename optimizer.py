@@ -5,6 +5,10 @@ from typing import List, Callable
 from transaction import Transaction, BuyRecord, SaleRecord
 
 
+def list_strategies() -> List[str]:
+    return ["fifo", "lifo", "max_cost", "min_cost"]
+
+
 def find_buys_fifo(sale_t: Transaction, trans: List[Transaction]) -> List[BuyRecord]:
     remaining_sold_count = -sale_t.count
 

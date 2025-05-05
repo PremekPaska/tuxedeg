@@ -1,17 +1,18 @@
-import os
-import decimal
 from decimal import Decimal
 import argparse
 import os
-
+import json
+from pathlib import Path
 import pandas as pd
 from pandas import DataFrame
+from datetime import datetime
+from typing import Dict
 
 from import_deg import convert_to_transactions, import_transactions, get_unique_product_ids_old, get_isin
 from import_ibkr import import_ibkr_stock_transactions
 from transaction_ibkr import convert_to_transactions_ibkr
 from corporate_action import apply_stock_splits_for_symbol
-from optimizer import optimize_product, print_report, calculate_totals, get_product_name
+from optimizer import optimize_product, print_report, calculate_totals, get_product_name, list_strategies
 from transaction import SaleRecord, Transaction
 
 def get_unique_product_ids(
@@ -99,7 +100,7 @@ def filter_and_optimize_product(df_trans: DataFrame, product_isin: str, tax_year
     return optimize_product(convert_to_transactions(df_trans, product_isin, tax_year), tax_year, strategies)
 
 
-def optimize_all_old(df_trans: DataFrame, tax_year: int, strategies: dict[int,str], account_code: str) -> decimal:
+def optimize_all_old(df_trans: DataFrame, tax_year: int, strategies: dict[int,str], account_code: str) -> None:
     products = get_unique_product_ids_old(df_trans, tax_year)
     print(f"Found {products.shape[0]} products with some transactions in {tax_year}.")
 
@@ -143,6 +144,11 @@ def optimize_all_old(df_trans: DataFrame, tax_year: int, strategies: dict[int,st
         f"{output_path}results-{account_code}-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}.csv",
         index=False)
 
+    # Round to 2 decimal places
+    total_income = Decimal(total_income).quantize(Decimal('0.01'))
+    total_cost = Decimal(total_cost).quantize(Decimal('0.01'))
+    total_fees = Decimal(total_fees).quantize(Decimal('0.01'))
+
     print()
     print(f"Pairing strategies: {strategies}")
     print()
@@ -151,8 +157,9 @@ def optimize_all_old(df_trans: DataFrame, tax_year: int, strategies: dict[int,st
     print(f"Total fees  : {total_fees}")
 
     total_profit = total_income - total_cost - total_fees
-    print(f"! Profit !  : {total_income - total_cost}, after fees: {total_profit}")
-    print(f"(tax est.)  : {total_profit * Decimal('0.15')}")
+    print()
+    print(f"! Profit !  : {(total_income - total_cost):,.2f}, after fees: {total_profit:,.2f}")
+    print(f"(tax est.)  : {(total_profit * Decimal('0.15')):,.2f}")
 
 
 def optimize_all(
@@ -161,7 +168,7 @@ def optimize_all(
     strategies: dict[int, str],
     account_code: str,
     splits_df: DataFrame,
-) -> decimal:
+) -> None:
     id_col, date_col = _detect_id_and_date_cols(df_trans)
 
     products = get_unique_product_ids(
@@ -212,6 +219,11 @@ def optimize_all(
         f"{output_path}results-{account_code}-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}.csv",
         index=False)
 
+    # Round to 2 decimal places
+    total_income = Decimal(total_income).quantize(Decimal('0.01'))
+    total_cost = Decimal(total_cost).quantize(Decimal('0.01'))
+    total_fees = Decimal(total_fees).quantize(Decimal('0.01'))
+
     print()
     print(f"Pairing strategies: {strategies}")
     print()
@@ -220,8 +232,9 @@ def optimize_all(
     print(f"Total fees  : {total_fees}")
 
     total_profit = total_income - total_cost - total_fees
-    print(f"! Profit !  : {total_income - total_cost}, after fees: {total_profit}")
-    print(f"(tax est.)  : {total_profit * Decimal('0.15')}")
+    print()
+    print(f"! Profit !  : {(total_income - total_cost):,.2f}, after fees: {total_profit:,.2f}")
+    print(f"(tax est.)  : {(total_profit * Decimal('0.15')):,.2f}")
 
 
 def manual_debug(df_transactions: DataFrame):
@@ -257,10 +270,42 @@ def detect_account_code(args) -> str:
     return code
 
 
+def load_strategies(path: Path) -> Dict[int, str]:
+    # Load strategies from JSON file
+    with open(path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    # JSON keys are strings; convert them back to int
+    return {int(year): strategy for year, strategy in data.items()}
+
+
+def setup_strategies(args) -> Dict[int, str]:
+    # Check that only one of the options was selected.
+    if sum([bool(args.fifo), bool(args.strategy), bool(args.config)]) > 1:
+        raise ValueError("Only one of --fifo, --strategy or --config can be specified")
+
+    if args.fifo or args.strategy:
+        if args.strategy and args.strategy not in list_strategies():
+            print(f"Available strategies: {list_strategies()}")
+            raise ValueError(f"Unknown strategy: {args.strategy}")
+
+        strategies = {args.year: "fifo"} if args.fifo else {args.year: args.strategy}
+        strategies[args.year - 1] = 'fifo'  # For the output filename; always fifo for previous years.
+        return strategies
+    elif args.config:
+        print(f"Loading strategies from {args.config}")
+        return load_strategies(Path(args.config))
+    else:
+        return load_strategies(Path("config/strategies.json"))
+
+
 def main():
     parser = argparse.ArgumentParser(description='Process transactions from Degiro or IBKR')
     parser.add_argument('--deg', action='store_true', help='Use Degiro data')
     parser.add_argument('--ibkr', action='store_true', help='Use IBKR data')
+    parser.add_argument('--year', type=int, help='Tax year')
+    parser.add_argument('--strategy', type=str, help='Pairing strategy for this tax year (' + ', '.join(list_strategies()) + ')')
+    parser.add_argument('--fifo', action='store_true', help='Use FIFO strategy')
+    parser.add_argument('--config', type=str, help='Path to strategies JSON file, default: config/strategies.json')
     parser.add_argument('files', nargs='+', help='Files to process')
     args = parser.parse_args()
 
@@ -268,6 +313,10 @@ def main():
         parser.error('At least one of --deg or --ibkr must be specified')
     if args.deg and args.ibkr:
         parser.error('Only one of --deg or --ibkr can be specified')
+
+    if not args.year:
+        args.year = datetime.now().year - 1
+        print(f"Using tax year: {args.year}")
 
     os.chdir(os.path.dirname(__file__))
     account_code = detect_account_code(args)  # Used in output file names.
@@ -282,19 +331,14 @@ def main():
     # manual_debug(df_transactions)
 
     # pairing strategies for each tax year
-    strategies = {
-        2021: 'max_cost',
-        2022: 'min_cost',
-        2023: 'min_cost',
-        2024: 'max_cost'
-    }
+    strategies = setup_strategies(args)
 
-    # TODO: corporate actions for Degiro; unify the code; detect tax year automatically
+    # TODO: corporate actions for Degiro; unify the code
     if args.ibkr:
-        splits_df = load_stock_splits("config/corporate_actions.csv")             # default path; can be empty
-        optimize_all(df_transactions, 2024, strategies, account_code, splits_df)
+        splits_df = load_stock_splits("config/corporate_actions.csv")
+        optimize_all(df_transactions, args.year, strategies, account_code, splits_df)
     else:
-        optimize_all_old(df_transactions, 2024, strategies, account_code)
+        optimize_all_old(df_transactions, args.year, strategies, account_code)
 
 
 if __name__ == '__main__':
