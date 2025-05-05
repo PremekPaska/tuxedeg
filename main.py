@@ -12,7 +12,7 @@ from import_deg import convert_to_transactions, import_transactions, get_unique_
 from import_ibkr import import_ibkr_stock_transactions
 from transaction_ibkr import convert_to_transactions_ibkr
 from corporate_action import apply_stock_splits_for_symbol
-from optimizer import optimize_product, print_report, calculate_totals, get_product_name
+from optimizer import optimize_product, print_report, calculate_totals, get_product_name, list_strategies
 from transaction import SaleRecord, Transaction
 
 def get_unique_product_ids(
@@ -144,6 +144,11 @@ def optimize_all_old(df_trans: DataFrame, tax_year: int, strategies: dict[int,st
         f"{output_path}results-{account_code}-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}.csv",
         index=False)
 
+    # Round to 2 decimal places
+    total_income = Decimal(total_income).quantize(Decimal('0.01'))
+    total_cost = Decimal(total_cost).quantize(Decimal('0.01'))
+    total_fees = Decimal(total_fees).quantize(Decimal('0.01'))
+
     print()
     print(f"Pairing strategies: {strategies}")
     print()
@@ -152,8 +157,9 @@ def optimize_all_old(df_trans: DataFrame, tax_year: int, strategies: dict[int,st
     print(f"Total fees  : {total_fees}")
 
     total_profit = total_income - total_cost - total_fees
-    print(f"! Profit !  : {total_income - total_cost}, after fees: {total_profit}")
-    print(f"(tax est.)  : {total_profit * Decimal('0.15')}")
+    print()
+    print(f"! Profit !  : {(total_income - total_cost):,.2f}, after fees: {total_profit:,.2f}")
+    print(f"(tax est.)  : {(total_profit * Decimal('0.15')):,.2f}")
 
 
 def optimize_all(
@@ -213,6 +219,11 @@ def optimize_all(
         f"{output_path}results-{account_code}-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}.csv",
         index=False)
 
+    # Round to 2 decimal places
+    total_income = Decimal(total_income).quantize(Decimal('0.01'))
+    total_cost = Decimal(total_cost).quantize(Decimal('0.01'))
+    total_fees = Decimal(total_fees).quantize(Decimal('0.01'))
+
     print()
     print(f"Pairing strategies: {strategies}")
     print()
@@ -221,8 +232,9 @@ def optimize_all(
     print(f"Total fees  : {total_fees}")
 
     total_profit = total_income - total_cost - total_fees
-    print(f"! Profit !  : {total_income - total_cost}, after fees: {total_profit}")
-    print(f"(tax est.)  : {total_profit * Decimal('0.15')}")
+    print()
+    print(f"! Profit !  : {(total_income - total_cost):,.2f}, after fees: {total_profit:,.2f}")
+    print(f"(tax est.)  : {(total_profit * Decimal('0.15')):,.2f}")
 
 
 def manual_debug(df_transactions: DataFrame):
@@ -272,8 +284,12 @@ def setup_strategies(args) -> Dict[int, str]:
         raise ValueError("Only one of --fifo, --strategy or --config can be specified")
 
     if args.fifo or args.strategy:
+        if args.strategy and args.strategy not in list_strategies():
+            print(f"Available strategies: {list_strategies()}")
+            raise ValueError(f"Unknown strategy: {args.strategy}")
+
         strategies = {args.year: "fifo"} if args.fifo else {args.year: args.strategy}
-        strategies[args.year - 1] = strategies[args.year]  # For the output filename.
+        strategies[args.year - 1] = 'fifo'  # For the output filename; always fifo for previous years.
         return strategies
     elif args.config:
         print(f"Loading strategies from {args.config}")
@@ -287,7 +303,7 @@ def main():
     parser.add_argument('--deg', action='store_true', help='Use Degiro data')
     parser.add_argument('--ibkr', action='store_true', help='Use IBKR data')
     parser.add_argument('--year', type=int, help='Tax year')
-    parser.add_argument('--strategy', type=str, help='Pairing strategy for this tax year')
+    parser.add_argument('--strategy', type=str, help='Pairing strategy for this tax year (' + ', '.join(list_strategies()) + ')')
     parser.add_argument('--fifo', action='store_true', help='Use FIFO strategy')
     parser.add_argument('--config', type=str, help='Path to strategies JSON file, default: config/strategies.json')
     parser.add_argument('files', nargs='+', help='Files to process')
