@@ -6,19 +6,21 @@ from decimal import Decimal
 import pandas as pd
 
 
-def apply_stock_splits_for_symbol(
+def apply_stock_splits_for_product(
     tx_list: List[Transaction],
     splits_df: DataFrame,
-    symbol: str,
+    product_id: str,
+    *,
+    id_col: str,
 ) -> None:
     """Mutates *tx_list* in-place, adjusting quantities and prices."""
     if not tx_list:
         return
 
-    first_tx_time = min(t.time for t in tx_list if t.product_name == symbol)
+    first_tx_time = min(t.time for t in tx_list if t.isin == product_id)
 
     s = (
-        splits_df[splits_df["Symbol"] == symbol]
+        splits_df[splits_df[id_col] == product_id]
         .copy()
         .assign(ts=lambda d: pd.to_datetime(d["Date/Time"]))
         .query("ts >= @first_tx_time")
@@ -29,5 +31,5 @@ def apply_stock_splits_for_symbol(
         numerator, denominator = int(split["Numerator"]), int(split["Denominator"])
         cut_off = split["ts"]
         for tx in tx_list:
-            if tx.product_name == symbol and tx.time < cut_off:
+            if tx.isin == product_id and tx.time < cut_off:
                 tx.apply_split(numerator, denominator)

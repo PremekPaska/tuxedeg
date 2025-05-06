@@ -8,10 +8,10 @@ from pandas import DataFrame
 from datetime import datetime
 from typing import Dict
 
-from import_deg import convert_to_transactions, import_transactions, get_unique_product_ids_old, get_isin
+from import_deg import convert_to_transactions_deg, import_transactions, get_unique_product_ids_old, get_isin
 from import_ibkr import import_ibkr_stock_transactions
 from transaction_ibkr import convert_to_transactions_ibkr
-from corporate_action import apply_stock_splits_for_symbol
+from corporate_action import apply_stock_splits_for_product
 from optimizer import optimize_product, print_report, calculate_totals, get_product_name, list_strategies
 from transaction import SaleRecord, Transaction
 
@@ -53,10 +53,9 @@ def _detect_id_and_date_cols(df: DataFrame) -> tuple[str, str]:
 def load_stock_splits(path: str) -> pd.DataFrame:
     try:
         df = pd.read_csv(path, parse_dates=["Date/Time"])
-        return df[["Symbol", "Date/Time", "Numerator", "Denominator"]]
+        return df[["Symbol", "ISIN", "Date/Time", "Numerator", "Denominator"]]
     except FileNotFoundError:
-        print("No stock_splits.csv – split adjustment skipped.")
-        return pd.DataFrame(columns=["Symbol", "Date/Time", "Numerator", "Denominator"])
+        raise SystemExit("Stock split file, " + path + " not found.")
 
 
 def build_transactions(
@@ -67,14 +66,14 @@ def build_transactions(
     *,
     id_col: str,
 ) -> list[Transaction]:
-    """Convert one product’s rows to Transaction objects and apply splits."""
+    """Convert one product's rows to Transaction objects and apply splits."""
 
     if id_col == "ISIN":
-        txs = convert_to_transactions(df_trans, product_id, tax_year)
-        return txs                                    # Degiro – nothing to scale
-
-    txs = convert_to_transactions_ibkr(df_trans, product_id, tax_year)
-    apply_stock_splits_for_symbol(txs, splits_df, product_id)
+        txs = convert_to_transactions_deg(df_trans, product_id, tax_year)
+    else:
+        txs = convert_to_transactions_ibkr(df_trans, product_id, tax_year)
+    
+    apply_stock_splits_for_product(txs, splits_df, product_id, id_col=id_col)
     return txs
 
 
@@ -97,7 +96,7 @@ def calculate_current_count(transactions: DataFrame, product_prefix: str) -> int
 def filter_and_optimize_product(df_trans: DataFrame, product_isin: str, tax_year: int,
                                 strategies: dict[int,str] = None) -> list[SaleRecord]:
 
-    return optimize_product(convert_to_transactions(df_trans, product_isin, tax_year), tax_year, strategies)
+    return optimize_product(convert_to_transactions_deg(df_trans, product_isin, tax_year), tax_year, strategies)
 
 
 def optimize_all_old(df_trans: DataFrame, tax_year: int, strategies: dict[int,str], account_code: str) -> None:
@@ -333,12 +332,15 @@ def main():
     # pairing strategies for each tax year
     strategies = setup_strategies(args)
 
-    # TODO: corporate actions for Degiro; unify the code
-    if args.ibkr:
-        splits_df = load_stock_splits("config/corporate_actions.csv")
-        optimize_all(df_transactions, args.year, strategies, account_code, splits_df)
-    else:
-        optimize_all_old(df_transactions, args.year, strategies, account_code)
+    # load corporate actions (stock splits)
+    splits_df = load_stock_splits("config/corporate_actions.csv")    
+
+    # *** main processing ***
+    optimize_all(df_transactions, args.year, strategies, account_code, splits_df)
+    
+    print()
+    print("Processed file(s):", args.files)
+    print("Done.")
 
 
 if __name__ == '__main__':

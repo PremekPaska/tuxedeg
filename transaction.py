@@ -16,11 +16,7 @@ class Transaction:
                  fee: decimal, fee_currency: str):
         self._time = time
         self._product_name = product_name
-        self.isin = isin
-        # TODO: remove this hack, add proper stock-split handling.
-        if isin == 'US88160R1014' and time < TSLA_SPLIT:
-            count = count * 3
-            share_price = share_price / 3
+        self.isin = isin  # TODO: rename to product_id
         self._count = int(count)
         self._remaining_count = self._count  # This is only valid for buy transactions.
         self._share_price = Decimal(share_price).quantize(IMPORT_PRECISION)  # 'cause pandas stores it in doubles (TODO)

@@ -5,7 +5,7 @@ from decimal import Decimal
 import unittest
 
 from currency import unified_fx_rate
-from import_deg import import_transactions, get_isin, convert_to_transactions
+from import_deg import import_transactions, get_isin, convert_to_transactions_deg
 from optimizer import optimize_transaction_pairing, is_better_cost_pair, calculate_tax, optimize_product, \
     calculate_totals
 from tests.test_transaction import create_t
@@ -118,7 +118,7 @@ class PairingStrategiesTestCase(unittest.TestCase):
     def import_product_transactions(self, product_prefix: str, tax_year: int):
         df_trans = self.import_test_transactions_cz()
         product_id = get_isin(df_trans, product_prefix)
-        return convert_to_transactions(df_trans, product_id, tax_year)
+        return convert_to_transactions_deg(df_trans, product_id, tax_year)
 
     def optimize_product_amd(self, tax_year: int, strategies: dict[int,str]):
         transactions = self.import_product_transactions('ADVANCED MICRO DEVICES', tax_year)
