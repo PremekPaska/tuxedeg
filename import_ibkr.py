@@ -178,6 +178,9 @@ def _parse_ca_csv(path: Path) -> pd.DataFrame:
     df["Symbol"] = df["Description"].str.split("(", n=1).str[0].str.strip()
     df["ISIN"]   = df["Description"].str.extract(_ISIN_RE, expand=False)
 
+    # Override ISIN for TL0 (Tesla) to prevent creating duplicates for degiro
+    df.loc[df["Symbol"] == "TL0", "ISIN"] = "XX00000R0000"
+
     # -- skip CUSIP/ISIN Change records --
     df = df[~df["Description"].str.contains("CUSIP/ISIN Change", na=False)]
 

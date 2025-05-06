@@ -27,7 +27,19 @@ def apply_stock_splits_for_product(
         .sort_values("ts")
     )
 
+    # Collapse duplicates for the same ISIN and Date/Time
+    # there can be duplicate records because multiple symbols (TESLA, TL0) map to the same ISIN
+    if id_col == "ISIN":
+        s = s.drop_duplicates(subset=[id_col, "Date/Time"])
+
+    # Check that we have multiple splits for TSLA
+    if product_id == "TSLA" or product_id == "US88160R1014" and len(s) < 2:
+        raise ValueError("Missing stock split data for %s: %s" % (product_id, s))
+
     for _, split in s.iterrows():
+        print("Applying stock split %d:%d, product id %s, cut off %s"
+              % (split["Numerator"], split["Denominator"], product_id, split["ts"]))
+
         numerator, denominator = int(split["Numerator"]), int(split["Denominator"])
         cut_off = split["ts"]
         for tx in tx_list:
