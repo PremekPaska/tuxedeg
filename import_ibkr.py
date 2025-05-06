@@ -150,11 +150,14 @@ def _scan_corporate_actions(path: Path) -> tuple[list[str], list[str]]:
     return header, rows
 
 
+_ISIN_RE = re.compile(r'^[^(]+\(\s*([A-Z0-9]{12})\s*\)')   # 12-char ISIN in first () pair
+
 def _parse_ca_csv(path: Path) -> pd.DataFrame:
     header, rows = _scan_corporate_actions(path)
     if not rows:
-        return pd.DataFrame(columns=CA_KEEP_COLS + ["Symbol"])
+        return pd.DataFrame(columns=CA_KEEP_COLS + ["Symbol", "ISIN"])
 
+    # -- basic CSV ingestion -- 
     buf = io.StringIO()
     buf.write(",".join(header) + "\n")
     buf.writelines(rows)
@@ -171,19 +174,33 @@ def _parse_ca_csv(path: Path) -> pd.DataFrame:
         df["Date/Time"], format="%Y-%m-%d, %H:%M:%S", errors="coerce"
     )
 
-    # extract symbol before the first "(" in Description
+    # -- derive Symbol and ISIN --
     df["Symbol"] = df["Description"].str.split("(", n=1).str[0].str.strip()
+    df["ISIN"]   = df["Description"].str.extract(_ISIN_RE, expand=False)
 
-    # skip CUSIP/ISIN Change records
+    # Override ISIN for TL0 (Tesla) to prevent creating duplicates for degiro
+    df.loc[df["Symbol"] == "TL0", "ISIN"] = "XX00000R0000"
+
+    # -- skip CUSIP/ISIN Change records --
     df = df[~df["Description"].str.contains("CUSIP/ISIN Change", na=False)]
 
-    return df[CA_KEEP_COLS + ["Symbol"]]
+    # -- HARD FAIL if any ISIN is missing --
+    if df["ISIN"].isna().any():
+        bad = df[df["ISIN"].isna()].copy()
+        msg = (
+            f"ISIN could not be parsed for {len(bad)} line(s):\n"
+            + "\n".join(f"  • {desc}" for desc in bad["Description"].head(10))
+            + ("…" if len(bad) > 10 else "")
+        )
+        raise ValueError(msg)
+
+    return df[CA_KEEP_COLS + ["Symbol", "ISIN"]]
 
 
 def import_corporate_actions(csv_paths: Iterable[str | Path]) -> pd.DataFrame:
     """Collect corporate-action rows from all CSVs into one DataFrame."""
     frames = [_parse_ca_csv(Path(p).expanduser()) for p in csv_paths]
-    return pd.concat(frames, ignore_index=True)[CA_KEEP_COLS + ["Symbol"]]
+    return pd.concat(frames, ignore_index=True)[CA_KEEP_COLS + ["Symbol", "ISIN"]]
 
 
 # === split ratio integer-only extractor ===

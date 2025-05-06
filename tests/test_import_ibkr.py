@@ -1,7 +1,7 @@
 import unittest
 import os
 
-from import_ibkr import import_ibkr_stock_transactions, extract_split_ratio
+from import_ibkr import import_corporate_actions, import_ibkr_stock_transactions, extract_split_ratio
 from transaction_ibkr import convert_to_transactions_ibkr
 from pandas import DataFrame
 from transaction import Transaction
@@ -11,10 +11,19 @@ class ImportTestCase(unittest.TestCase):
     TAX_YEAR = 2022
 
     @staticmethod
-    def import_test_transactions() -> DataFrame:
+    def change_dir():
         if not os.path.exists('test_data'):
             os.chdir(os.path.dirname(__file__))
+
+    @staticmethod
+    def import_test_transactions() -> DataFrame:
+        ImportTestCase.change_dir()
         return import_ibkr_stock_transactions(["test_data/U74_2022_test.csv"])
+    
+    @staticmethod
+    def import_test_ca() -> DataFrame:
+        ImportTestCase.change_dir()
+        return import_corporate_actions(["test_data/U74_2022_test.csv"])
 
     def convert_to_transactions(self, df_transactions: DataFrame, symbol: str) -> list[Transaction]:
         txs = convert_to_transactions_ibkr(df_transactions, symbol, self.TAX_YEAR)
@@ -30,6 +39,14 @@ class ImportTestCase(unittest.TestCase):
         transactions = self.convert_to_transactions(df_txs, "MELI")
         self.assertEqual(6, len(transactions))
         self.assertGreaterEqual(transactions[0].fee, 0)
+
+    def test_import_ca(self):
+        df_ca = self.import_test_ca()
+        self.assertEqual(5, df_ca.shape[0])
+
+    def test_import_ISIN(self):
+        df_ca = self.import_test_ca()
+        self.assertEqual(df_ca[df_ca['Symbol'] == 'TSLA']['ISIN'].iloc[0], 'US88160R1014')
 
 
 class TestExtractSplitRatio(unittest.TestCase):

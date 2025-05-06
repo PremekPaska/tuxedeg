@@ -83,7 +83,7 @@ def do_skip_transaction(row: object) -> bool:
     return False
 
 
-def convert_to_transactions(df_trans: DataFrame, product_isin: str, tax_year: int) -> List[Transaction]:
+def convert_to_transactions_deg(df_trans: DataFrame, product_isin: str, tax_year: int) -> List[Transaction]:
     df_product = df_trans[df_trans['ISIN'] == product_isin].sort_values('DateTime')
     product_names = df_product['Product'].unique()
     if product_names.size == 0:
