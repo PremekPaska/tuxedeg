@@ -21,11 +21,13 @@ def get_unique_product_ids(
     *,
     id_col: str,
     date_col: str,
+    product_col: str,
 ) -> pd.Series:
-    """Return the unique product identifiers (ISIN or Symbol) for *tax_year*."""
+    """Return the unique product identifiers (ISIN or Symbol) for *tax_year*, sorted by *product_col*."""
     df = df_trans.copy()
     df["TaxYear"] = df[date_col].dt.year
-    return df.loc[df["TaxYear"] == tax_year, id_col].unique()
+    df_tax_year = df[df["TaxYear"] == tax_year]
+    return df_tax_year.sort_values(product_col)[id_col].unique()
 
 
 def get_product_id_by_prefix(
@@ -41,19 +43,18 @@ def get_product_id_by_prefix(
     return df.iloc[0][id_col]
 
 
-def _detect_id_and_date_cols(df: DataFrame) -> tuple[str, str]:
-    """Return (id_col, date_col) for the given frame."""
+def _detect_columns(df: DataFrame) -> tuple[str, str, str]:
     if "ISIN" in df.columns:
-        return "ISIN", "DateTime"
+        return "ISIN", "DateTime", "Product"
     if "Symbol" in df.columns:
-        return "Symbol", "Date/Time"
+        return "Symbol", "Date/Time", "Symbol"
     raise ValueError("Unknown dataframe format: no ISIN or Symbol column")
 
 
 def load_stock_splits(path: str) -> pd.DataFrame:
     try:
-        df = pd.read_csv(path, parse_dates=["Date/Time"])
-        return df[["Symbol", "ISIN", "Date/Time", "Numerator", "Denominator"]]
+        df = pd.read_csv(path, parse_dates=["Report Date"])
+        return df[["Symbol", "ISIN", "Report Date", "Numerator", "Denominator"]]
     except FileNotFoundError:
         raise SystemExit("Stock split file, " + path + " not found.")
 
@@ -168,10 +169,10 @@ def optimize_all(
     account_code: str,
     splits_df: DataFrame,
 ) -> None:
-    id_col, date_col = _detect_id_and_date_cols(df_trans)
+    id_col, date_col, product_col = _detect_columns(df_trans)
 
     products = get_unique_product_ids(
-        df_trans, tax_year, id_col=id_col, date_col=date_col
+        df_trans, tax_year, id_col=id_col, date_col=date_col, product_col=product_col
     )
     print(f"Found {len(products)} products with some transactions in {tax_year}.")
 
@@ -179,7 +180,7 @@ def optimize_all(
     total_income = total_cost = total_fees = Decimal(0)
 
     for pid in products:
-        if id_col == "ISIN" and pid in ("CA88035N1033",):  # skip-list stays Degiro-only
+        if id_col == "ISIN" and pid in ("CA88035N1033",):  # skip-list for Degiro
             pname = df_trans.query(f"ISIN == '{pid}'").iloc[0]["Product"]
             print(f"Skipping product {pid}: {pname}")
             continue
@@ -191,7 +192,7 @@ def optimize_all(
         report = optimize_product(txs, tax_year, strategies)
 
         income, cost, fees = calculate_totals(report, tax_year)
-        print(f"income: {income}, cost: {cost}, profit: {income - cost}, fees: {fees}")
+        print(f"income: {income}, cost: {cost}, profit: {income - cost}, fees: {fees}\n")
 
         row = {
             "Product": get_product_name(report),   # = symbol for IBKR

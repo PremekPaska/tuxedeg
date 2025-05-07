@@ -22,18 +22,18 @@ def apply_stock_splits_for_product(
     s = (
         splits_df[splits_df[id_col] == product_id]
         .copy()
-        .assign(ts=lambda d: pd.to_datetime(d["Date/Time"]))
-        .query("ts >= @first_tx_time")
+        .assign(ts=lambda d: pd.to_datetime(d["Report Date"]))
+        .query("ts > @first_tx_time")
         .sort_values("ts")
     )
 
     # Collapse duplicates for the same ISIN and Date/Time
     # there can be duplicate records because multiple symbols (TESLA, TL0) map to the same ISIN
     if id_col == "ISIN":
-        s = s.drop_duplicates(subset=[id_col, "Date/Time"])
+        s = s.drop_duplicates(subset=[id_col, "Report Date"])
 
     # Check that we have multiple splits for TSLA
-    if product_id == "TSLA" or product_id == "US88160R1014" and len(s) < 2:
+    if (product_id == "TSLA" or product_id == "US88160R1014") and len(s) < 2:
         raise ValueError("Missing stock split data for %s: %s" % (product_id, s))
 
     for _, split in s.iterrows():
@@ -43,5 +43,5 @@ def apply_stock_splits_for_product(
         numerator, denominator = int(split["Numerator"]), int(split["Denominator"])
         cut_off = split["ts"]
         for tx in tx_list:
-            if tx.isin == product_id and tx.time < cut_off:
+            if tx.isin == product_id and tx.time.date() < cut_off.date():
                 tx.apply_split(numerator, denominator)

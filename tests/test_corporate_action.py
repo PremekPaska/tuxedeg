@@ -41,7 +41,7 @@ class SplitTests(unittest.TestCase):
         splits = pd.DataFrame(
             {
                 "Symbol": ["AMZN"],
-                "Date/Time": ["2020-05-01 12:00:00"],  # older than trade
+                "Report Date": ["2020-05-01"],  # older than trade
                 "Numerator": [20],
                 "Denominator": [1],
             }
@@ -56,7 +56,7 @@ class SplitTests(unittest.TestCase):
         splits = pd.DataFrame(
             {
                 "Symbol": ["TSLA", "TSLA"],
-                "Date/Time": ["2020-08-28 20:25:00", "2022-08-24 20:25:00"],
+                "Report Date": ["2020-08-28", "2022-08-24"],
                 "Numerator": [5, 3],           # 5-for-1 then 3-for-1
                 "Denominator": [1, 1],
             }
@@ -73,7 +73,7 @@ class SplitTests(unittest.TestCase):
         splits = pd.DataFrame(
             {
                 "Symbol": ["SHOP"],
-                "Date/Time": ["2022-06-28 20:25:00"],  # between the two trades
+                "Report Date": ["2022-06-28"],  # between the two trades
                 "Numerator": [10],
                 "Denominator": [1],
             }
@@ -90,7 +90,7 @@ class SplitTests(unittest.TestCase):
             {
                 "Symbol": ["SHOP"],
                 "ISIN": ["CA82509L1076"],
-                "Date/Time": ["2022-06-28 20:25:00"],  # between the two trades
+                "Report Date": ["2022-06-28"],  # between the two trades
                 "Numerator": [10],
                 "Denominator": [1],
             }
