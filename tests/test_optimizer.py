@@ -1,11 +1,11 @@
 import os
-import datetime
 import decimal
 from decimal import Decimal
 import unittest
 
 from currency import unified_fx_rate
-from import_deg import import_transactions, get_isin, convert_to_transactions_deg
+from import_deg import import_transactions, convert_to_transactions_deg
+from import_utils import get_product_id_by_prefix
 from optimizer import optimize_transaction_pairing, is_better_cost_pair, calculate_tax, optimize_product, \
     calculate_totals
 from tests.test_transaction import create_t
@@ -117,7 +117,7 @@ class PairingStrategiesTestCase(unittest.TestCase):
 
     def import_product_transactions(self, product_prefix: str, tax_year: int):
         df_trans = self.import_test_transactions_cz()
-        product_id = get_isin(df_trans, product_prefix)
+        product_id = get_product_id_by_prefix(df_trans, product_prefix, id_col="ISIN")
         return convert_to_transactions_deg(df_trans, product_id, tax_year)
 
     def optimize_product_amd(self, tax_year: int, strategies: dict[int,str]):
