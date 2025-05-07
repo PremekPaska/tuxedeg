@@ -55,11 +55,27 @@ def import_transactions(file_name: str):
 
     rename_columns_to_english(df)
 
+    print(f"Imported transactions before filtering: {df.shape[0]}")
+
     # To be dropped
     df_nan = df[df['Date'].isnull()]
-    print(f"*** Dropping {df_nan.shape[0]} records with null/NaN 'Date'. ***")
-    print(df_nan)
-    df = df[df['Date'].notnull()]
+    if df_nan.shape[0] > 0:
+        print(f"*** Dropping {df_nan.shape[0]} records with null/NaN 'Date'. ***")
+        print(df_nan)
+        df = df.drop(df_nan.index)
+        print(f"Transactions after dropping null Date: {df.shape[0]}\n")
+
+    # Drop also stock split transactions
+    df_split = df[(df['Order ID'].isnull() & df['Transaction and/or third'].isnull())]
+    if df_split.shape[0] > 0:
+        print(f"*** Dropping {df_split.shape[0]} transactions without Order ID & Fee (stock splits). ***")
+        df = df.drop(df_split.index)  # Drop the exact same rows that were identified in df_split
+        print(f"Transactions after filtering stock splits: {df.shape[0]}\n")
+        print("Dropped transactions:")
+        df_to_print = df_split.copy()
+        df_to_print['Product'] = df_to_print['Product'].apply(lambda x: (x[:30] + '~') if len(str(x)) > 30 else x)
+        columns_to_show = ['Date', 'Time', 'Product', 'ISIN', 'Quantity', 'Price', 'Value', 'Exchange rate', 'Total']
+        print(df_to_print[columns_to_show], "\n")
 
     df['DateTime'] = df.apply(lambda row: merge_date_time(row['Date'], row['Time']), axis=1)
 
