@@ -6,6 +6,14 @@ from decimal import Decimal
 import pandas as pd
 
 
+def load_stock_splits(path: str) -> pd.DataFrame:
+    try:
+        df = pd.read_csv(path, parse_dates=["Report Date"])
+        return df[["Symbol", "ISIN", "Report Date", "Numerator", "Denominator"]]
+    except FileNotFoundError:
+        raise SystemExit("Stock split file, " + path + " not found.")
+
+
 def apply_stock_splits_for_product(
     tx_list: List[Transaction],
     splits_df: DataFrame,

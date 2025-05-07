@@ -3,7 +3,8 @@ import os
 
 from decimal import Decimal
 
-from import_deg import import_transactions, convert_to_transactions_deg, get_isin
+from import_deg import import_transactions, convert_to_transactions_deg
+from import_utils import get_product_id_by_prefix
 from optimizer import optimize_product, calculate_totals
 
 
@@ -17,7 +18,7 @@ class ImportTestCase(unittest.TestCase):
         return import_transactions("test_data/Transactions-deg-en-2021.csv")
 
     def convert_to_transactions(self, df_transactions, product_prefix: str):
-        product_id = get_isin(df_transactions, product_prefix)
+        product_id = get_product_id_by_prefix(df_transactions, product_prefix, id_col="ISIN")
         transactions = convert_to_transactions_deg(df_transactions, product_id, self.TAX_YEAR)
         return transactions
 
@@ -28,7 +29,7 @@ class ImportTestCase(unittest.TestCase):
     def test_conversion(self):
         df_transactions = self.import_test_transactions_en()
 
-        product_id = get_isin(df_transactions, "CLOUDFLARE")
+        product_id = get_product_id_by_prefix(df_transactions, "CLOUDFLARE", id_col="ISIN")
         transactions = convert_to_transactions_deg(df_transactions, product_id, self.TAX_YEAR)
         self.assertEqual(9, len(transactions))
         self.assertGreaterEqual(transactions[0].fee, 0)
@@ -49,7 +50,7 @@ class ImportTestCase(unittest.TestCase):
         df_transactions = import_transactions("test_data/Transactions-deg-cz-2019.csv")
         self.assertEqual(156, df_transactions.shape[0])
 
-        product_id = get_isin(df_transactions, "ADVANCED MICRO DEVICES")
+        product_id = get_product_id_by_prefix(df_transactions, "ADVANCED MICRO DEVICES", id_col="ISIN")
         tax_year = 2019
         transactions = convert_to_transactions_deg(df_transactions, product_id, tax_year)
         self.assertEqual(74, len(transactions))

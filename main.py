@@ -8,10 +8,11 @@ from pandas import DataFrame
 from datetime import datetime
 from typing import Dict
 
-from import_deg import convert_to_transactions_deg, import_transactions, get_unique_product_ids_old, get_isin
+from import_deg import convert_to_transactions_deg, import_transactions
 from import_ibkr import import_ibkr_stock_transactions
+from import_utils import detect_columns
 from transaction_ibkr import convert_to_transactions_ibkr
-from corporate_action import apply_stock_splits_for_product
+from corporate_action import load_stock_splits, apply_stock_splits_for_product
 from optimizer import optimize_product, print_report, calculate_totals, get_product_name, list_strategies
 from transaction import SaleRecord, Transaction
 
@@ -28,35 +29,6 @@ def get_unique_product_ids(
     df["TaxYear"] = df[date_col].dt.year
     df_tax_year = df[df["TaxYear"] == tax_year]
     return df_tax_year.sort_values(product_col)[id_col].unique()
-
-
-def get_product_id_by_prefix(
-    df_trans: DataFrame,
-    prefix: str,
-    *,
-    id_col: str,
-) -> str:
-    col = "Product" if "Product" in df_trans.columns else id_col
-    df = df_trans[df[col].str.startswith(prefix)]
-    if df.empty:
-        raise ValueError(f"No product starting with {prefix!r}")
-    return df.iloc[0][id_col]
-
-
-def _detect_columns(df: DataFrame) -> tuple[str, str, str]:
-    if "ISIN" in df.columns:
-        return "ISIN", "DateTime", "Product"
-    if "Symbol" in df.columns:
-        return "Symbol", "Date/Time", "Symbol"
-    raise ValueError("Unknown dataframe format: no ISIN or Symbol column")
-
-
-def load_stock_splits(path: str) -> pd.DataFrame:
-    try:
-        df = pd.read_csv(path, parse_dates=["Report Date"])
-        return df[["Symbol", "ISIN", "Report Date", "Numerator", "Denominator"]]
-    except FileNotFoundError:
-        raise SystemExit("Stock split file, " + path + " not found.")
 
 
 def build_transactions(
@@ -100,68 +72,6 @@ def filter_and_optimize_product(df_trans: DataFrame, product_isin: str, tax_year
     return optimize_product(convert_to_transactions_deg(df_trans, product_isin, tax_year), tax_year, strategies)
 
 
-def optimize_all_old(df_trans: DataFrame, tax_year: int, strategies: dict[int,str], account_code: str) -> None:
-    products = get_unique_product_ids_old(df_trans, tax_year)
-    print(f"Found {products.shape[0]} products with some transactions in {tax_year}.")
-
-    df_results = DataFrame(columns=['Product', 'ISIN', 'Income', 'Cost', 'Profit', 'Fees'])
-
-    total_income = Decimal(0)
-    total_cost = Decimal(0)
-    total_fees = Decimal(0)
-    for product_isin in products:
-        print()
-        if product_isin in ('CA88035N1033'):
-            # IE: ('IE00B53SZB19', 'US9344231041'):
-            # CZ: ('IE00B53SZB19', 'US9344231041', 'BMG9525W1091', 'CA88035N1033', 'CA92919V4055', 'KYG851581069', 'US37611X1000'):
-            # 'CA88035N1033' is TENET FINTECH
-            product_name = df_trans.query(f"ISIN == '{product_isin}'").head(1)['Product'].iloc[0]
-            print(f"Skipping product {product_isin}: {product_name}")
-            continue
-        report = filter_and_optimize_product(df_trans, product_isin, tax_year, strategies)
-        # print_report(report)
-
-        income, cost, fees = calculate_totals(report, tax_year)
-        print(f"income: {income}, cost: {cost}, profit: {income - cost}, fees: {fees}")
-
-        # Add to dataframe
-        row = {'Product': get_product_name(report), 'ISIN': product_isin, 'Income': income, 'Cost': cost,
-               'Profit': income - cost, 'Fees': fees}
-        df_results = pd.concat([df_results, DataFrame(row, index=[0])], ignore_index=True)
-
-        total_income += income
-        total_cost += cost
-        total_fees += fees
-
-    print()
-    print(df_results)
-
-    # Export df_results to CSV
-    output_path = f"outputs/"
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-    df_results.to_csv(
-        f"{output_path}results-{account_code}-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}.csv",
-        index=False)
-
-    # Round to 2 decimal places
-    total_income = Decimal(total_income).quantize(Decimal('0.01'))
-    total_cost = Decimal(total_cost).quantize(Decimal('0.01'))
-    total_fees = Decimal(total_fees).quantize(Decimal('0.01'))
-
-    print()
-    print(f"Pairing strategies: {strategies}")
-    print()
-    print(f"Total income: {total_income}")
-    print(f"Total cost  : {total_cost}")
-    print(f"Total fees  : {total_fees}")
-
-    total_profit = total_income - total_cost - total_fees
-    print()
-    print(f"! Profit !  : {(total_income - total_cost):,.2f}, after fees: {total_profit:,.2f}")
-    print(f"(tax est.)  : {(total_profit * Decimal('0.15')):,.2f}")
-
-
 def optimize_all(
     df_trans: DataFrame,
     tax_year: int,
@@ -169,7 +79,7 @@ def optimize_all(
     account_code: str,
     splits_df: DataFrame,
 ) -> None:
-    id_col, date_col, product_col = _detect_columns(df_trans)
+    id_col, date_col, product_col = detect_columns(df_trans)
 
     products = get_unique_product_ids(
         df_trans, tax_year, id_col=id_col, date_col=date_col, product_col=product_col
