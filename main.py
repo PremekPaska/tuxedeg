@@ -99,10 +99,9 @@ def build_pairing_rows(report: List[SaleRecord], id_col: str) -> list[dict]:
             "Product": close_t.product_name,
             id_col: _id_value(close_t),
             "Quantity": abs(close_t.count),
+            "SplitRatio": close_t.split_ratio,
             "SharePrice": close_t.share_price,
             "Currency": close_t.currency,
-            "Fee": close_t.fee,
-            "FeeCurrency": close_t.fee_currency,
         })
 
         # Opening side(s)
@@ -115,10 +114,9 @@ def build_pairing_rows(report: List[SaleRecord], id_col: str) -> list[dict]:
                 "Product": open_t.product_name,
                 id_col: _id_value(open_t),
                 "Quantity": br._count_consumed,
+                "SplitRatio": open_t.split_ratio,
                 "SharePrice": open_t.share_price,
                 "Currency": open_t.currency,
-                "Fee": open_t.fee if br._fee_consumed else Decimal(0),
-                "FeeCurrency": open_t.fee_currency,
             })
     return rows
 
@@ -144,7 +142,9 @@ def optimize_all(
     pairing_rows: list[dict] = []
 
     for pid in products:
-        if id_col == "ISIN" and pid in ("CA88035N1033",):  # skip-list for Degiro
+        if id_col == "ISIN" and pid in ("CA88035N1033",):  # skip-list for Degiro ('CA88035N1033' is TENET FINTECH)
+            # IE: ('IE00B53SZB19', 'US9344231041'):
+            # CZ: ('IE00B53SZB19', 'US9344231041', 'BMG9525W1091', 'CA88035N1033', 'CA92919V4055', 'KYG851581069', 'US37611X1000'):
             pname = df_trans.query(f"ISIN == '{pid}'").iloc[0]["Product"]
             print(f"Skipping product {pid}: {pname}")
             continue
