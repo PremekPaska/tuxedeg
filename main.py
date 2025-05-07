@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 from pandas import DataFrame
 from datetime import datetime
-from typing import Dict
+from typing import Dict, List
 
 from import_deg import convert_to_transactions_deg, import_transactions
 from import_ibkr import import_ibkr_stock_transactions
@@ -15,6 +15,7 @@ from transaction_ibkr import convert_to_transactions_ibkr
 from corporate_action import load_stock_splits, apply_stock_splits_for_product
 from optimizer import optimize_product, print_report, calculate_totals, get_product_name, list_strategies
 from transaction import SaleRecord, Transaction
+
 
 def get_unique_product_ids(
     df_trans: DataFrame,
@@ -45,7 +46,7 @@ def build_transactions(
         txs = convert_to_transactions_deg(df_trans, product_id, tax_year)
     else:
         txs = convert_to_transactions_ibkr(df_trans, product_id, tax_year)
-    
+
     apply_stock_splits_for_product(txs, splits_df, product_id, id_col=id_col)
     return txs
 
@@ -72,6 +73,56 @@ def filter_and_optimize_product(df_trans: DataFrame, product_isin: str, tax_year
     return optimize_product(convert_to_transactions_deg(df_trans, product_isin, tax_year), tax_year, strategies)
 
 
+def build_pairing_rows(report: List[SaleRecord], id_col: str) -> list[dict]:
+    """
+    Flatten SaleRecord objects into dictionaries suitable for a CSV export.
+
+    Each pairing is identified by a *PairID* and split into two logical sides:
+    an **open** transaction (position opening) and a **close** transaction
+    (position closing).  Using this neutral terminology future‑proofs the
+    export for short selling, where a close might be a *buy*.
+    """
+    rows: list[dict] = []
+
+    def _id_value(t: Transaction) -> str:
+        return t.isin if id_col == "ISIN" else t.product_name
+
+    for idx, sale in enumerate(report):
+        close_t = sale.sale_t
+        pair_id = f"{close_t.time.isoformat()}_{idx}"
+
+        # Closing side
+        rows.append({
+            "PairID": pair_id,
+            "Side": "close",
+            "DateTime": close_t.time,
+            "Product": close_t.product_name,
+            id_col: _id_value(close_t),
+            "Quantity": abs(close_t.count),
+            "SharePrice": close_t.share_price,
+            "Currency": close_t.currency,
+            "Fee": close_t.fee,
+            "FeeCurrency": close_t.fee_currency,
+        })
+
+        # Opening side(s)
+        for br in sale.buys:
+            open_t = br.buy_t
+            rows.append({
+                "PairID": pair_id,
+                "Side": "open",
+                "DateTime": open_t.time,
+                "Product": open_t.product_name,
+                id_col: _id_value(open_t),
+                "Quantity": br._count_consumed,
+                "SharePrice": open_t.share_price,
+                "Currency": open_t.currency,
+                "Fee": open_t.fee if br._fee_consumed else Decimal(0),
+                "FeeCurrency": open_t.fee_currency,
+            })
+    return rows
+
+
 def optimize_all(
     df_trans: DataFrame,
     tax_year: int,
@@ -89,6 +140,9 @@ def optimize_all(
     df_results = DataFrame(columns=["Product", id_col, "Income", "Cost", "Profit", "Fees"])
     total_income = total_cost = total_fees = Decimal(0)
 
+    # Collect detailed pairing rows for audit purposes.
+    pairing_rows: list[dict] = []
+
     for pid in products:
         if id_col == "ISIN" and pid in ("CA88035N1033",):  # skip-list for Degiro
             pname = df_trans.query(f"ISIN == '{pid}'").iloc[0]["Product"]
@@ -100,6 +154,9 @@ def optimize_all(
 
         txs = build_transactions(df_trans, pid, tax_year, splits_df, id_col=id_col)
         report = optimize_product(txs, tax_year, strategies)
+
+        # Accumulate pairing details
+        pairing_rows.extend(build_pairing_rows(report, id_col))
 
         income, cost, fees = calculate_totals(report, tax_year)
         print(f"income: {income}, cost: {cost}, profit: {income - cost}, fees: {fees}\n")
@@ -121,13 +178,22 @@ def optimize_all(
     print()
     print(df_results)
 
-    # Export df_results to CSV
-    output_path = f"outputs/"
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
+    # Export aggregated results and detailed pairings to CSV
+    output_path = "outputs/"
+    os.makedirs(output_path, exist_ok=True)
+    output_filename_suffix = f"{account_code}-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}.csv"
+
     df_results.to_csv(
-        f"{output_path}results-{account_code}-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}.csv",
+        f"{output_path}results-{output_filename_suffix}",
         index=False)
+
+    pairings_df = pd.DataFrame(pairing_rows)
+    if not pairings_df.empty:
+        pairings_df["DateTime"] = pairings_df["DateTime"].astype(str)
+        pairings_df.to_csv(
+            f"{output_path}pairings-{output_filename_suffix}",
+            index=False)
+        print(f"Exported {len(pairings_df)} pairing rows.")
 
     # Round to 2 decimal places
     total_income = Decimal(total_income).quantize(Decimal('0.01'))
@@ -156,11 +222,10 @@ def manual_debug(df_transactions: DataFrame):
     print(len(report))
 
     print_report(report)
-    income, cost, fees = calculate_totals(report, 2021)
+    income, cost, _ = calculate_totals(report, 2021)
     print(f"income: {income}, cost: {cost}, profit: {income - cost}")
 
     products = get_unique_product_ids(df_transactions, 2021)
-    # print(products)
     print(f"Found {products.shape[0]} unique ISINs.")
 
 
@@ -238,17 +303,15 @@ def main():
         # Import from one or more IBKR CSV files
         df_transactions = import_ibkr_stock_transactions(args.files)
 
-    # manual_debug(df_transactions)
-
     # pairing strategies for each tax year
     strategies = setup_strategies(args)
 
     # load corporate actions (stock splits)
-    splits_df = load_stock_splits("config/corporate_actions.csv")    
+    splits_df = load_stock_splits("config/corporate_actions.csv")
 
     # *** main processing ***
     optimize_all(df_transactions, args.year, strategies, account_code, splits_df)
-    
+
     print()
     print("Processed file(s):", args.files)
     print("Done.")
