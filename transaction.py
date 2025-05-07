@@ -25,6 +25,7 @@ class Transaction:
         self._fee = Decimal(fee).quantize(IMPORT_PRECISION) if not math.isnan(fee) else Decimal(0)
 
         self._fee_available = True  # Not used for sale transactions
+        self._split_ratio = Decimal(1)
 
     def __str__(self):
         return f"{self._time}, {self._product_name}, {self._count}, {self.isin}, {self._share_price}, fee: {self._fee}"
@@ -67,6 +68,10 @@ class Transaction:
     def fee(self) -> decimal:
         return self._fee
 
+    @property
+    def split_ratio(self) -> decimal:
+        return self._split_ratio
+
     def consume_shares(self, number_sold: int) -> bool:
         if number_sold < 1:
             raise ValueError(f"Number sold < 1: {number_sold}")
@@ -89,12 +94,17 @@ class Transaction:
         """Scale share count / price by *numerator/denominator* (in-place)."""
         if numerator == denominator:
             return
+        
         # must stay integral
         if (self._count * numerator) % denominator:
             raise ValueError(f"split leaves fractional share in {self}")
+        
         self._count = self._count * numerator // denominator
+        self._split_ratio = self._split_ratio * numerator / denominator
+        
         if not self.is_sale:
             self._remaining_count = self._remaining_count * numerator // denominator
+        
         factor = Decimal(denominator) / Decimal(numerator)
         self._share_price = (self._share_price * factor).quantize(IMPORT_PRECISION)
 

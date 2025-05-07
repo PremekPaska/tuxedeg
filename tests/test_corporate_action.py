@@ -65,6 +65,7 @@ class SplitTests(unittest.TestCase):
         # cumulative ratio = 15-for-1
         self.assertEqual(txs[0].count, 30)          # 2 * 15
         self.assertEqual(txs[0].share_price, Decimal("66.66666667").quantize(txs[0].share_price))  # 1000/15
+        self.assertEqual(txs[0].split_ratio, Decimal("15"))
 
     def test_split_affects_only_earlier_trades(self):
         old = self._tx("SHOP", datetime(2022, 5, 1), 3, 1200)
@@ -80,7 +81,9 @@ class SplitTests(unittest.TestCase):
         )
         apply_stock_splits_for_product(txs, splits, "SHOP", id_col="Symbol")
         self.assertEqual(old.count, 30)     # adjusted
+        self.assertEqual(old.split_ratio, Decimal("10"))
         self.assertEqual(new.count, 3)      # untouched
+        self.assertEqual(new.split_ratio, Decimal("1"))
 
     def test_split_by_isin(self):
         old = self._tx("CA82509L1076", datetime(2022, 5, 1), 3, 1200)
