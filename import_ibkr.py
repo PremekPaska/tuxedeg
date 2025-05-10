@@ -219,10 +219,14 @@ def extract_split_ratio(text: str) -> tuple[int, int]:
 
 def process_corporate_actions(csv_paths: Iterable[str | Path]) -> pd.DataFrame:
     df = import_corporate_actions(csv_paths)
+    if df.empty:
+        logging.info("No corporate actions found in the provided files.")
+        df["Numerator"] = []
+        df["Denominator"] = []
+        return df
     df[["Numerator", "Denominator"]] = (
         df["Description"]
-          .apply(lambda s: pd.Series(extract_split_ratio(s),
-                                     index=["Numerator", "Denominator"]))
+          .apply(lambda s: pd.Series(extract_split_ratio(s), index=["Numerator", "Denominator"]))
     )
     return df
 
@@ -265,13 +269,14 @@ def main() -> None:
     
     # import and print corporate actions
     ca_df = process_corporate_actions(files)
-    logging.info("imported %d corporate actions from %d file(s)", len(ca_df), len(files))
-    logging.info("Corporate Actions:\n%s", ca_df.to_markdown(index=False))
+    if not ca_df.empty:
+        logging.info("imported %d corporate actions from %d file(s)", len(ca_df), len(files))
+        logging.info("Corporate Actions:\n%s", ca_df.to_markdown(index=False))
     
-    if args.export_ca:
-        out_path = "corporate_actions.csv"
-        ca_df.drop("Quantity", axis=1).to_csv(out_path, index=False)
-        logging.info("exported corporate actions to %s", out_path)
+        if args.export_ca:
+            out_path = "corporate_actions.csv"
+            ca_df.drop("Quantity", axis=1).to_csv(out_path, index=False)
+            logging.info("exported corporate actions to %s", out_path)
 
 if __name__ == "__main__":
     main()
