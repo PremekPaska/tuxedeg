@@ -98,10 +98,12 @@ def build_pairing_rows(report: List[SaleRecord], id_col: str) -> list[dict]:
             "DateTime": close_t.time,
             "Product": close_t.product_name,
             id_col: _id_value(close_t),
-            "Quantity": abs(close_t.count),
+            "Quantity": close_t.count,
             "SplitRatio": close_t.split_ratio,
             "SharePrice": close_t.share_price,
             "Currency": close_t.currency,
+            "TimeTestPassed": "--",
+            "ProfitPerShare": "--",
         })
 
         # Opening side(s)
@@ -117,6 +119,8 @@ def build_pairing_rows(report: List[SaleRecord], id_col: str) -> list[dict]:
                 "SplitRatio": open_t.split_ratio,
                 "SharePrice": open_t.share_price,
                 "Currency": open_t.currency,
+                "TimeTestPassed": "T" if br.time_test_passed else "",
+                "ProfitPerShare": close_t.share_price - open_t.share_price,
             })
     return rows
 

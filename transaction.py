@@ -118,6 +118,7 @@ class BuyRecord:
         self._fx_rate = None
         self._cost_tc = None  # In the target currency (CZK).
         self._fees_tc = None
+        self._time_test_passed = False
 
     @property
     def trans(self):
@@ -134,6 +135,13 @@ class BuyRecord:
     @property
     def fees_tc(self):
         return self._fees_tc
+
+    @property
+    def time_test_passed(self):
+        return self._time_test_passed
+
+    def pass_time_test(self):
+        self._time_test_passed = True
 
     def calculate_cost(self):
         self._fx_rate = unified_fx_rate(self.buy_t.time.year, self.buy_t.currency)
@@ -188,6 +196,8 @@ class SaleRecord:
             buy_record.calculate_cost()
             cost += buy_record.cost_tc
             fees += buy_record.fees_tc
+            if (self.sale_t.time - buy_record.buy_t.time).days > 3 * 365:
+                buy_record.pass_time_test()
         self._cost_tc = cost
 
         sale_fee = self.sale_t.fee * unified_fx_rate(self.sale_t.time.year, self.sale_t.fee_currency)
@@ -196,4 +206,3 @@ class SaleRecord:
     def calculate_profit(self) -> None:
         self._calculate_income()
         self._calculate_cost_and_fees()
-
