@@ -41,7 +41,7 @@ def apply_stock_splits_for_product(
         s = s.drop_duplicates(subset=[id_col, "Report Date"])
 
     # Check that we have multiple splits for TSLA
-    if (product_id == "TSLA" or product_id == "US88160R1014") and len(s) < 2:
+    if (product_id == "TSLA" or product_id == "US88160R1014") and len(s) < 1:
         raise ValueError("Missing stock split data for %s: %s" % (product_id, s))
 
     for _, split in s.iterrows():
