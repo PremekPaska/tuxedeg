@@ -24,6 +24,10 @@ def apply_stock_splits_for_product(
     """Mutates *tx_list* in-place, adjusting quantities and prices."""
     if not tx_list:
         return
+    
+    if splits_df is None or splits_df.empty:
+        print("Skipping stock split application.")
+        return
 
     first_tx_time = min(t.time for t in tx_list if t.isin == product_id)
 

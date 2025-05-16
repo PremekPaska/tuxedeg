@@ -285,6 +285,7 @@ def main():
     parser.add_argument('--strategy', type=str, help='Pairing strategy for this tax year (' + ', '.join(list_strategies()) + ')')
     parser.add_argument('--fifo', action='store_true', help='Use FIFO strategy')
     parser.add_argument('--config', type=str, help='Path to strategies JSON file, default: config/strategies.json')
+    parser.add_argument('--no-split', action='store_true', help='Disable loading and applying stock splits')
     parser.add_argument('files', nargs='+', help='Files to process')
     args = parser.parse_args()
 
@@ -311,7 +312,7 @@ def main():
     strategies = setup_strategies(args)
 
     # load corporate actions (stock splits)
-    splits_df = load_stock_splits("config/corporate_actions.csv")
+    splits_df = load_stock_splits("config/corporate_actions.csv") if not args.no_split else None
 
     # *** main processing ***
     optimize_all(df_transactions, args.year, strategies, account_code, splits_df)
