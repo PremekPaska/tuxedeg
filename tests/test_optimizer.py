@@ -7,7 +7,7 @@ from currency import unified_fx_rate
 from import_deg import import_transactions, convert_to_transactions_deg
 from import_utils import get_product_id_by_prefix
 from optimizer import optimize_transaction_pairing, is_better_cost_pair, calculate_tax, optimize_product, \
-    calculate_totals
+    calculate_totals, calculate_break_even_prices
 from tests.test_transaction import create_t
 
 
@@ -106,6 +106,55 @@ class OptimizerTestCase(unittest.TestCase):
         self.assertFalse(is_better_cost_pair(buy_t, create_t(1, 112, day=27, month=2)))
         self.assertFalse(is_better_cost_pair(buy_t, create_t(1, 112, day=27, month=10, year_offset=-1)))
         self.assertTrue(is_better_cost_pair(buy_t, create_t(1, 112, day=27, month=8)))
+        
+    def test_calculate_break_even_prices_buy_only(self):
+        # Test with only buy transactions
+        transactions = [
+            create_t(5, price=100.0, day=1),  # 5 shares at $100 each
+            create_t(3, price=150.0, day=2)   # 3 shares at $150 each
+        ]
+        
+        calculate_break_even_prices(transactions)
+        
+        # First transaction: 5 shares at $100, BEP = $100
+        self.assertEqual(Decimal('100.0'), transactions[0].bep)
+        
+        # Second transaction: after buying 3 more at $150
+        # Total cost = (5*100) + (3*150) = 500 + 450 = 950
+        # Total quantity = 5 + 3 = 8
+        # BEP = 950/8 = 118.75
+        self.assertEqual(Decimal('118.75'), transactions[1].bep)
+    
+    def test_calculate_break_even_prices_with_sales(self):
+        # Test with buys and sells
+        transactions = [
+            create_t(10, price=100.0, day=1),    # Buy 10 at $100
+            create_t(5, price=120.0, day=2),     # Buy 5 at $120
+            create_t(-8, price=130.0, day=3),    # Sell 8 at $130
+            create_t(1, price=140.0, day=4)      # Buy 1 at $140
+        ]
+        
+        calculate_break_even_prices(transactions)
+        
+        # First transaction: 10 shares at $100, BEP = $100
+        self.assertEqual(Decimal('100.0'), transactions[0].bep)
+        
+        # Second transaction: after buying 5 more at $120
+        # Total cost = (10*100) + (5*120) = 1000 + 600 = 1600
+        # Total quantity = 10 + 5 = 15
+        # BEP = 1600/15 = 106.666...
+        expected_bep = Decimal('1600') / Decimal('15')
+        self.assertEqual(expected_bep, transactions[1].bep)
+        
+        # For the sale transaction, no BEP is set, but the total cost is adjusted
+        self.assertEqual(expected_bep, transactions[2].bep)
+        quantity = 15 + transactions[2].count
+        total_cost = Decimal('1600') + transactions[2].count * expected_bep
+
+        # Fourth transaction: after selling 8 at $130 and buying 1 at $140
+        t = transactions[3]
+        final_expected_bep = (total_cost + t.count * t.share_price) / (quantity + t.count)
+        self.assertEqual(final_expected_bep, t.bep)        
 
 
 class PairingStrategiesTestCase(unittest.TestCase):

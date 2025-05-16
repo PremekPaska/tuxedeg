@@ -125,6 +125,22 @@ def find_buys(sale_t: Transaction, trans: List[Transaction], strategies: dict[in
     return method(sale_t, trans)
 
 
+def calculate_break_even_prices(txs: List[Transaction]):
+    quantity = 0
+    total_cost = Decimal(0)
+
+    for tx in txs:
+        if not tx.is_sale:
+            total_cost += tx.count * tx.share_price
+            quantity += tx.count
+            tx.set_bep(total_cost / quantity)
+        else:
+            bep = total_cost / quantity
+            tx.set_bep(bep)
+            total_cost += tx.count * bep  # Count is negative for sales
+            quantity += tx.count
+        
+
 def warn_about_default_strategy(trans: List[Transaction], strategies: dict[int,str]) -> None:
     for sale_t in [t for t in trans if t.is_sale]:
         if sale_t.time.year < min(strategies.keys()):
@@ -149,12 +165,9 @@ def calculate_tax(sale_records: List[SaleRecord], tax_year: int):
 
 
 def optimize_product(txs: List[Transaction], tax_year: int, strategies: dict[int,str] = None) -> List[SaleRecord]:
-    if not strategies:
-        strategies = {tax_year: 'max_cost'}  # This fallback is just for testing (TODO: remove)
-
+    calculate_break_even_prices(txs)
     sale_records = optimize_transaction_pairing(txs, strategies)
     calculate_tax(sale_records, tax_year)
-
     return sale_records
 
 
@@ -168,7 +181,8 @@ def calculate_totals(sale_records: List[SaleRecord], tax_year: int) -> (decimal,
         total_cost += sale.cost_tc
         total_fees += sale.fees_tc
 
-    return total_income, total_cost, total_fees
+    precision = Decimal('0.0001')
+    return total_income.quantize(precision), total_cost.quantize(precision), total_fees.quantize(precision)
 
 
 def print_report(sale_records: List[SaleRecord]):

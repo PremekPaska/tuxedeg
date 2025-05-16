@@ -17,7 +17,7 @@ class Transaction:
         self._time = time
         self._product_name = product_name
         self.isin = isin  # TODO: rename to product_id
-        self._count = int(count)
+        self._count = int(count)  # count is negative for sales
         self._remaining_count = self._count  # This is only valid for buy transactions.
         self._share_price = Decimal(share_price).quantize(IMPORT_PRECISION)  # 'cause pandas stores it in doubles (TODO)
         self._currency = check_currency(currency)
@@ -26,6 +26,7 @@ class Transaction:
 
         self._fee_available = True  # Not used for sale transactions
         self._split_ratio = Decimal(1)
+        self._bep = None
 
     def __str__(self):
         return f"{self._time}, {self._product_name}, {self._count}, {self.isin}, {self._share_price}, fee: {self._fee}"
@@ -71,6 +72,13 @@ class Transaction:
     @property
     def split_ratio(self) -> decimal:
         return self._split_ratio
+
+    @property
+    def bep(self) -> decimal:
+        return self._bep
+    
+    def set_bep(self, bep: decimal):
+        self._bep = bep
 
     def consume_shares(self, number_sold: int) -> bool:
         if number_sold < 1:
@@ -189,15 +197,19 @@ class SaleRecord:
         self._income_tc = (-self.sale_t.count) * self.sale_t.share_price * self._fx_rate
         return self._income_tc
 
-    def _calculate_cost_and_fees(self) -> None:
+    def _calculate_cost_and_fees(self, use_bep: bool = False) -> None:
         cost = Decimal(0)
         fees = Decimal(0)
         for buy_record in self.buys:
+            if use_bep:
+                buy_record.buy_t._share_price = self.sale_t.bep  # Hack
+
             buy_record.calculate_cost()
             cost += buy_record.cost_tc
             fees += buy_record.fees_tc
             if (self.sale_t.time - buy_record.buy_t.time).days > 3 * 365:
                 buy_record.pass_time_test()
+
         self._cost_tc = cost
 
         sale_fee = self.sale_t.fee * unified_fx_rate(self.sale_t.time.year, self.sale_t.fee_currency)
@@ -205,4 +217,4 @@ class SaleRecord:
 
     def calculate_profit(self) -> None:
         self._calculate_income()
-        self._calculate_cost_and_fees()
+        self._calculate_cost_and_fees(use_bep=False)

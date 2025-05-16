@@ -10,6 +10,7 @@ from optimizer import optimize_product, calculate_totals
 
 class ImportTestCase(unittest.TestCase):
     TAX_YEAR = 2021
+    STRATEGIES = {2021: "max_cost"}
 
     @staticmethod
     def import_test_transactions_en():
@@ -38,7 +39,7 @@ class ImportTestCase(unittest.TestCase):
         df_transactions = self.import_test_transactions_en()
         ts_cloudflare = self.convert_to_transactions(df_transactions, "CLOUDFLARE")
 
-        report = optimize_product(ts_cloudflare, self.TAX_YEAR)
+        report = optimize_product(ts_cloudflare, self.TAX_YEAR, self.STRATEGIES)
         self.assertEqual(2, len(report))
 
         income, cost, fees = calculate_totals(report, self.TAX_YEAR)
@@ -55,7 +56,7 @@ class ImportTestCase(unittest.TestCase):
         transactions = convert_to_transactions_deg(df_transactions, product_id, tax_year)
         self.assertEqual(74, len(transactions))
 
-        report = optimize_product(transactions, tax_year)
+        report = optimize_product(transactions, tax_year, {tax_year: "max_cost"})
         self.assertEqual(38, len(report))
 
         income, cost, fees = calculate_totals(report, tax_year)
