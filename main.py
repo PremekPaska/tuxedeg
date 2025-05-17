@@ -131,6 +131,7 @@ def optimize_all(
     strategies: dict[int, str],
     account_code: str,
     splits_df: DataFrame,
+    enable_bep: bool = False,
 ) -> None:
     id_col, date_col, product_col = detect_columns(df_trans)
 
@@ -157,7 +158,7 @@ def optimize_all(
             continue
 
         txs = build_transactions(df_trans, pid, tax_year, splits_df, id_col=id_col)
-        report = optimize_product(txs, tax_year, strategies)
+        report = optimize_product(txs, tax_year, strategies, enable_bep)
 
         # Accumulate pairing details
         pairing_rows.extend(build_pairing_rows(report, id_col))
@@ -185,7 +186,8 @@ def optimize_all(
     # Export aggregated results and detailed pairings to CSV
     output_path = "outputs/"
     os.makedirs(output_path, exist_ok=True)
-    output_filename_suffix = f"{account_code}-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}.csv"
+    bep_suffix = "-bep" if enable_bep else ""
+    output_filename_suffix = f"{account_code}-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}{bep_suffix}.csv"
 
     df_results.to_csv(
         f"{output_path}results-{output_filename_suffix}",
@@ -206,6 +208,8 @@ def optimize_all(
 
     print()
     print(f"Pairing strategies: {strategies}")
+    if enable_bep:
+        print("BEP (break-even price) used for cost calculations.")
     print()
     print(f"Total income: {total_income}")
     print(f"Total cost  : {total_cost}")
@@ -286,6 +290,7 @@ def main():
     parser.add_argument('--fifo', action='store_true', help='Use FIFO strategy')
     parser.add_argument('--config', type=str, help='Path to strategies JSON file, default: config/strategies.json')
     parser.add_argument('--no-split', action='store_true', help='Disable loading and applying stock splits')
+    parser.add_argument('--bep', action='store_true', help='Enable break-even prices calculation')
     parser.add_argument('files', nargs='+', help='Files to process')
     args = parser.parse_args()
 
@@ -315,7 +320,7 @@ def main():
     splits_df = load_stock_splits("config/corporate_actions.csv") if not args.no_split else None
 
     # *** main processing ***
-    optimize_all(df_transactions, args.year, strategies, account_code, splits_df)
+    optimize_all(df_transactions, args.year, strategies, account_code, splits_df, args.bep)
 
     print()
     print("Processed file(s):", args.files)

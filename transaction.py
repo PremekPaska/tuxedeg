@@ -215,6 +215,6 @@ class SaleRecord:
         sale_fee = self.sale_t.fee * unified_fx_rate(self.sale_t.time.year, self.sale_t.fee_currency)
         self._fees_tc = fees + sale_fee
 
-    def calculate_profit(self) -> None:
+    def calculate_profit(self, enable_bep: bool = False) -> None:
         self._calculate_income()
-        self._calculate_cost_and_fees(use_bep=False)
+        self._calculate_cost_and_fees(use_bep=enable_bep)
