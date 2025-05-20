@@ -86,6 +86,33 @@ class OptimizerTestCase(unittest.TestCase):
 
         self.assertEqual(Decimal('60.0') * self.fx_rate, sale_record.profit_tc)
 
+    def test_calculate_profit_bep(self):
+        transactions = [
+            create_t(10, 100.0, day=1),
+            create_t(10, 300.0, day=3),
+            create_t(-3, 120.0, day=5),
+            create_t(17, 400.0, day=10),
+            create_t(-10, 500.0, day=15)
+        ]
+
+        calculate_break_even_prices(transactions)
+        report = optimize_transaction_pairing(transactions, {self.TAX_YEAR: 'fifo'})
+        self.assertEqual(2, len(report))
+
+        sale_record = report[0]
+        sale_record.calculate_profit(enable_bep=True)
+
+        expected_profit_usd = Decimal('-240.0')
+        actual_profit_usd = sale_record.profit_tc / self.fx_rate
+        self.assertEqual(expected_profit_usd, actual_profit_usd)
+
+        sale_record = report[1]
+        sale_record.calculate_profit(enable_bep=True)
+
+        expected_profit_usd = Decimal('2000.0')
+        actual_profit_usd = sale_record.profit_tc / self.fx_rate
+        self.assertEqual(expected_profit_usd, actual_profit_usd)
+
     def test_calculate_profit_multiple_buys(self):
         trans = scenario_sell_multiple_buys()
         report = optimize_transaction_pairing(trans, self.STRATEGIES)
@@ -169,10 +196,10 @@ class PairingStrategiesTestCase(unittest.TestCase):
         product_id = get_product_id_by_prefix(df_trans, product_prefix, id_col="ISIN")
         return convert_to_transactions_deg(df_trans, product_id, tax_year)
 
-    def optimize_product_amd(self, tax_year: int, strategies: dict[int,str]):
+    def optimize_product_amd(self, tax_year: int, strategies: dict[int,str], enable_bep: bool = False):
         transactions = self.import_product_transactions('ADVANCED MICRO DEVICES', tax_year)
 
-        report = optimize_product(transactions, tax_year, strategies)
+        report = optimize_product(transactions, tax_year, strategies, enable_bep)
         self.assertEqual(38, len(report))
         return report
 
@@ -212,6 +239,15 @@ class PairingStrategiesTestCase(unittest.TestCase):
         self.assertEqual(Decimal('60565.7172'), cost)
         self.assertEqual(Decimal('500.4564'), fees)
 
+    def test_pairing_strategy_lifo_bep(self):
+        tax_year = 2019
+        report = self.optimize_product_amd(tax_year, {tax_year: 'lifo'}, enable_bep=True)
+        # Not sure if LIFO with BEP makes sense, but FIFO gives same results with or without BEP
+
+        income, cost, fees = calculate_totals(report, tax_year)
+        self.assertEqual(Decimal('93774.7573'), income)
+        self.assertEqual(Decimal('63322.7934'), cost)
+        self.assertEqual(Decimal('593.3456'), fees)
 
 if __name__ == '__main__':
     unittest.main()
