@@ -82,7 +82,7 @@ class OptimizerTestCase(unittest.TestCase):
         self.assertEqual(1, len(report))
 
         sale_record = report[0]
-        sale_record.calculate_profit()
+        sale_record.calculate_income_and_cost()
 
         self.assertEqual(Decimal('60.0') * self.fx_rate, sale_record.profit_tc)
 
@@ -100,14 +100,14 @@ class OptimizerTestCase(unittest.TestCase):
         self.assertEqual(2, len(report))
 
         sale_record = report[0]
-        sale_record.calculate_profit(enable_bep=True)
+        sale_record.calculate_income_and_cost(enable_bep=True)
 
         expected_profit_usd = Decimal('-240.0')
         actual_profit_usd = sale_record.profit_tc / self.fx_rate
         self.assertEqual(expected_profit_usd, actual_profit_usd)
 
         sale_record = report[1]
-        sale_record.calculate_profit(enable_bep=True)
+        sale_record.calculate_income_and_cost(enable_bep=True)
 
         expected_profit_usd = Decimal('2000.0')
         actual_profit_usd = sale_record.profit_tc / self.fx_rate
@@ -118,7 +118,7 @@ class OptimizerTestCase(unittest.TestCase):
         report = optimize_transaction_pairing(trans, self.STRATEGIES)
 
         sale_record = report[0]
-        sale_record.calculate_profit()
+        sale_record.calculate_income_and_cost()
         self.assertEqual(Decimal('900') * self.fx_rate, sale_record.profit_tc)  # assumes max_cost, FIFO would be $940
 
     def test_is_better_cost_pair(self):

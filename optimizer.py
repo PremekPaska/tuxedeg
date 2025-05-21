@@ -161,7 +161,7 @@ def optimize_transaction_pairing(trans: List[Transaction], strategies: dict[int,
 
 def calculate_tax(sale_records: List[SaleRecord], tax_year: int, enable_bep: bool = False):
     for sale in [sale for sale in sale_records if sale.sale_t.time.year == tax_year]:
-        sale.calculate_profit(enable_bep)
+        sale.calculate_income_and_cost(enable_bep)
 
 
 def optimize_product(txs: List[Transaction], tax_year: int, strategies: dict[int,str] = None, enable_bep: bool = False) -> List[SaleRecord]:

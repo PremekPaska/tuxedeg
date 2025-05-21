@@ -194,37 +194,31 @@ class SaleRecord:
         sale_fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)
         return buy_record._count_consumed * self.sale_t.share_price * sale_fx_rate
 
-    def _calculate_income(self) -> decimal:
+    def calculate_income_and_cost(self, enable_bep: bool = False) -> None:
         self._fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)
         if not self.sale_t.is_sale:
             raise ValueError("Expected a sale transaction.")
         
-        # Calculate income for each buy record individually
         total_income = Decimal(0)
+        total_cost = Decimal(0)
+        total_fees = Decimal(0)
+        
         for buy_record in self.buys:
             total_income += self._calculate_income_for_buy_sell_pair(buy_record)
             
-        self._income_tc = total_income
-        return self._income_tc
-
-    def _calculate_cost_and_fees(self, use_bep: bool = False) -> None:
-        cost = Decimal(0)
-        fees = Decimal(0)
-        for buy_record in self.buys:
-            if use_bep:
-                buy_record.buy_t._share_price = self.sale_t.bep  # Hack
-
+            if enable_bep:
+                buy_record.buy_t._share_price = self.sale_t.bep  # Break-Even Price (BEP) hack
+            
             buy_record.calculate_cost()
-            cost += buy_record.cost_tc
-            fees += buy_record.fees_tc
-            if (self.sale_t.time - buy_record.buy_t.time).days > 3 * 365:
+            total_cost += buy_record.cost_tc
+            total_fees += buy_record.fees_tc
+            
+            if (self.sale_t.time - buy_record.buy_t.time).days > 3 * 365:  # Time test
                 buy_record.pass_time_test()
-
-        self._cost_tc = cost
-
+        
+        self._income_tc = total_income
+        self._cost_tc = total_cost
+        
         sale_fee = self.sale_t.fee * unified_fx_rate(self.sale_t.time.year, self.sale_t.fee_currency)
-        self._fees_tc = fees + sale_fee
-
-    def calculate_profit(self, enable_bep: bool = False) -> None:
-        self._calculate_income()
-        self._calculate_cost_and_fees(use_bep=enable_bep)
+        self._fees_tc = total_fees + sale_fee
+   
