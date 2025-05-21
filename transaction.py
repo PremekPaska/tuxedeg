@@ -189,12 +189,22 @@ class SaleRecord:
     @property
     def fees_tc(self) -> decimal:
         return self._fees_tc
+    
+    def _calculate_income_for_buy_sell_pair(self, buy_record: BuyRecord):
+        sale_fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)
+        return buy_record._count_consumed * self.sale_t.share_price * sale_fx_rate
 
     def _calculate_income(self) -> decimal:
         self._fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)
         if not self.sale_t.is_sale:
             raise ValueError("Expected a sale transaction.")
-        self._income_tc = (-self.sale_t.count) * self.sale_t.share_price * self._fx_rate
+        
+        # Calculate income for each buy record individually
+        total_income = Decimal(0)
+        for buy_record in self.buys:
+            total_income += self._calculate_income_for_buy_sell_pair(buy_record)
+            
+        self._income_tc = total_income
         return self._income_tc
 
     def _calculate_cost_and_fees(self, use_bep: bool = False) -> None:
