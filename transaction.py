@@ -203,7 +203,12 @@ class SaleRecord:
         total_cost = Decimal(0)
         total_fees = Decimal(0)
         
-        for buy_record in self.buys:
+        for buy_record in self.buys:             
+            if (self.sale_t.time - buy_record.buy_t.time).days > 3 * 365:  # Time test
+                buy_record.pass_time_test()
+                print(f"Time test passed for {buy_record._count_consumed} shares bought on {buy_record.buy_t.time}")
+                continue
+
             total_income += self._calculate_income_for_buy_sell_pair(buy_record)
             
             if enable_bep:
@@ -211,10 +216,7 @@ class SaleRecord:
             
             buy_record.calculate_cost()
             total_cost += buy_record.cost_tc
-            total_fees += buy_record.fees_tc
-            
-            if (self.sale_t.time - buy_record.buy_t.time).days > 3 * 365:  # Time test
-                buy_record.pass_time_test()
+            total_fees += buy_record.fees_tc            
         
         self._income_tc = total_income
         self._cost_tc = total_cost
