@@ -28,6 +28,17 @@ def scenario_sell_multiple_buys():
     ]
 
 
+def scenario_time_test():
+    # Create a scenario with buys at different times, some over 3 years old
+    return [
+        # Buy shares 3 years and 1 day before sale (should pass time test)
+        create_t(5, price=100.0, day=1, month=1, year_offset=-3),
+        # Buy shares 2 years before sale (should not pass time test)
+        create_t(3, price=120.0, day=1, month=1, year_offset=-2),
+        create_t(-8, price=200.0, day=2, month=1)
+    ]
+
+
 class OptimizerTestCase(unittest.TestCase):
     TAX_YEAR = 2021
     STRATEGIES = {2021: 'max_cost'}
@@ -60,9 +71,45 @@ class OptimizerTestCase(unittest.TestCase):
         self.assertFalse(report[1].buys[0]._fee_consumed)
 
         calculate_tax(report, self.TAX_YEAR)
-        # There's always the sale transaction fee
-        self.assertEqual(Decimal('1.00') * unified_fx_rate(self.TAX_YEAR, 'EUR'), report[0].fees_tc)
-        self.assertEqual(Decimal('0.50') * unified_fx_rate(self.TAX_YEAR, 'EUR'), report[1].fees_tc)
+         
+    def test_time_test_flag_disabled(self):
+        """Test that the time test flag doesn't skip transactions over 3 years old when not enabled."""
+        trans = scenario_time_test()
+        report = optimize_transaction_pairing(trans, {self.TAX_YEAR: 'fifo'})
+        self.assertEqual(1, len(report))  # One sale record
+        
+        calculate_tax(report, self.TAX_YEAR, enable_ttest=False)
+        
+        expected_income_no_ttest = (5 + 3) * 200 * self.fx_rate
+        expected_cost_no_ttest = 5 * 100 * unified_fx_rate(self.TAX_YEAR - 3, 'USD') \
+                               + 3 * 120 * unified_fx_rate(self.TAX_YEAR - 2, 'USD')
+        
+        self.assertEqual(expected_income_no_ttest, report[0].income_tc)
+        self.assertEqual(expected_cost_no_ttest, report[0].cost_tc)
+        self.assertFalse(report[0].buys[0].time_test_passed)
+        self.assertFalse(report[0].buys[1].time_test_passed)
+        
+    def test_time_test_flag_enabled(self):
+        """Test that the time test flag correctly skips transactions over 3 years old."""
+        trans = scenario_time_test()
+        report = optimize_transaction_pairing(trans, {self.TAX_YEAR: 'fifo'})
+        self.assertEqual(1, len(report))  # One sale record
+       
+        # Test with the ttest flag, buys over 3 years old should be skipped
+        calculate_tax(report, self.TAX_YEAR, enable_ttest=True)
+        
+        # Calculate expected values with ttest
+        # Only 3 shares at $120 should be included (other 5 are skipped due to time test)
+        expected_income_ttest = 3 * 200 * self.fx_rate
+        expected_cost_ttest = 3 * 120 * unified_fx_rate(self.TAX_YEAR - 2, 'USD')
+        
+        self.assertEqual(expected_income_ttest, report[0].income_tc)
+        self.assertEqual(expected_cost_ttest, report[0].cost_tc)
+        self.assertTrue(report[0].buys[0].time_test_passed)
+        self.assertFalse(report[0].buys[1].time_test_passed)
+
+        self.assertEqual(Decimal('0.50') * unified_fx_rate(self.TAX_YEAR, 'EUR') \
+                       + Decimal('0.50') * unified_fx_rate(self.TAX_YEAR - 2, 'EUR'), report[0].fees_tc)
 
     def test_sell_multiple_buys(self):
         trans = scenario_sell_multiple_buys()

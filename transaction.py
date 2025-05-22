@@ -203,8 +203,9 @@ class SaleRecord:
         total_cost = Decimal(0)
         total_fees = Decimal(0)
         
-        for buy_record in self.buys:             
-            if enable_ttest and (self.sale_t.time - buy_record.buy_t.time).days > 3 * 365:  # Time test
+        for buy_record in self.buys:
+            ttest_passed = (self.sale_t.time - buy_record.buy_t.time).days > 3 * 365  # Time test
+            if enable_ttest and ttest_passed:
                 buy_record.pass_time_test()
                 print(f"Time test passed for {buy_record._count_consumed} shares bought on {buy_record.buy_t.time}")
                 continue
