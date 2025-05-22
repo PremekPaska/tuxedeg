@@ -194,7 +194,7 @@ class SaleRecord:
         sale_fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)
         return buy_record._count_consumed * self.sale_t.share_price * sale_fx_rate
 
-    def calculate_income_and_cost(self, enable_bep: bool = False) -> None:
+    def calculate_income_and_cost(self, enable_bep: bool = False, enable_ttest: bool = False) -> None:
         self._fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)
         if not self.sale_t.is_sale:
             raise ValueError("Expected a sale transaction.")
@@ -204,7 +204,7 @@ class SaleRecord:
         total_fees = Decimal(0)
         
         for buy_record in self.buys:             
-            if (self.sale_t.time - buy_record.buy_t.time).days > 3 * 365:  # Time test
+            if enable_ttest and (self.sale_t.time - buy_record.buy_t.time).days > 3 * 365:  # Time test
                 buy_record.pass_time_test()
                 print(f"Time test passed for {buy_record._count_consumed} shares bought on {buy_record.buy_t.time}")
                 continue

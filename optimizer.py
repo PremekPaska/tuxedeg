@@ -159,16 +159,16 @@ def optimize_transaction_pairing(trans: List[Transaction], strategies: dict[int,
     return sale_records
 
 
-def calculate_tax(sale_records: List[SaleRecord], tax_year: int, enable_bep: bool = False):
+def calculate_tax(sale_records: List[SaleRecord], tax_year: int, enable_bep: bool = False, enable_ttest: bool = False):
     for sale in [sale for sale in sale_records if sale.sale_t.time.year == tax_year]:
-        sale.calculate_income_and_cost(enable_bep)
+        sale.calculate_income_and_cost(enable_bep, enable_ttest)
 
 
-def optimize_product(txs: List[Transaction], tax_year: int, strategies: dict[int,str] = None, enable_bep: bool = False) -> List[SaleRecord]:
+def optimize_product(txs: List[Transaction], tax_year: int, strategies: dict[int,str] = None, enable_bep: bool = False, enable_ttest: bool = False) -> List[SaleRecord]:
     if enable_bep:
         calculate_break_even_prices(txs)
     sale_records = optimize_transaction_pairing(txs, strategies)
-    calculate_tax(sale_records, tax_year, enable_bep)
+    calculate_tax(sale_records, tax_year, enable_bep, enable_ttest)
     return sale_records
 
 

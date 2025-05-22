@@ -132,6 +132,7 @@ def optimize_all(
     account_code: str,
     splits_df: DataFrame,
     enable_bep: bool = False,
+    enable_ttest: bool = False,
 ) -> None:
     id_col, date_col, product_col = detect_columns(df_trans)
 
@@ -158,7 +159,7 @@ def optimize_all(
             continue
 
         txs = build_transactions(df_trans, pid, tax_year, splits_df, id_col=id_col)
-        report = optimize_product(txs, tax_year, strategies, enable_bep)
+        report = optimize_product(txs, tax_year, strategies, enable_bep, enable_ttest)
 
         # Accumulate pairing details
         pairing_rows.extend(build_pairing_rows(report, id_col))
@@ -187,7 +188,8 @@ def optimize_all(
     output_path = "outputs/"
     os.makedirs(output_path, exist_ok=True)
     bep_suffix = "-bep" if enable_bep else ""
-    output_filename_suffix = f"{account_code}-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}{bep_suffix}.csv"
+    ttest_suffix = "-ttest" if enable_ttest else ""
+    output_filename_suffix = f"{account_code}-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}{bep_suffix}{ttest_suffix}.csv"
 
     df_results.to_csv(
         f"{output_path}results-{output_filename_suffix}",
@@ -291,6 +293,7 @@ def main():
     parser.add_argument('--config', type=str, help='Path to strategies JSON file, default: config/strategies.json')
     parser.add_argument('--no-split', action='store_true', help='Disable loading and applying stock splits')
     parser.add_argument('--bep', action='store_true', help='Enable break-even prices calculation')
+    parser.add_argument('--ttest', action='store_true', help='Skip profit (both income & cost) for sales after 3 years')
     parser.add_argument('files', nargs='+', help='Files to process')
     args = parser.parse_args()
 
@@ -320,7 +323,7 @@ def main():
     splits_df = load_stock_splits("config/corporate_actions.csv") if not args.no_split else None
 
     # *** main processing ***
-    optimize_all(df_transactions, args.year, strategies, account_code, splits_df, args.bep)
+    optimize_all(df_transactions, args.year, strategies, account_code, splits_df, args.bep, args.ttest)
 
     print()
     print("Processed file(s):", args.files)
