@@ -204,18 +204,24 @@ class SaleRecord:
         total_fees = Decimal(0)
         
         for buy_record in self.buys:
-            ttest_passed = (self.sale_t.time - buy_record.buy_t.time).days > 3 * 365  # Time test
-            if enable_ttest and ttest_passed:
-                buy_record.pass_time_test()
-                print(f"Time test passed for {buy_record._count_consumed} shares bought on {buy_record.buy_t.time}")
-                continue
-
-            total_income += self._calculate_income_for_buy_sell_pair(buy_record)
+            # Calculate income and cost of the buy-sell pair, don't add it to totals if time test passed.
+            pair_income = self._calculate_income_for_buy_sell_pair(buy_record)
             
             if enable_bep:
                 buy_record.buy_t._share_price = self.sale_t.bep  # Break-Even Price (BEP) hack
             
             buy_record.calculate_cost()
+
+            ttest_passed = (self.sale_t.time - buy_record.buy_t.time).days > 3 * 365  # Time test
+            if ttest_passed:
+                buy_record.pass_time_test()  # We still enable the flag, even if time test is not enabled.
+                pair_profit = (pair_income - buy_record.cost_tc).quantize(Decimal('0.01'))
+                suffix = f". Untaxed profit: {pair_profit} CZK" if enable_ttest else ", but not applied, consider --ttest."
+                print(f"Time test passed for {buy_record._count_consumed} shares bought on {buy_record.buy_t.time}{suffix}")
+                if enable_ttest:
+                    continue
+
+            total_income += pair_income    
             total_cost += buy_record.cost_tc
             total_fees += buy_record.fees_tc            
         

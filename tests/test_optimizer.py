@@ -86,7 +86,7 @@ class OptimizerTestCase(unittest.TestCase):
         
         self.assertEqual(expected_income_no_ttest, report[0].income_tc)
         self.assertEqual(expected_cost_no_ttest, report[0].cost_tc)
-        self.assertFalse(report[0].buys[0].time_test_passed)
+        self.assertTrue(report[0].buys[0].time_test_passed)  # We still enable the flag.
         self.assertFalse(report[0].buys[1].time_test_passed)
         
     def test_time_test_flag_enabled(self):
