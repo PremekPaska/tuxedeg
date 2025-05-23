@@ -18,7 +18,9 @@ import re
 
 # === constants ===
 HEADER_PREFIX: Final[str] = "Trades,Header,"
-IMPORT_PREFIX: Final[str] = "Trades,Data,Order,Stocks"
+IMPORT_PREFIX: Final[str] = "Trades,Data,Order,"
+ASSET_STOCKS: Final[str] = "Stocks"
+ASSET_OPTIONS: Final[str] = "Equity and Index Options"
 KEEP_COLS: Final[list[str]] = [
     "Currency",
     "Symbol",
@@ -29,7 +31,7 @@ KEEP_COLS: Final[list[str]] = [
 ]
 
 # === helper functions ===
-def _scan_csv(path: Path) -> tuple[list[str], list[str]]:
+def _scan_csv(path: Path, asset_category: str) -> tuple[list[str], list[str]]:
     """Return (header, data_rows) from *path* or raise ValueError."""
     current_header: list[str] | None = None
     header_locked = False
@@ -41,7 +43,7 @@ def _scan_csv(path: Path) -> tuple[list[str], list[str]]:
                 current_header = [h.strip() for h in line.rstrip("\n").split(",")]
                 continue
 
-            if line.startswith(IMPORT_PREFIX):
+            if line.startswith(f"{IMPORT_PREFIX}{asset_category}"):
                 if current_header is None:
                     raise ValueError(f"{path.name}: data before header")
                 
@@ -63,10 +65,10 @@ def _scan_csv(path: Path) -> tuple[list[str], list[str]]:
     return current_header, data_rows
 
 
-def _parse_one_csv(path: Path) -> pd.DataFrame:
-    header, rows = _scan_csv(path)
+def _parse_one_csv(path: Path, asset_category: str) -> pd.DataFrame:
+    header, rows = _scan_csv(path, asset_category)
     if not rows:
-        logging.info("%s: no stock trades", path.name)
+        logging.info("%s: no %s trades", path.name, asset_category)
         return pd.DataFrame(columns=KEEP_COLS)
 
     buf = io.StringIO()
@@ -90,13 +92,21 @@ def _parse_one_csv(path: Path) -> pd.DataFrame:
     return df
 
 
-def import_ibkr_stock_transactions(paths: Iterable[str | Path]) -> pd.DataFrame:
+def import_ibkr_transactions(paths: Iterable[str | Path], asset_category: str) -> pd.DataFrame:
     frames: list[pd.DataFrame] = []
     for p in paths:
         path = Path(p).expanduser()
         logging.info("Importing %s", path)
-        frames.append(_parse_one_csv(path))
+        frames.append(_parse_one_csv(path, asset_category))
     return pd.concat(frames, ignore_index=True)[KEEP_COLS]
+
+
+def import_ibkr_stock_transactions(paths: Iterable[str | Path]) -> pd.DataFrame:
+    return import_ibkr_transactions(paths, asset_category=ASSET_STOCKS)
+
+
+def import_ibkr_option_transactions(paths: Iterable[str | Path]) -> pd.DataFrame:
+    return import_ibkr_transactions(paths, asset_category=ASSET_OPTIONS)
 
 
 def filter_by_symbol(df: pd.DataFrame, symbol: str) -> pd.DataFrame:
@@ -234,6 +244,7 @@ def process_corporate_actions(csv_paths: Iterable[str | Path]) -> pd.DataFrame:
 def _cli() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Import IBKR stock trades")
     p.add_argument("csv", nargs="+", help="CSV file(s) or glob(s)")
+    p.add_argument("-o", "--options", help="Import options trades", action="store_true")
     p.add_argument("-s", "--symbol", help="Filter trades by symbol", default=None)
     p.add_argument("-e", "--export-ca", help="Export corporate actions", action="store_true")
     return p.parse_args()
@@ -254,7 +265,7 @@ def main() -> None:
         raise SystemExit("nothing to import")
 
     try:
-        df = import_ibkr_stock_transactions(files)
+        df = import_ibkr_transactions(files, asset_category=ASSET_STOCKS if not args.options else ASSET_OPTIONS)
         if args.symbol:
             original_count = len(df)
             df = filter_by_symbol(df, args.symbol)
