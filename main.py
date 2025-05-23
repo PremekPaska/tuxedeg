@@ -155,7 +155,7 @@ def optimize_all(
             print(f"Skipping product {pid}: {pname}")
             continue
         elif id_col == "Symbol" and pid in ("CNDX", "CSPX", "VOW3d", "AMD", "CRWD", "NVDA", "PLTR", "TM"):
-            print(f"Skipping product {pid}, shorting not (yet) supported.")
+            print(f"Skipping product {pid}, shorting not (yet) supported.\n")
             continue
 
         txs = build_transactions(df_trans, pid, tax_year, splits_df, id_col=id_col)
