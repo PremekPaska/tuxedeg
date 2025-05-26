@@ -26,7 +26,7 @@ class ImportTestCase(unittest.TestCase):
         return import_corporate_actions(["test_data/U74_2022_test.csv"])
 
     def convert_to_transactions(self, df_transactions: DataFrame, symbol: str) -> list[Transaction]:
-        txs = convert_to_transactions_ibkr(df_transactions, symbol, self.TAX_YEAR)
+        txs = convert_to_transactions_ibkr(df_transactions, symbol, self.TAX_YEAR, options=False)
         return txs
 
     def test_import(self):

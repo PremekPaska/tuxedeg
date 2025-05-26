@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Dict, List
 
 from import_deg import convert_to_transactions_deg, import_transactions
-from import_ibkr import import_ibkr_stock_transactions
+from import_ibkr import import_ibkr_stock_transactions, import_ibkr_option_transactions
 from import_utils import detect_columns
 from transaction_ibkr import convert_to_transactions_ibkr
 from corporate_action import load_stock_splits, apply_stock_splits_for_product
@@ -39,13 +39,14 @@ def build_transactions(
     splits_df: DataFrame,
     *,
     id_col: str,
+    options: bool,
 ) -> list[Transaction]:
     """Convert one product's rows to Transaction objects and apply splits."""
 
     if id_col == "ISIN":
         txs = convert_to_transactions_deg(df_trans, product_id, tax_year)
     else:
-        txs = convert_to_transactions_ibkr(df_trans, product_id, tax_year)
+        txs = convert_to_transactions_ibkr(df_trans, product_id, tax_year, options=options)
 
     apply_stock_splits_for_product(txs, splits_df, product_id, id_col=id_col)
     return txs
@@ -131,8 +132,10 @@ def optimize_all(
     strategies: dict[int, str],
     account_code: str,
     splits_df: DataFrame,
+    *,
     enable_bep: bool = False,
     enable_ttest: bool = False,
+    options: bool = False,
 ) -> None:
     id_col, date_col, product_col = detect_columns(df_trans)
 
@@ -158,7 +161,7 @@ def optimize_all(
             print(f"Skipping product {pid}, shorting not (yet) supported.\n")
             continue
 
-        txs = build_transactions(df_trans, pid, tax_year, splits_df, id_col=id_col)
+        txs = build_transactions(df_trans, pid, tax_year, splits_df, id_col=id_col, options=options)
         report = optimize_product(txs, tax_year, strategies, enable_bep, enable_ttest)
 
         # Accumulate pairing details
@@ -294,13 +297,16 @@ def main():
     parser.add_argument('--no-split', action='store_true', help='Disable loading and applying stock splits')
     parser.add_argument('--bep', action='store_true', help='Enable break-even prices calculation')
     parser.add_argument('--ttest', action='store_true', help='Skip profit (both income & cost) for sales after 3 years')
+    parser.add_argument('-o', '--options', action='store_true', help='Import options trades')
     parser.add_argument('files', nargs='+', help='Files to process')
     args = parser.parse_args()
 
-    if not (args.deg or args.ibkr):
-        parser.error('At least one of --deg or --ibkr must be specified')
+    if not (args.deg or args.ibkr or args.options):
+        parser.error('At least one of --deg, --ibkr or --options must be specified')
     if args.deg and args.ibkr:
         parser.error('Only one of --deg or --ibkr can be specified')
+    if args.deg and args.options:
+        parser.error('Only --ibkr can be used with --options')
 
     if not args.year:
         args.year = datetime.now().year - 1
@@ -312,8 +318,11 @@ def main():
         # Import from one or more Degiro CSV files
         df_list = [import_transactions(f) for f in args.files]
         df_transactions = pd.concat(df_list, ignore_index=True)
+    elif args.options:
+        # Import options from one or more IBKR CSV files
+        df_transactions = import_ibkr_option_transactions(args.files)
     else:
-        # Import from one or more IBKR CSV files
+        # Import stocks from one or more IBKR CSV files
         df_transactions = import_ibkr_stock_transactions(args.files)
 
     # pairing strategies for each tax year
@@ -323,7 +332,11 @@ def main():
     splits_df = load_stock_splits("config/corporate_actions.csv") if not args.no_split else None
 
     # *** main processing ***
-    optimize_all(df_transactions, args.year, strategies, account_code, splits_df, args.bep, args.ttest)
+    optimize_all(
+        df_transactions, args.year, strategies, account_code, splits_df,
+        enable_bep=args.bep,
+        enable_ttest=args.ttest,
+        options=args.options)
 
     print()
     print("Processed file(s):", args.files)

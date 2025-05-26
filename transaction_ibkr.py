@@ -5,7 +5,9 @@ from typing import List
 def convert_to_transactions_ibkr(
     df_trans: DataFrame,
     symbol: str,
-    tax_year: int
+    tax_year: int,
+    *,
+    options: bool,
 ) -> List[Transaction]:
     df_sym = (
         df_trans[df_trans["Symbol"] == symbol]
@@ -34,6 +36,7 @@ def convert_to_transactions_ibkr(
             currency=row["Currency"],
             fee=fee,
             fee_currency=row["Currency"],
+            option_contract=options,
         ))
 
     return txs
