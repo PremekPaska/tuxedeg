@@ -136,13 +136,20 @@ def optimize_all(
     enable_bep: bool = False,
     enable_ttest: bool = False,
     options: bool = False,
+    symbols_filter_str: str = None,
 ) -> None:
     id_col, date_col, product_col = detect_columns(df_trans)
 
     products = get_unique_product_ids(
         df_trans, tax_year, id_col=id_col, date_col=date_col, product_col=product_col
     )
-    print(f"Found {len(products)} products with some transactions in {tax_year}.")
+    print(f"Found {len(products)} products with some transactions in {tax_year} to process.")
+
+    if symbols_filter_str:
+        selected_symbols = [s.strip() for s in symbols_filter_str.split(',')]
+        products = [p for p in products if p in selected_symbols]
+        print(f"Processing only specified symbols: {', '.join(selected_symbols)}")
+        print(f"Selected {len(products)} products to process.")
 
     df_results = DataFrame(columns=["Product", id_col, "Income", "Cost", "Profit", "Fees"])
     total_income = total_cost = total_fees = Decimal(0)
@@ -298,6 +305,7 @@ def main():
     parser.add_argument('--bep', action='store_true', help='Enable break-even prices calculation')
     parser.add_argument('--ttest', action='store_true', help='Skip profit (both income & cost) for sales after 3 years')
     parser.add_argument('-o', '--options', action='store_true', help='Import options trades')
+    parser.add_argument('--symbols', type=str, help='Comma-separated list of symbols to process')
     parser.add_argument('files', nargs='+', help='Files to process')
     args = parser.parse_args()
 
@@ -336,7 +344,8 @@ def main():
         df_transactions, args.year, strategies, account_code, splits_df,
         enable_bep=args.bep,
         enable_ttest=args.ttest,
-        options=args.options)
+        options=args.options,
+        symbols_filter_str=args.symbols)
 
     print()
     print("Processed file(s):", args.files)
