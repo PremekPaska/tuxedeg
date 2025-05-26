@@ -13,7 +13,7 @@ TSLA_SPLIT = datetime(2022, 8, 25)
 
 class Transaction:
     def __init__(self, time: datetime, product_name: str, isin: str, count: int, share_price: decimal, currency: str,
-                 fee: decimal, fee_currency: str):
+                 fee: decimal, fee_currency: str, option_contract: bool = False):
         self._time = time
         self._product_name = product_name
         self.isin = isin  # TODO: rename to product_id
@@ -27,6 +27,8 @@ class Transaction:
         self._fee_available = True  # Not used for sale transactions
         self._split_ratio = Decimal(1)
         self._bep = None
+
+        self._multiplier = Decimal(1) if not option_contract else Decimal(100)
 
     def __str__(self):
         return f"{self._time}, {self._product_name}, {self._count}, {self.isin}, {self._share_price}, fee: {self._fee}"
@@ -153,7 +155,7 @@ class BuyRecord:
 
     def calculate_cost(self):
         self._fx_rate = unified_fx_rate(self.buy_t.time.year, self.buy_t.currency)
-        self._cost_tc = self.buy_t.share_price * self._fx_rate * self._count_consumed
+        self._cost_tc = self.buy_t.share_price * self._fx_rate * self._count_consumed * self.buy_t._multiplier
 
         self._fees_tc = self.buy_t.fee * unified_fx_rate(self.buy_t.time.year, self.buy_t.fee_currency) if self._fee_consumed \
             else Decimal(0)
@@ -192,7 +194,7 @@ class SaleRecord:
     
     def _calculate_income_for_buy_sell_pair(self, buy_record: BuyRecord):
         sale_fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)
-        return buy_record._count_consumed * self.sale_t.share_price * sale_fx_rate
+        return buy_record._count_consumed * self.sale_t.share_price * sale_fx_rate * self.sale_t._multiplier
 
     def calculate_income_and_cost(self, enable_bep: bool = False, enable_ttest: bool = False) -> None:
         self._fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)
