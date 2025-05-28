@@ -4,7 +4,7 @@ import os
 import json
 from pathlib import Path
 import pandas as pd
-from pandas import DataFrame
+from pandas import DataFrame, Series, read_csv, read_excel, concat as pd_concat
 from datetime import datetime
 from typing import Dict, List
 
@@ -151,41 +151,71 @@ def optimize_all(
         print(f"Processing only specified symbols: {', '.join(selected_symbols)}")
         print(f"Selected {len(products)} products to process.")
 
-    df_results = DataFrame(columns=["Product", id_col, "Income", "Cost", "Profit", "Fees"])
+    df_results = DataFrame(columns=["Product", id_col, "Status", "Income", "Cost", "Profit", "Fees"])
     total_income = total_cost = total_fees = Decimal(0)
 
     # Collect detailed pairing rows for audit purposes.
     pairing_rows: list[dict] = []
 
     for pid in products:
-        if id_col == "ISIN" and pid in ("CA88035N1033",):  # skip-list for Degiro ('CA88035N1033' is TENET FINTECH)
-            # IE: ('IE00B53SZB19', 'US9344231041'):
-            # CZ: ('IE00B53SZB19', 'US9344231041', 'BMG9525W1091', 'CA88035N1033', 'CA92919V4055', 'KYG851581069', 'US37611X1000'):
+        pname = pid
+        if id_col == "ISIN":
             pname = df_trans.query(f"ISIN == '{pid}'").iloc[0]["Product"]
-            print(f"Skipping product {pid}: {pname}")
-            continue
+            if pid in ("CA88035N1033",):  # skip-list for Degiro ('CA88035N1033' is TENET FINTECH)
+                # IE: ('IE00B53SZB19', 'US9344231041'):
+                # CZ: ('IE00B53SZB19', 'US9344231041', 'BMG9525W1091', 'CA88035N1033', 'CA92919V4055', 'KYG851581069', 'US37611X1000'):
+                print(f"Skipping product {pid}: {pname}")
+                continue
         elif id_col == "Symbol" and pid in ("CNDX", "CSPX", "VOW3d", "AMD", "CRWD", "NVDA", "PLTR", "TM"):
             print(f"Skipping product {pid}, shorting not (yet) supported.\n")
             continue
 
-        txs = build_transactions(df_trans, pid, tax_year, splits_df, id_col=id_col, options=options)
-        report = optimize_product(txs, tax_year, strategies, enable_bep, enable_ttest)
+        print(f"Processing product {pname}")
 
-        # Accumulate pairing details
-        pairing_rows.extend(build_pairing_rows(report, id_col))
+        # Initialize variables for current product processing
+        report: List[SaleRecord] = []
+        current_pairing_rows: list[dict] = []
+        income = Decimal(0)
+        cost = Decimal(0)
+        fees = Decimal(0)
+        error_occurred_for_product = False
 
-        income, cost, fees = calculate_totals(report, tax_year)
-        print(f"income: {income}, cost: {cost}, profit: {income - cost}, fees: {fees}\n")
+        try:
+            txs = build_transactions(df_trans, pid, tax_year, splits_df, id_col=id_col, options=options)
+            report = optimize_product(txs, tax_year, strategies, enable_bep, enable_ttest)
+
+            current_pairing_rows = build_pairing_rows(report, id_col)
+            income, cost, fees = calculate_totals(report, tax_year)
+
+            print(f"  Income: {income}, Cost: {cost}, Profit: {income - cost}, Fees: {fees}\n")
+
+        except Exception as e:
+            print(f"ERROR processing product {pname}: {e}")
+            print(f"  Recording zero income/cost for this product and continuing with others.\n")
+            error_occurred_for_product = True
+            # income, cost, fees remain Decimal(0) as initialized
+            # report and current_pairing_rows remain empty
+
+        # Accumulate pairing details (will be empty if an error occurred)
+        pairing_rows.extend(current_pairing_rows)
+
+        # Construct row for the results DataFrame
+        status = "ERROR" 
+        if not error_occurred_for_product:
+            status = "OK" if report else "No sales"
 
         row = {
-            "Product": get_product_name(report),   # = symbol for IBKR
+            "Product": pname,
             id_col: pid,
+            "Status": status,
             "Income": income,
             "Cost": cost,
             "Profit": income - cost,
             "Fees": fees,
         }
-        df_results = pd.concat([df_results, DataFrame(row, index=[0])], ignore_index=True)
+        
+        new_row_df = DataFrame([row]) 
+        df_results = pd_concat([df_results, new_row_df], ignore_index=True) 
 
         total_income += income
         total_cost += cost
