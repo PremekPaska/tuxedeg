@@ -153,6 +153,7 @@ def optimize_all(
 
     df_results = DataFrame(columns=["Product", id_col, "Status", "Income", "Cost", "Profit", "Fees"])
     total_income = total_cost = total_fees = Decimal(0)
+    error_count = 0
 
     # Collect detailed pairing rows for audit purposes.
     pairing_rows: list[dict] = []
@@ -193,8 +194,7 @@ def optimize_all(
             print(f"ERROR processing product {pname}: {e}")
             print(f"  Recording zero income/cost for this product and continuing with others.\n")
             error_occurred_for_product = True
-            # income, cost, fees remain Decimal(0) as initialized
-            # report and current_pairing_rows remain empty
+            error_count += 1
 
         # Accumulate pairing details (will be empty if an error occurred)
         pairing_rows.extend(current_pairing_rows)
@@ -259,6 +259,8 @@ def optimize_all(
 
     total_profit = total_income - total_cost - total_fees
     print()
+    if error_count > 0:
+        print(f"!! Number of products with ERROR status: {error_count} (see above for details)\n")
     print(f"! Profit !  : {(total_income - total_cost):,.2f}, after fees: {total_profit:,.2f}")
     print(f"(tax est.)  : {(total_profit * Decimal('0.15')):,.2f}")
 
