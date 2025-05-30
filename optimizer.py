@@ -130,15 +130,17 @@ def calculate_break_even_prices(txs: List[Transaction]):
     total_cost = Decimal(0)
 
     for tx in txs:
-        if not tx.is_sale:
+        # Only apply break-even price calculations to normal long positions
+        if not tx.is_sale and not tx.is_short_position:
             total_cost += tx.count * tx.share_price
             quantity += tx.count
             tx.set_bep(total_cost / quantity)
-        else:
-            bep = total_cost / quantity
-            tx.set_bep(bep)
-            total_cost += tx.count * bep  # Count is negative for sales
-            quantity += tx.count
+        elif tx.is_sale and not tx.is_short_position:
+            if quantity > 0:  # Only calculate if we have a long position
+                bep = total_cost / quantity
+                tx.set_bep(bep)
+                total_cost += tx.count * bep  # Count is negative for sales
+                quantity += tx.count
         
 
 def warn_about_default_strategy(trans: List[Transaction], strategies: dict[int,str]) -> None:
@@ -148,15 +150,96 @@ def warn_about_default_strategy(trans: List[Transaction], strategies: dict[int,s
             return
 
 
-def optimize_transaction_pairing(trans: List[Transaction], strategies: dict[int,str]) -> List[SaleRecord]:
-    warn_about_default_strategy(trans, strategies)
-    sale_records = []
-    for sale_t in [t for t in trans if t.is_sale]:
-        buy_records = find_buys(sale_t, trans, strategies)
-        sale_record = SaleRecord(sale_t, buy_records)
-        sale_records.append(sale_record)
+def find_buys_for_short_cover(buy_t: Transaction, trans: List[Transaction]) -> List[BuyRecord]:
+    """Find short positions to cover using FIFO for a buy transaction.
+    When covering shorts, buy transactions reduce the short position.
+    """
+    remaining_buy_count = buy_t.count
+    
+    buy_records = []
+    # Find short positions to cover (short sales have negative count but are marked as is_short_position)
+    for short_t in [t for t in trans if t.is_sale and t.is_short_position and t.remaining_count > 0 and t.time < buy_t.time]:
+        if remaining_buy_count <= 0:
+            break
+            
+        count_used = min(remaining_buy_count, short_t.remaining_count)
+        remaining_buy_count -= count_used
+        did_consume_fee = short_t.consume_shares(count_used)
+        
+        buy_records.append(BuyRecord(short_t, count_used, did_consume_fee))
+    
+    if remaining_buy_count > 0:
+        print(f"Still remaining buy count to pair: {remaining_buy_count} for {buy_t}")
+        raise ValueError("Could not pair all shares for short cover!")
+    
+    return buy_records
 
+
+def process_transactions_chronologically(trans: List[Transaction], strategies: dict[int,str]) -> List[SaleRecord]:
+    """Process transactions chronologically to properly handle both long and short positions."""
+    warn_about_default_strategy(trans, strategies)
+    
+    # Sort transactions by time
+    sorted_trans = sorted(trans, key=lambda t: t.time)
+    sale_records = []
+    
+    # Track current position
+    current_position = 0
+    
+    for tx in sorted_trans:
+        if not tx.is_sale:  # Buy transaction
+            if current_position < 0:  # We have a short position
+                # This buy will cover some or all of the short position
+                cover_count = min(-current_position, tx.count)
+                if cover_count > 0:
+                    # Create a transaction for covering the short position
+                    covering_tx = tx  # The buy transaction is covering shorts
+                    
+                    # Find short positions to cover using FIFO
+                    buy_records = find_buys_for_short_cover(covering_tx, sorted_trans[:sorted_trans.index(tx)])
+                    
+                    # Create a sale record for this short cover
+                    if buy_records:
+                        sale_record = SaleRecord(covering_tx, buy_records)
+                        sale_records.append(sale_record)
+                    
+                    # Update position
+                    current_position += cover_count
+            else:
+                # Normal buy adding to long position
+                current_position += tx.count
+        else:  # Sell transaction
+            if current_position <= 0:  # No long position or already short
+                # This is a short sale, mark it as such
+                tx.set_short_position(True)
+                current_position += tx.count  # Remember, tx.count is negative
+            else:  # We have a long position
+                # This sell will close some or all of the long position
+                close_count = min(current_position, -tx.count)
+                if close_count > 0:
+                    # Use original pairing functions for closing long positions
+                    buy_records = find_buys(tx, sorted_trans[:sorted_trans.index(tx)], strategies)
+                    
+                    # Create a sale record
+                    sale_record = SaleRecord(tx, buy_records)
+                    sale_records.append(sale_record)
+                    
+                    # Update position
+                    current_position += tx.count
+                    
+                    # If we've gone short, mark the remaining part as a short position
+                    if current_position < 0:
+                        # This is a bit tricky as we'd need to split the transaction
+                        # For now, we'll just mark it as a short if the final position is short
+                        if tx.remaining_count > 0:
+                            tx.set_short_position(True)
+    
     return sale_records
+
+
+def optimize_transaction_pairing(trans: List[Transaction], strategies: dict[int,str]) -> List[SaleRecord]:
+    """Main entry point for transaction pairing that handles both long and short positions."""
+    return process_transactions_chronologically(trans, strategies)
 
 
 def calculate_tax(sale_records: List[SaleRecord], tax_year: int, enable_bep: bool = False, enable_ttest: bool = False):

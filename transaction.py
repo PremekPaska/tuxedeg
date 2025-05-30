@@ -18,17 +18,18 @@ class Transaction:
         self._product_name = product_name
         self.isin = isin  # TODO: rename to product_id
         self._count = int(count)  # count is negative for sales
-        self._remaining_count = self._count  # This is only valid for buy transactions.
+        self._remaining_count = self._count  # This is valid for both buy and short sell transactions
         self._share_price = Decimal(share_price).quantize(IMPORT_PRECISION)  # 'cause pandas stores it in doubles (TODO)
         self._currency = check_currency(currency)
         self._fee_currency = check_currency(fee_currency)
         self._fee = Decimal(fee).quantize(IMPORT_PRECISION) if not math.isnan(fee) else Decimal(0)
 
-        self._fee_available = True  # Not used for sale transactions
+        self._fee_available = True  # Not used for sale transactions that close long positions
         self._split_ratio = Decimal(1)
         self._bep = None
 
         self._multiplier = Decimal(1) if not option_contract else Decimal(100)
+        self._is_short_position = False  # Flag to mark if this is part of a short position
 
     def __str__(self):
         return f"{self._time}, {self._product_name}, {self._count}, {self.isin}, {self._share_price}, fee: {self._fee}"
@@ -40,6 +41,13 @@ class Transaction:
     @property
     def is_sale(self) -> bool:
         return self._count < 0
+        
+    @property
+    def is_short_position(self) -> bool:
+        return self._is_short_position
+        
+    def set_short_position(self, is_short: bool = True):
+        self._is_short_position = is_short
 
     @property
     def count(self) -> int:
@@ -47,8 +55,9 @@ class Transaction:
 
     @property
     def remaining_count(self) -> int:
-        if self.is_sale:
-            raise ValueError("Remaining count not applicable to sell transactions.")
+        # Allow remaining count for short sales (which add to short position)
+        if self.is_sale and not self.is_short_position:
+            raise ValueError("Remaining count not applicable to regular sell transactions.")
         return self._remaining_count
 
     @property
@@ -90,7 +99,7 @@ class Transaction:
             raise ValueError(f"Remaining count is 0 (or less): {self._remaining_count}")
 
         if number_sold > self._remaining_count:
-            raise ValueError(f"Cannot mark {number_sold} shares as sold, only {self._remaining_count} remaining!")
+            raise ValueError(f"Cannot mark {number_sold} shares as consumed, only {self._remaining_count} remaining!")
 
         self._remaining_count -= number_sold
 
@@ -169,6 +178,7 @@ class SaleRecord:
         self._income_tc = None
         self._cost_tc = None
         self._fees_tc = None
+        self._is_short_cover = any(br.buy_t.is_short_position for br in buy_records) if buy_records else False
 
     @property
     def fx_rate(self) -> decimal:
@@ -191,6 +201,10 @@ class SaleRecord:
     @property
     def fees_tc(self) -> decimal:
         return self._fees_tc
+        
+    @property
+    def is_short_cover(self) -> bool:
+        return self._is_short_cover
     
     def _calculate_income_for_buy_sell_pair(self, buy_record: BuyRecord):
         sale_fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)
