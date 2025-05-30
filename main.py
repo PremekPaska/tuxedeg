@@ -167,9 +167,6 @@ def optimize_all(
                 # CZ: ('IE00B53SZB19', 'US9344231041', 'BMG9525W1091', 'CA88035N1033', 'CA92919V4055', 'KYG851581069', 'US37611X1000'):
                 print(f"Skipping product {pid}: {pname}")
                 continue
-        elif id_col == "Symbol" and pid in ("CNDX", "CSPX", "VOW3d", "AMD", "CRWD", "NVDA", "PLTR", "TM"):
-            print(f"Skipping product {pid}, shorting not (yet) supported.\n")
-            continue
 
         print(f"Processing product {pname}")
 
