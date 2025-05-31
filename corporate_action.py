@@ -2,6 +2,7 @@ from pandas import DataFrame
 from typing import List
 from transaction import Transaction
 from decimal import Decimal
+from datetime import datetime
 
 import pandas as pd
 
@@ -45,8 +46,12 @@ def apply_stock_splits_for_product(
         s = s.drop_duplicates(subset=[id_col, "Report Date"])
 
     # Check that we have multiple splits for TSLA
-    if (product_id == "TSLA" or product_id == "US88160R1014") and len(s) < 1:
-        raise ValueError("Missing stock split data for %s: %s" % (product_id, s))
+    if (product_id == "TSLA" or product_id == "US88160R1014"):
+        if (first_tx_time.date() < datetime(2022, 8, 25).date() and len(s) < 1) \
+            or (first_tx_time.date() < datetime(2020, 8, 31).date() and len(s) < 2):
+            print("! Heads up ! Potentially missing stock split data for %s" % (product_id))
+            print("  First transaction time: %s (last split 2022-08-25)" % first_tx_time)
+            raise ValueError("Missing stock split data for %s" % (product_id))
 
     for _, split in s.iterrows():
         print("Applying stock split %d:%d, product id %s, cut off %s"
