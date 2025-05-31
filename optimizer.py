@@ -153,6 +153,8 @@ def warn_about_default_strategy(trans: List[Transaction], strategies: dict[int,s
 def find_buys_for_short_cover(buy_t: Transaction, trans: List[Transaction]) -> List[BuyRecord]:
     """Find short positions to cover using FIFO for a buy transaction.
     When covering shorts, buy transactions reduce the short position.
+    This function returns all short positions that are covered by this buy,
+    but does not require that all bought shares are used to cover shorts.
     """
     remaining_buy_count = buy_t.count
     
@@ -168,9 +170,8 @@ def find_buys_for_short_cover(buy_t: Transaction, trans: List[Transaction]) -> L
         
         buy_records.append(BuyRecord(short_t, count_used, did_consume_fee))
     
-    if remaining_buy_count > 0:
-        print(f"Still remaining buy count to pair: {remaining_buy_count} for {buy_t}")
-        raise ValueError("Could not pair all shares for short cover!")
+    # It's okay if remaining_buy_count > 0, as buys can exceed short position
+    # This means we've covered all available shorts and the rest adds to long position
     
     return buy_records
 
@@ -189,22 +190,22 @@ def process_transactions_chronologically(trans: List[Transaction], strategies: d
     for tx in sorted_trans:
         if not tx.is_sale:  # Buy transaction
             if current_position < 0:  # We have a short position
-                # This buy will cover some or all of the short position
-                cover_count = min(-current_position, tx.count)
-                if cover_count > 0:
-                    # Create a transaction for covering the short position
-                    covering_tx = tx  # The buy transaction is covering shorts
+                # Find short positions to cover using FIFO
+                buy_records = find_buys_for_short_cover(tx, sorted_trans[:sorted_trans.index(tx)])
+                
+                # Create a sale record for this short cover if there are short positions to cover
+                if buy_records:
+                    sale_record = SaleRecord(tx, buy_records)
+                    sale_records.append(sale_record)
                     
-                    # Find short positions to cover using FIFO
-                    buy_records = find_buys_for_short_cover(covering_tx, sorted_trans[:sorted_trans.index(tx)])
+                    # Calculate how many shares were used to cover shorts
+                    covered_count = sum(br._count_consumed for br in buy_records)
                     
-                    # Create a sale record for this short cover
-                    if buy_records:
-                        sale_record = SaleRecord(covering_tx, buy_records)
-                        sale_records.append(sale_record)
-                    
-                    # Update position
-                    current_position += cover_count
+                    # Update position - cover shorts first, then add any remaining to long position
+                    current_position += tx.count
+                else:
+                    # No shorts to cover, just add to position
+                    current_position += tx.count
             else:
                 # Normal buy adding to long position
                 current_position += tx.count
