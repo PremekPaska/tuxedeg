@@ -222,6 +222,7 @@ def optimize_all(
         total_fees += fees
 
     print()
+    pd.set_option('display.max_rows', None)
     print(df_results)
 
     # Export aggregated results and detailed pairings to CSV
