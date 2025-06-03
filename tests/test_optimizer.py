@@ -1,6 +1,7 @@
 import os
 import decimal
 from decimal import Decimal
+from datetime import datetime
 import unittest
 
 from currency import unified_fx_rate
@@ -9,6 +10,7 @@ from import_utils import get_product_id_by_prefix
 from optimizer import optimize_transaction_pairing, is_better_cost_pair, calculate_tax, optimize_product, \
     calculate_totals, calculate_break_even_prices
 from tests.test_transaction import create_t
+from transaction import Transaction
 
 
 def scenario_sell_in_two_parts():
@@ -295,6 +297,125 @@ class PairingStrategiesTestCase(unittest.TestCase):
         self.assertEqual(Decimal('93774.7573'), income)
         self.assertEqual(Decimal('63322.7934'), cost)
         self.assertEqual(Decimal('593.3456'), fees)
+
+def make_tx(
+    ts: str | datetime,
+    qty: int,
+    *,
+    price: decimal = 10.0,
+    product: str = "TEST",
+    isin: str = "TEST123",
+    currency: str = "USD",
+) -> Transaction:
+    """
+    Build a Transaction in one line.
+
+    Parameters
+    ----------
+    ts   : ISO-date string or datetime
+    qty  : positive (BUY) or negative (SELL) share count
+    """
+    if isinstance(ts, str):
+        ts = datetime.fromisoformat(ts)
+
+    return Transaction(
+        time=ts,
+        product_name=product,
+        isin=isin,
+        count=qty,
+        share_price=price,
+        currency=currency,
+        fee=0,
+        fee_currency=currency,
+    )
+
+
+class OptimizerShortSellingTestCase(unittest.TestCase):
+    """Extra short-selling coverage for the optimiser."""
+
+    STRATEGIES = {2025: "fifo"}   # keep warn_about_default_strategy quiet
+
+    # ------------------------------------------------------------------ #
+    def test_single_short_open_and_close(self):
+        """SELL 100 → open short, BUY 100 → cover it completely."""
+        short_open = make_tx("2025-01-02", -100)
+        cover_buy  = make_tx("2025-01-05",  100)
+
+        records = optimize_transaction_pairing([short_open, cover_buy], self.STRATEGIES)
+        self.assertEqual(len(records), 1)
+
+        short_record = records[0]
+        self.assertIs(short_record.sale_t, short_open)
+        self.assertEqual(sum(br._count_consumed for br in short_record.buys), 100)
+        self.assertEqual(cover_buy.remaining_count, 0)
+
+    # ------------------------------------------------------------------ #
+    def test_deepen_short_then_two_step_cover(self):
+        """
+        SELL 50  → open
+        SELL 70  → deepen to –120
+        BUY  60  → partial cover (FIFO: 50+10)
+        BUY  60  → final cover
+        """
+        first_short   = make_tx("2025-01-02",  -50)
+        second_short  = make_tx("2025-01-04",  -70)
+        first_cover   = make_tx("2025-01-06",   60)
+        final_cover   = make_tx("2025-01-10",   60)
+
+        records = optimize_transaction_pairing(
+            [first_short, second_short, first_cover, final_cover],
+            self.STRATEGIES,
+        )
+        self.assertEqual(len(records), 2)
+
+        rec_first  = next(r for r in records if r.sale_t is first_short)
+        rec_second = next(r for r in records if r.sale_t is second_short)
+
+        self.assertEqual(sum(br._count_consumed for br in rec_first.buys), 50)
+        self.assertEqual(sum(br._count_consumed for br in rec_second.buys), 70)
+
+    # ------------------------------------------------------------------ #
+    def test_partial_cover_deepen_and_final_cover(self):
+        """
+        SELL 80  → open
+        BUY  50  → partial cover (remaining –30)
+        SELL 100 → deepen to –130
+        BUY  130 → final cover
+        """
+        initial_short  = make_tx("2025-01-02",  -80)
+        partial_cover  = make_tx("2025-01-05",   50)
+        deepen_short   = make_tx("2025-01-06", -100)
+        final_cover    = make_tx("2025-01-10",  130)
+
+        records = optimize_transaction_pairing(
+            [initial_short, partial_cover, deepen_short, final_cover],
+            self.STRATEGIES,
+        )
+        self.assertEqual(len(records), 2)
+
+        rec_init   = next(r for r in records if r.sale_t is initial_short)
+        rec_deepen = next(r for r in records if r.sale_t is deepen_short)
+
+        self.assertEqual(sum(br._count_consumed for br in rec_init.buys),   80)
+        self.assertEqual(sum(br._count_consumed for br in rec_deepen.buys), 100)
+
+    # ------------------------------------------------------------------ #
+    def test_unmatched_open_short_raises(self):
+        """
+        BUY 100  → open long
+        SELL 100 → flat
+        SELL  50 → open short and leave it unmatched  → expect ValueError
+        """
+        long_buy        = make_tx("2025-01-02",  100)
+        long_close_sell = make_tx("2025-01-04", -100)
+        dangling_short  = make_tx("2025-01-05",  -50)
+
+        with self.assertRaises(ValueError):
+            optimize_transaction_pairing(
+                [long_buy, long_close_sell, dangling_short],
+                self.STRATEGIES,
+            )
+
 
 if __name__ == '__main__':
     unittest.main()

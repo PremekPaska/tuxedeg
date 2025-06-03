@@ -1,10 +1,8 @@
 import decimal
 from decimal import Decimal
-from typing import List, Callable
-
+from typing import List, Callable, Dict
 from collections import deque
 from dataclasses import dataclass
-from typing import Dict, List
 
 from transaction import Transaction, BuyRecord, SaleRecord
 
@@ -201,7 +199,11 @@ def optimize_transaction_pairing(
         # SELL: first close longs with the original machinery
         # -------------------------------------------------------------------
         if t.is_sale:
-            buy_records = find_buys(t, trans, strategies)   # unchanged call
+            try:
+                buy_records = find_buys(t, trans, strategies)   # unchanged call
+            except ValueError:
+                print(f"Could not find a buy transaction for {t}, openning short.")
+                buy_records = []
 
             matched_qty = sum(br._count_consumed for br in buy_records)
             total_qty   = -t.count          # positive number of shares sold
