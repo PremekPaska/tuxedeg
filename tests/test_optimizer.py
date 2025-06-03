@@ -230,6 +230,37 @@ class OptimizerTestCase(unittest.TestCase):
         final_expected_bep = (total_cost + t.count * t.share_price) / (quantity + t.count)
         self.assertEqual(final_expected_bep, t.bep)        
 
+    def test_short_selling_basic(self):
+        # Test basic short selling scenario - open and close a short position with a loss
+        trans = [
+            # Short sell 5 shares at $100
+            create_t(-5, price=100.0, day=1),
+            # Buy to cover at $120 (loss of $20 per share)
+            create_t(5, price=120.0, day=10)
+        ]
+        
+        # Mark the first transaction as a short position
+        #trans[0].set_short_position(True)
+        
+        # Run the optimizer
+        result = optimize_transaction_pairing(trans, self.STRATEGIES)
+        
+        self.assertEqual(len(result), 1, "Should have one sale record")
+        sale_record = result[0]
+        
+        # Verify it's recognized as a short cover
+        self.assertTrue(sale_record.is_short_cover(), "Transaction should be marked as a short cover")
+        
+        # Verify the buy was paired with the short sell
+        self.assertEqual(len(sale_record.buys), 1, "Should have one buy record")
+        
+        # Calculate expected loss: 5 shares * ($120 - $100) = $100 loss
+        expected_loss = Decimal(-100) * self.fx_rate
+        actual_profit = sale_record.profit_tc()
+        
+        self.assertEqual(actual_profit, expected_loss, 
+                         f"Expected loss of {expected_loss}, got profit of {actual_profit}")
+
 
 class PairingStrategiesTestCase(unittest.TestCase):
     @staticmethod
@@ -295,6 +326,7 @@ class PairingStrategiesTestCase(unittest.TestCase):
         self.assertEqual(Decimal('93774.7573'), income)
         self.assertEqual(Decimal('63322.7934'), cost)
         self.assertEqual(Decimal('593.3456'), fees)
+
 
 if __name__ == '__main__':
     unittest.main()
