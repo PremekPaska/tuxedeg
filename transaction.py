@@ -170,6 +170,10 @@ class SaleRecord:
         self._cost_tc = None
         self._fees_tc = None
 
+        # Long positions close immediately; shorts close when the last
+        # covering buy executes.  We track that moment here.
+        self.close_time = sale_t.time
+
     @property
     def fx_rate(self) -> decimal:
         return self._fx_rate
@@ -195,8 +199,60 @@ class SaleRecord:
     def _calculate_income_for_buy_sell_pair(self, buy_record: BuyRecord):
         sale_fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)
         return buy_record._count_consumed * self.sale_t.share_price * sale_fx_rate * self.sale_t._multiplier
-
+    
     def calculate_income_and_cost(self, enable_bep: bool = False, enable_ttest: bool = False) -> None:
+        self._fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)
+        if not self.sale_t.is_sale:
+            raise ValueError("Expected a sale transaction.")
+
+        total_income = Decimal(0)
+        total_cost   = Decimal(0)
+        total_fees   = Decimal(0)
+
+        # collect timestamps that might close the position
+        close_moments = [self.sale_t.time]
+
+        for br in self.buys:
+            close_moments.append(br.buy_t.time)
+
+            pair_income = self._calculate_income_for_buy_sell_pair(br)
+
+            if enable_bep:                           # BEP hack
+                br.buy_t._share_price = self.sale_t.bep
+
+            br.calculate_cost()
+
+            ttest_passed = (self.sale_t.time - br.buy_t.time).days > 3 * 365
+            if ttest_passed:
+                br.pass_time_test()
+                pair_profit = (pair_income - br.cost_tc).quantize(Decimal("0.01"))
+                suffix = (
+                    f". Untaxed profit: {pair_profit} CZK"
+                    if enable_ttest else
+                    ", but not applied, consider --ttest."
+                )
+                print(
+                    f"Time test passed for {br._count_consumed} shares "
+                    f"bought on {br.buy_t.time}{suffix}"
+                )
+                if enable_ttest:
+                    continue
+
+            total_income += pair_income
+            total_cost   += br.cost_tc
+            total_fees   += br.fees_tc
+
+        # final tallies
+        self._income_tc = total_income
+        self._cost_tc   = total_cost
+        self._fees_tc   = total_fees + (
+            self.sale_t.fee * unified_fx_rate(self.sale_t.time.year, self.sale_t.fee_currency)
+        )
+
+        # definitive closing timestamp
+        self.close_time = max(close_moments)
+
+    def calculate_income_and_cost_old(self, enable_bep: bool = False, enable_ttest: bool = False) -> None:
         self._fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)
         if not self.sale_t.is_sale:
             raise ValueError("Expected a sale transaction.")
