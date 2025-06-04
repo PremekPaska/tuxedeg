@@ -3,6 +3,7 @@ import argparse
 import os
 import json
 from pathlib import Path
+import datetime
 import pandas as pd
 from pandas import DataFrame, Series, read_csv, read_excel, concat as pd_concat
 from datetime import datetime
@@ -227,17 +228,20 @@ def optimize_all(
     os.makedirs(output_path, exist_ok=True)
     bep_suffix = "-bep" if enable_bep else ""
     ttest_suffix = "-ttest" if enable_ttest else ""
-    output_filename_suffix = f"{account_code}-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}{bep_suffix}{ttest_suffix}.csv"
+    options_suffix = "-opt" if options else ""
+    date_prefix = datetime.today().date().strftime('%Y-%m-%d')
+    filename_base = f"{account_code}-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}" \
+                    f"{bep_suffix}{ttest_suffix}{options_suffix}.csv"
 
     df_results.to_csv(
-        f"{output_path}results-{output_filename_suffix}",
+        f"{output_path}{date_prefix}-results-{filename_base}",
         index=False)
 
     pairings_df = pd.DataFrame(pairing_rows)
     if not pairings_df.empty:
         pairings_df["DateTime"] = pairings_df["DateTime"].astype(str)
         pairings_df.to_csv(
-            f"{output_path}pairings-{output_filename_suffix}",
+            f"{output_path}{date_prefix}-pairings-{filename_base}",
             index=False)
         print(f"Exported {len(pairings_df)} pairing rows.")
 
