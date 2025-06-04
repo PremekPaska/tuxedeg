@@ -247,7 +247,8 @@ def optimize_transaction_pairing(
             # No extra action needed: they will be paired by find_buys later.
 
     if open_shorts:
-        raise ValueError("Unmatched open short positions remain after pairing.")
+        print("Warning: Unmatched open short positions remain after pairing.")
+        # TODO: Add some status reporting.
 
     return sale_records
 

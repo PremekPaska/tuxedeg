@@ -428,7 +428,7 @@ class OptimizerShortSellingTestCase(unittest.TestCase):
         
         # Initial short: 80 shares sold at $100, covered with 50 at $110 and 30 from final_cover at $90
         # Deepen short: 100 shares sold at $120, covered with 100 from final_cover at $90
-        expected_income = Decimal(80 * 100.0 + 100 * 120.0) * self.fx_rate
+        expected_income = Decimal(80 * 100.0 + 100 * 120.0) * self.fx_rate  # Income from both shorts
         expected_cost = Decimal(50 * 110.0 + 30 * 90.0 + 100 * 90.0) * self.fx_rate
         expected_fees = Decimal('0') * self.fx_rate
         
@@ -437,21 +437,45 @@ class OptimizerShortSellingTestCase(unittest.TestCase):
         self.assertEqual(fees, expected_fees)
 
     # ------------------------------------------------------------------ #
-    def test_unmatched_open_short_raises(self):
+    def test_unmatched_open_short_profit_calculation(self):
         """
-        BUY 100  → open long
-        SELL 100 → flat
-        SELL  50 → open short and leave it unmatched  → expect ValueError
+        BUY 100 @ $10 (USD) → open long
+        SELL 100 @ $12 (USD) → close long. Profit in USD: $200.
+                                Profit in CZK: $200 * 23.28 (FX for 2024) = 4656.00 CZK.
+        SELL  50 @ $15 (USD) → open short, profit $0 (unmatched at this stage).
+        Total profit from processed sales should be 4656.00 CZK.
         """
-        long_buy        = make_tx("2025-01-02",  100)
-        long_close_sell = make_tx("2025-01-04", -100)
-        dangling_short  = make_tx("2025-01-05",  -50)
 
-        with self.assertRaises(ValueError):
-            optimize_transaction_pairing(
-                [long_buy, long_close_sell, dangling_short],
-                self.STRATEGIES,
-            )
+        long_buy        = make_tx("2024-01-02",  100, price=Decimal("10.0")) # USD
+        long_close_sell = make_tx("2024-01-04", -100, price=Decimal("12.0")) # USD
+        open_short_sell = make_tx("2024-01-05",  -50, price=Decimal("15.0")) # USD
+
+        transactions = [long_buy, long_close_sell, open_short_sell]
+        
+        sale_records = optimize_transaction_pairing(
+            transactions,
+            self.STRATEGIES,
+        )
+
+        self.assertEqual(len(sale_records), 2, "Expected two sale records.")
+
+        sale_records.sort(key=lambda sr: sr.sale_t.time)
+
+        # First sale record: closing the long position (long_close_sell)
+        sr1 = sale_records[0]
+        self.assertIs(sr1.sale_t, long_close_sell, "First SaleRecord should correspond to long_close_sell")
+        sr1.calculate_income_and_cost()
+        expected_profit_sr1_usd = (Decimal("12.0") - Decimal("10.0")) * 100
+        expected_profit_sr1_tc = expected_profit_sr1_usd * self.fx_rate
+        self.assertEqual(sr1.profit_tc, expected_profit_sr1_tc, f"Profit (TC) for first sale (long close) was {sr1.profit_tc}, expected {expected_profit_sr1_tc}")
+
+        # Second sale record: opening the short position (open_short_sell)
+        sr2 = sale_records[1]
+        self.assertIs(sr2.sale_t, open_short_sell, "Second SaleRecord should correspond to open_short_sell")
+        sr2.calculate_income_and_cost()
+        # This SaleRecord is for an unmatched short sale, so its buys list is empty; zero profits.
+        expected_profit_sr2_tc = Decimal("0.00")
+        self.assertEqual(sr2.profit_tc, expected_profit_sr2_tc, f"Profit (TC) for second sale (open short) was {sr2.profit_tc}, expected {expected_profit_sr2_tc}")
 
 
 if __name__ == '__main__':
