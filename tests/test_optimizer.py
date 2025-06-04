@@ -333,13 +333,18 @@ def make_tx(
 class OptimizerShortSellingTestCase(unittest.TestCase):
     """Extra short-selling coverage for the optimiser."""
 
-    STRATEGIES = {2025: "fifo"}   # keep warn_about_default_strategy quiet
+    TAX_YEAR = 2024
+    STRATEGIES = {TAX_YEAR: "fifo"}   # keep warn_about_default_strategy quiet
+ 
+    @property
+    def fx_rate(self) -> decimal:
+        return unified_fx_rate(self.TAX_YEAR, 'USD')
 
     # ------------------------------------------------------------------ #
     def test_single_short_open_and_close(self):
         """SELL 100 → open short, BUY 100 → cover it completely."""
-        short_open = make_tx("2025-01-02", -100)
-        cover_buy  = make_tx("2025-01-05",  100)
+        short_open = make_tx("2024-01-02", -100, price=100.0)
+        cover_buy  = make_tx("2024-01-05",  100, price=150.0)
 
         records = optimize_transaction_pairing([short_open, cover_buy], self.STRATEGIES)
         self.assertEqual(len(records), 1)
@@ -349,6 +354,12 @@ class OptimizerShortSellingTestCase(unittest.TestCase):
         self.assertEqual(sum(br._count_consumed for br in short_record.buys), 100)
         self.assertEqual(cover_buy.remaining_count, 0)
 
+        calculate_tax(records, self.TAX_YEAR)
+        income, cost, fees = calculate_totals(records, self.TAX_YEAR)
+        self.assertEqual(income, Decimal('10000') * self.fx_rate)
+        self.assertEqual(cost, Decimal('15000') * self.fx_rate)
+        self.assertEqual(fees, Decimal('0') * self.fx_rate)
+
     # ------------------------------------------------------------------ #
     def test_deepen_short_then_two_step_cover(self):
         """
@@ -357,10 +368,10 @@ class OptimizerShortSellingTestCase(unittest.TestCase):
         BUY  60  → partial cover (FIFO: 50+10)
         BUY  60  → final cover
         """
-        first_short   = make_tx("2025-01-02",  -50)
-        second_short  = make_tx("2025-01-04",  -70)
-        first_cover   = make_tx("2025-01-06",   60)
-        final_cover   = make_tx("2025-01-10",   60)
+        first_short   = make_tx("2024-01-02",  -50, price=100.0)
+        second_short  = make_tx("2024-01-04",  -70, price=120.0)
+        first_cover   = make_tx("2024-01-06",   60, price=90.0)
+        final_cover   = make_tx("2024-01-10",   60, price=80.0)
 
         records = optimize_transaction_pairing(
             [first_short, second_short, first_cover, final_cover],
@@ -373,6 +384,19 @@ class OptimizerShortSellingTestCase(unittest.TestCase):
 
         self.assertEqual(sum(br._count_consumed for br in rec_first.buys), 50)
         self.assertEqual(sum(br._count_consumed for br in rec_second.buys), 70)
+        
+        calculate_tax(records, self.TAX_YEAR)
+        income, cost, fees = calculate_totals(records, self.TAX_YEAR)
+        
+        # First short: 50 shares sold at $100, bought at $90 (first_cover)
+        # Second short: 10 shares from first_cover at $90 + 60 shares from final_cover at $80
+        expected_income_usd = Decimal(50 * 100.0 + 70 * 120.0)  # Income from both shorts
+        expected_cost_usd = Decimal(60 * 90.0 + 60 * 80.0)      # Cost from covering both shorts
+        expected_fees_usd = Decimal('0')
+        
+        self.assertEqual(income / self.fx_rate, expected_income_usd)
+        self.assertEqual(cost / self.fx_rate, expected_cost_usd)
+        self.assertEqual(fees / self.fx_rate, expected_fees_usd)
 
     # ------------------------------------------------------------------ #
     def test_partial_cover_deepen_and_final_cover(self):
@@ -382,10 +406,10 @@ class OptimizerShortSellingTestCase(unittest.TestCase):
         SELL 100 → deepen to –130
         BUY  130 → final cover
         """
-        initial_short  = make_tx("2025-01-02",  -80)
-        partial_cover  = make_tx("2025-01-05",   50)
-        deepen_short   = make_tx("2025-01-06", -100)
-        final_cover    = make_tx("2025-01-10",  130)
+        initial_short  = make_tx("2024-01-02",  -80, price=100.0)
+        partial_cover  = make_tx("2024-01-05",   50, price=110.0)
+        deepen_short   = make_tx("2024-01-06", -100, price=120.0)
+        final_cover    = make_tx("2024-01-10",  130, price=90.0)
 
         records = optimize_transaction_pairing(
             [initial_short, partial_cover, deepen_short, final_cover],
@@ -398,6 +422,19 @@ class OptimizerShortSellingTestCase(unittest.TestCase):
 
         self.assertEqual(sum(br._count_consumed for br in rec_init.buys),   80)
         self.assertEqual(sum(br._count_consumed for br in rec_deepen.buys), 100)
+        
+        calculate_tax(records, self.TAX_YEAR)
+        income, cost, fees = calculate_totals(records, self.TAX_YEAR)
+        
+        # Initial short: 80 shares sold at $100, covered with 50 at $110 and 30 from final_cover at $90
+        # Deepen short: 100 shares sold at $120, covered with 100 from final_cover at $90
+        expected_income = Decimal(80 * 100.0 + 100 * 120.0) * self.fx_rate
+        expected_cost = Decimal(50 * 110.0 + 30 * 90.0 + 100 * 90.0) * self.fx_rate
+        expected_fees = Decimal('0') * self.fx_rate
+        
+        self.assertEqual(income, expected_income)
+        self.assertEqual(cost, expected_cost)
+        self.assertEqual(fees, expected_fees)
 
     # ------------------------------------------------------------------ #
     def test_unmatched_open_short_raises(self):
