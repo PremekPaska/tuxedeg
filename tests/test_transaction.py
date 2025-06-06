@@ -48,7 +48,7 @@ class TransactionTestCase(unittest.TestCase):
         buy_t = create_t(10, 50.0)  # Price doesn't matter for income calculation
         buy_record = BuyRecord(buy_t, 10, fee_consumed=True)  # 10 shares consumed, matching the sale
         sale_record = SaleRecord(sale_t, [buy_record])
-        sale_record.calculate_income_and_cost()
+        sale_record.calculate_income_and_cost(TAX_YEAR)
 
         self.assertEqual(Decimal('21.72'), sale_record.fx_rate)
         self.assertEqual(Decimal('21720.0'), sale_record.income_tc)

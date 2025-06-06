@@ -120,10 +120,11 @@ class Transaction:
 
 
 class BuyRecord:
-    def __init__(self, buy_t: Transaction, count_consumed: int, fee_consumed: bool):
+    def __init__(self, buy_t: Transaction, count_consumed: int, fee_consumed: bool, is_short_cover: bool = False):
         self.buy_t = buy_t
         self._count_consumed = count_consumed
         self._fee_consumed = fee_consumed
+        self._is_short_cover = is_short_cover
 
         self._fx_rate = None
         self._cost_tc = None  # In the target currency (CZK).
@@ -204,7 +205,7 @@ class SaleRecord:
         sale_fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)
         return buy_record._count_consumed * self.sale_t.share_price * sale_fx_rate * self.sale_t._multiplier
     
-    def calculate_income_and_cost(self, enable_bep: bool = False, enable_ttest: bool = False) -> None:
+    def calculate_income_and_cost(self, tax_year: int, enable_bep: bool = False, enable_ttest: bool = False) -> None:
         self._fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)
         if not self.sale_t.is_sale:
             raise ValueError("Expected a sale transaction.")
@@ -214,6 +215,13 @@ class SaleRecord:
         total_fees   = Decimal(0)
 
         for br in self.buys:
+            # Skip buy-sell pair if the buy is a short cover before the tax year.
+            if br._is_short_cover and br.buy_t.time.year < tax_year:
+                print(f"Skipping short cover {br.buy_t} before tax year {tax_year}")
+                if br.buy_t.time < self.sale_t.time:
+                    raise ValueError("Not a short cover! Buy transaction is before sale transaction.")
+                continue
+
             pair_income = self._calculate_income_for_buy_sell_pair(br)
 
             if enable_bep:                           # BEP hack

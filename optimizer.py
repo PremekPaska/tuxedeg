@@ -229,7 +229,7 @@ def optimize_transaction_pairing(
                 qty = min(remaining, short_lot.remaining)
 
                 fee_used = t.consume_shares(qty)
-                br = BuyRecord(t, qty, fee_used)
+                br = BuyRecord(t, qty, fee_used, is_short_cover=True)
 
                 sr = sale_map.get(short_lot.tx)
                 if sr is None:                      # should not generally happen
@@ -255,7 +255,7 @@ def optimize_transaction_pairing(
 
 def calculate_tax_old(sale_records: List[SaleRecord], tax_year: int, enable_bep: bool = False, enable_ttest: bool = False):
     for sale in [sale for sale in sale_records if sale.sale_t.time.year == tax_year]:
-        sale.calculate_income_and_cost(enable_bep, enable_ttest)
+        sale.calculate_income_and_cost_old(enable_bep, enable_ttest)
 
 # ---------------------------------------------------------------------------
 # Tax calculation: use the true closing year of each position
@@ -267,7 +267,7 @@ def calculate_tax(
     enable_ttest: bool = False,
 ) -> None:
     for sale in (s for s in sale_records if s.close_time.year == tax_year):
-        sale.calculate_income_and_cost(enable_bep, enable_ttest)
+        sale.calculate_income_and_cost(tax_year, enable_bep, enable_ttest)
 
 
 def optimize_product(txs: List[Transaction], tax_year: int, strategies: dict[int,str] = None, enable_bep: bool = False, enable_ttest: bool = False) -> List[SaleRecord]:

@@ -131,7 +131,7 @@ class OptimizerTestCase(unittest.TestCase):
         self.assertEqual(1, len(report))
 
         sale_record = report[0]
-        sale_record.calculate_income_and_cost()
+        sale_record.calculate_income_and_cost(self.TAX_YEAR)
 
         self.assertEqual(Decimal('60.0') * self.fx_rate, sale_record.profit_tc)
 
@@ -149,14 +149,14 @@ class OptimizerTestCase(unittest.TestCase):
         self.assertEqual(2, len(report))
 
         sale_record = report[0]
-        sale_record.calculate_income_and_cost(enable_bep=True)
+        sale_record.calculate_income_and_cost(self.TAX_YEAR, enable_bep=True)
 
         expected_profit_usd = Decimal('-240.0')
         actual_profit_usd = sale_record.profit_tc / self.fx_rate
         self.assertEqual(expected_profit_usd, actual_profit_usd)
 
         sale_record = report[1]
-        sale_record.calculate_income_and_cost(enable_bep=True)
+        sale_record.calculate_income_and_cost(self.TAX_YEAR, enable_bep=True)
 
         expected_profit_usd = Decimal('2000.0')
         actual_profit_usd = sale_record.profit_tc / self.fx_rate
@@ -167,7 +167,7 @@ class OptimizerTestCase(unittest.TestCase):
         report = optimize_transaction_pairing(trans, self.STRATEGIES)
 
         sale_record = report[0]
-        sale_record.calculate_income_and_cost()
+        sale_record.calculate_income_and_cost(self.TAX_YEAR)
         self.assertEqual(Decimal('900') * self.fx_rate, sale_record.profit_tc)  # assumes max_cost, FIFO would be $940
 
     def test_is_better_cost_pair(self):
@@ -467,7 +467,7 @@ class OptimizerShortSellingTestCase(unittest.TestCase):
         # First sale record: closing the long position (long_close_sell)
         sr1 = sale_records[0]
         self.assertIs(sr1.sale_t, long_close_sell, "First SaleRecord should correspond to long_close_sell")
-        sr1.calculate_income_and_cost()
+        sr1.calculate_income_and_cost(self.TAX_YEAR)
         expected_profit_sr1_usd = (Decimal("12.0") - Decimal("10.0")) * 100
         expected_profit_sr1_tc = expected_profit_sr1_usd * self.fx_rate
         self.assertEqual(sr1.profit_tc, expected_profit_sr1_tc, f"Profit (TC) for first sale (long close) was {sr1.profit_tc}, expected {expected_profit_sr1_tc}")
@@ -475,7 +475,7 @@ class OptimizerShortSellingTestCase(unittest.TestCase):
         # Second sale record: opening the short position (open_short_sell)
         sr2 = sale_records[1]
         self.assertIs(sr2.sale_t, open_short_sell, "Second SaleRecord should correspond to open_short_sell")
-        sr2.calculate_income_and_cost()
+        sr2.calculate_income_and_cost(self.TAX_YEAR)
         # This SaleRecord is for an unmatched short sale, so its buys list is empty; zero profits.
         expected_profit_sr2_tc = Decimal("0.00")
         self.assertEqual(sr2.profit_tc, expected_profit_sr2_tc, f"Profit (TC) for second sale (open short) was {sr2.profit_tc}, expected {expected_profit_sr2_tc}")
