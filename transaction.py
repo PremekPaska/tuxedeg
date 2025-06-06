@@ -246,7 +246,8 @@ class SaleRecord:
         self._income_tc = total_income
         self._cost_tc   = total_cost
         self._fees_tc   = total_fees + (
-            self.sale_t.fee * unified_fx_rate(self.sale_t.time.year, self.sale_t.fee_currency)
+            Decimal(0) if not self.buys  # Don't add fee for dangling short
+            else self.sale_t.fee * unified_fx_rate(self.sale_t.time.year, self.sale_t.fee_currency)
         )
 
         # definitive closing timestamp

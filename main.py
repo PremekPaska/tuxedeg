@@ -98,6 +98,7 @@ def build_pairing_rows(report: List[SaleRecord], id_col: str) -> list[dict]:
             "PairID": pair_id,
             "Side": "close",
             "DateTime": close_t.time,
+            "CloseTime" : sale.close_time if sale.close_time != close_t.time else "",
             "Product": close_t.product_name,
             id_col: _id_value(close_t),
             "Quantity": close_t.count,
@@ -105,7 +106,7 @@ def build_pairing_rows(report: List[SaleRecord], id_col: str) -> list[dict]:
             "SharePrice": close_t.share_price,
             "Currency": close_t.currency,
             "TimeTestPassed": "--",
-            "ProfitPerShare": "--",
+            "ProfitPerShare": "",
         })
 
         # Opening side(s)
@@ -115,6 +116,7 @@ def build_pairing_rows(report: List[SaleRecord], id_col: str) -> list[dict]:
                 "PairID": pair_id,
                 "Side": "open",
                 "DateTime": open_t.time,
+                "CloseTime": "",
                 "Product": open_t.product_name,
                 id_col: _id_value(open_t),
                 "Quantity": br._count_consumed,

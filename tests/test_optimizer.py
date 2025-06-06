@@ -360,6 +360,9 @@ class OptimizerShortSellingTestCase(unittest.TestCase):
         self.assertEqual(cost, Decimal('15000') * self.fx_rate)
         self.assertEqual(fees, Decimal('0') * self.fx_rate)
 
+        self.assertEqual(short_record.close_time, cover_buy.time)
+        self.assertNotEqual(short_record.close_time, short_open.time)
+
     # ------------------------------------------------------------------ #
     def test_deepen_short_then_two_step_cover(self):
         """
