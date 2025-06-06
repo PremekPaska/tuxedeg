@@ -195,6 +195,10 @@ class SaleRecord:
     @property
     def fees_tc(self) -> decimal:
         return self._fees_tc
+
+    def append_buy_record(self, buy_record: BuyRecord):
+        self.buys.append(buy_record)
+        self.close_time = max(self.close_time, buy_record.buy_t.time)
     
     def _calculate_income_for_buy_sell_pair(self, buy_record: BuyRecord):
         sale_fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)
@@ -209,12 +213,7 @@ class SaleRecord:
         total_cost   = Decimal(0)
         total_fees   = Decimal(0)
 
-        # collect timestamps that might close the position
-        close_moments = [self.sale_t.time]
-
         for br in self.buys:
-            close_moments.append(br.buy_t.time)
-
             pair_income = self._calculate_income_for_buy_sell_pair(br)
 
             if enable_bep:                           # BEP hack
@@ -249,9 +248,6 @@ class SaleRecord:
             Decimal(0) if not self.buys  # Don't add fee for dangling short
             else self.sale_t.fee * unified_fx_rate(self.sale_t.time.year, self.sale_t.fee_currency)
         )
-
-        # definitive closing timestamp
-        self.close_time = max(close_moments)
 
     def calculate_income_and_cost_old(self, enable_bep: bool = False, enable_ttest: bool = False) -> None:
         self._fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)

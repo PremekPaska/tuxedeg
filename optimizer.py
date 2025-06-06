@@ -236,7 +236,7 @@ def optimize_transaction_pairing(
                     sr = SaleRecord(short_lot.tx, [])
                     sale_records.append(sr)
                     sale_map[short_lot.tx] = sr
-                sr.buys.append(br)
+                sr.append_buy_record(br)
 
                 short_lot.remaining -= qty
                 remaining -= qty
@@ -283,7 +283,7 @@ def calculate_totals(sale_records: List[SaleRecord], tax_year: int) -> (decimal,
     total_cost = Decimal(0)
     total_fees = Decimal(0)
 
-    for sale in [s for s in sale_records if s.sale_t.time.year == tax_year]:
+    for sale in [s for s in sale_records if s.close_time.year == tax_year]:
         total_income += sale.income_tc
         total_cost += sale.cost_tc
         total_fees += sale.fees_tc
