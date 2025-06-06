@@ -297,6 +297,11 @@ class PairingStrategiesTestCase(unittest.TestCase):
         self.assertEqual(Decimal('93774.7573'), income)
         self.assertEqual(Decimal('63322.7934'), cost)
         self.assertEqual(Decimal('593.3456'), fees)
+    
+    # TODO:
+    # Test the situation that short opens and partially closes before tax year.
+    # Test that the profit calculation correctly includes/excludes buy-sell pairs based on close_time.
+    # Test the situation when a sale swings from a long directly to short position and vice versa.
 
 def make_tx(
     ts: str | datetime,
