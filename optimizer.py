@@ -150,20 +150,6 @@ def warn_about_default_strategy(trans: List[Transaction], strategies: dict[int,s
             return
 
 
-def optimize_transaction_pairing_old(trans: List[Transaction], strategies: dict[int,str]) -> List[SaleRecord]:
-    warn_about_default_strategy(trans, strategies)
-    sale_records = []
-    for sale_t in [t for t in trans if t.is_sale]:
-        buy_records = find_buys(sale_t, trans, strategies)
-        sale_record = SaleRecord(sale_t, buy_records)
-        sale_records.append(sale_record)
-
-    return sale_records
-
-
-# The helpers below (find_buys*, warn_about_default_strategy) already exist
-# elsewhere in this file or the project and are reused unchanged.
-
 @dataclass
 class _OpenShort:
     """One still-uncovered short lot."""
@@ -251,11 +237,6 @@ def optimize_transaction_pairing(
         # TODO: Add some status reporting.
 
     return sale_records
-
-
-def calculate_tax_old(sale_records: List[SaleRecord], tax_year: int, enable_bep: bool = False, enable_ttest: bool = False):
-    for sale in [sale for sale in sale_records if sale.sale_t.time.year == tax_year]:
-        sale.calculate_income_and_cost_old(enable_bep, enable_ttest)
 
 # ---------------------------------------------------------------------------
 # Tax calculation: use the true closing year of each position
