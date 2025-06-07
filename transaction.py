@@ -224,7 +224,7 @@ class SaleRecord:
 
             pair_income = self._calculate_income_for_buy_sell_pair(br)
 
-            if enable_bep:                           # BEP hack
+            if enable_bep:  # BEP hack
                 br.buy_t._share_price = self.sale_t.bep
 
             br.calculate_cost()
@@ -233,14 +233,10 @@ class SaleRecord:
             if ttest_passed:
                 br.pass_time_test()
                 pair_profit = (pair_income - br.cost_tc).quantize(Decimal("0.01"))
-                suffix = (
-                    f". Untaxed profit: {pair_profit} CZK"
-                    if enable_ttest else
-                    ", but not applied, consider --ttest."
-                )
+                not_applied = " (but not applied due to --no-ttest)" if not enable_ttest else ""
                 print(
-                    f"Time test passed for {br._count_consumed} shares "
-                    f"bought on {br.buy_t.time}{suffix}"
+                    f"Time test passed{not_applied} for {br._count_consumed} shares bought on {br.buy_t.time}"
+                    f", untaxed profit: {pair_profit} CZK"
                 )
                 if enable_ttest:
                     continue
