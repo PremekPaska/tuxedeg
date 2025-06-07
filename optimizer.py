@@ -43,8 +43,6 @@ def find_buys_lifo(sale_t: Transaction, trans: List[Transaction]) -> List[BuyRec
 
 
 def is_better_cost_pair(buy_t: Transaction, t: Transaction) -> bool:
-    if t is None:
-        raise ValueError("Transaction parameter 't' must not be None!")
     if buy_t is None:
         return True
     day_diff = abs((buy_t.time - t.time).days)
@@ -53,15 +51,23 @@ def is_better_cost_pair(buy_t: Transaction, t: Transaction) -> bool:
         or t.share_price > buy_t.share_price * Decimal('1.15')
 
 
-def is_lower_cost_pair(buy_t: Transaction, t: Transaction) -> bool:
-    if t is None:
-        raise ValueError("Transaction parameter 't' must not be None!")
+def is_lower_cost_pair_orig(buy_t: Transaction, t: Transaction) -> bool:
     if buy_t is None:
         return True
     day_diff = abs((buy_t.time - t.time).days)
     return (day_diff < 20 and t.share_price < buy_t.share_price * Decimal('0.97')) \
         or (day_diff < 75 and t.share_price < buy_t.share_price * Decimal('0.90')) \
         or t.share_price < buy_t.share_price * Decimal('0.75')
+
+
+# This version of min_cost eats much less shares eligible for ttest
+def is_lower_cost_pair(buy_t: Transaction, t: Transaction) -> bool:
+    if buy_t is None:
+        return True
+    day_diff = abs((buy_t.time - t.time).days)
+    return (day_diff < 20 and t.share_price < buy_t.share_price * Decimal('0.97')) \
+        or (day_diff < 75 and t.share_price < buy_t.share_price * Decimal('0.75')) \
+        or t.share_price < buy_t.share_price * Decimal('0.085')
 
 
 # Take cost function as a parameter.
