@@ -120,10 +120,11 @@ class Transaction:
 
 
 class BuyRecord:
-    def __init__(self, buy_t: Transaction, count_consumed: int, fee_consumed: bool):
+    def __init__(self, buy_t: Transaction, count_consumed: int, fee_consumed: bool, is_short_cover: bool = False):
         self.buy_t = buy_t
         self._count_consumed = count_consumed
         self._fee_consumed = fee_consumed
+        self._is_short_cover = is_short_cover
 
         self._fx_rate = None
         self._cost_tc = None  # In the target currency (CZK).
@@ -170,6 +171,10 @@ class SaleRecord:
         self._cost_tc = None
         self._fees_tc = None
 
+        # Long positions close immediately; shorts close when the last
+        # covering buy executes.  We track that moment here.
+        self.close_time = sale_t.time
+
     @property
     def fx_rate(self) -> decimal:
         return self._fx_rate
@@ -191,45 +196,63 @@ class SaleRecord:
     @property
     def fees_tc(self) -> decimal:
         return self._fees_tc
+
+    def append_buy_record(self, buy_record: BuyRecord):
+        self.buys.append(buy_record)
+        self.close_time = max(self.close_time, buy_record.buy_t.time)
     
     def _calculate_income_for_buy_sell_pair(self, buy_record: BuyRecord):
         sale_fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)
         return buy_record._count_consumed * self.sale_t.share_price * sale_fx_rate * self.sale_t._multiplier
-
-    def calculate_income_and_cost(self, enable_bep: bool = False, enable_ttest: bool = False) -> None:
+    
+    def calculate_income_and_cost(self, tax_year: int, enable_bep: bool = False, enable_ttest: bool = False) -> None:
         self._fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)
         if not self.sale_t.is_sale:
             raise ValueError("Expected a sale transaction.")
-        
-        total_income = Decimal(0)
-        total_cost = Decimal(0)
-        total_fees = Decimal(0)
-        
-        for buy_record in self.buys:
-            # Calculate income and cost of the buy-sell pair, don't add it to totals if time test passed.
-            pair_income = self._calculate_income_for_buy_sell_pair(buy_record)
-            
-            if enable_bep:
-                buy_record.buy_t._share_price = self.sale_t.bep  # Break-Even Price (BEP) hack
-            
-            buy_record.calculate_cost()
 
-            ttest_passed = (self.sale_t.time - buy_record.buy_t.time).days > 3 * 365  # Time test
+        total_income = Decimal(0)
+        total_cost   = Decimal(0)
+        total_fees   = Decimal(0)
+
+        for br in self.buys:
+            # Skip buy-sell pair if the buy is a short cover before the tax year.
+            if br._is_short_cover and br.buy_t.time.year < tax_year:
+                print(f"Skipping short cover {br.buy_t} before tax year {tax_year}")
+                if br.buy_t.time < self.sale_t.time:
+                    raise ValueError("Not a short cover! Buy transaction is before sale transaction.")
+                continue
+
+            pair_income = self._calculate_income_for_buy_sell_pair(br)
+
+            if enable_bep:                           # BEP hack
+                br.buy_t._share_price = self.sale_t.bep
+
+            br.calculate_cost()
+
+            ttest_passed = (self.sale_t.time - br.buy_t.time).days > 3 * 365
             if ttest_passed:
-                buy_record.pass_time_test()  # We still enable the flag, even if time test is not enabled.
-                pair_profit = (pair_income - buy_record.cost_tc).quantize(Decimal('0.01'))
-                suffix = f". Untaxed profit: {pair_profit} CZK" if enable_ttest else ", but not applied, consider --ttest."
-                print(f"Time test passed for {buy_record._count_consumed} shares bought on {buy_record.buy_t.time}{suffix}")
+                br.pass_time_test()
+                pair_profit = (pair_income - br.cost_tc).quantize(Decimal("0.01"))
+                suffix = (
+                    f". Untaxed profit: {pair_profit} CZK"
+                    if enable_ttest else
+                    ", but not applied, consider --ttest."
+                )
+                print(
+                    f"Time test passed for {br._count_consumed} shares "
+                    f"bought on {br.buy_t.time}{suffix}"
+                )
                 if enable_ttest:
                     continue
 
-            total_income += pair_income    
-            total_cost += buy_record.cost_tc
-            total_fees += buy_record.fees_tc            
-        
+            total_income += pair_income
+            total_cost   += br.cost_tc
+            total_fees   += br.fees_tc
+
+        # final tallies
         self._income_tc = total_income
-        self._cost_tc = total_cost
-        
-        sale_fee = self.sale_t.fee * unified_fx_rate(self.sale_t.time.year, self.sale_t.fee_currency)
-        self._fees_tc = total_fees + sale_fee
-   
+        self._cost_tc   = total_cost
+        self._fees_tc   = total_fees + (
+            Decimal(0) if not self.buys  # Don't add fee for dangling short
+            else self.sale_t.fee * unified_fx_rate(self.sale_t.time.year, self.sale_t.fee_currency)
+        )

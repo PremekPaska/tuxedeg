@@ -3,6 +3,7 @@ import argparse
 import os
 import json
 from pathlib import Path
+import datetime
 import pandas as pd
 from pandas import DataFrame, Series, read_csv, read_excel, concat as pd_concat
 from datetime import datetime
@@ -97,6 +98,7 @@ def build_pairing_rows(report: List[SaleRecord], id_col: str) -> list[dict]:
             "PairID": pair_id,
             "Side": "close",
             "DateTime": close_t.time,
+            "CloseTime" : sale.close_time if sale.close_time != close_t.time else "",
             "Product": close_t.product_name,
             id_col: _id_value(close_t),
             "Quantity": close_t.count,
@@ -104,7 +106,7 @@ def build_pairing_rows(report: List[SaleRecord], id_col: str) -> list[dict]:
             "SharePrice": close_t.share_price,
             "Currency": close_t.currency,
             "TimeTestPassed": "--",
-            "ProfitPerShare": "--",
+            "ProfitPerShare (ignores FX!)": "",
         })
 
         # Opening side(s)
@@ -114,6 +116,7 @@ def build_pairing_rows(report: List[SaleRecord], id_col: str) -> list[dict]:
                 "PairID": pair_id,
                 "Side": "open",
                 "DateTime": open_t.time,
+                "CloseTime": "",
                 "Product": open_t.product_name,
                 id_col: _id_value(open_t),
                 "Quantity": br._count_consumed,
@@ -121,7 +124,8 @@ def build_pairing_rows(report: List[SaleRecord], id_col: str) -> list[dict]:
                 "SharePrice": open_t.share_price,
                 "Currency": open_t.currency,
                 "TimeTestPassed": "T" if br.time_test_passed else "",
-                "ProfitPerShare": close_t.share_price - open_t.share_price,
+                # Note: FX can make substantial difference!
+                "ProfitPerShare (ignores FX!)": close_t.share_price - open_t.share_price,
             })
     return rows
 
@@ -167,9 +171,6 @@ def optimize_all(
                 # CZ: ('IE00B53SZB19', 'US9344231041', 'BMG9525W1091', 'CA88035N1033', 'CA92919V4055', 'KYG851581069', 'US37611X1000'):
                 print(f"Skipping product {pid}: {pname}")
                 continue
-        elif id_col == "Symbol" and pid in ("CNDX", "CSPX", "VOW3d", "AMD", "CRWD", "NVDA", "PLTR", "TM"):
-            print(f"Skipping product {pid}, shorting not (yet) supported.\n")
-            continue
 
         print(f"Processing product {pname}")
 
@@ -230,17 +231,20 @@ def optimize_all(
     os.makedirs(output_path, exist_ok=True)
     bep_suffix = "-bep" if enable_bep else ""
     ttest_suffix = "-ttest" if enable_ttest else ""
-    output_filename_suffix = f"{account_code}-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}{bep_suffix}{ttest_suffix}.csv"
+    options_suffix = "-opt" if options else ""
+    date_prefix = datetime.today().date().strftime('%Y-%m-%d')
+    filename_base = f"{account_code}-{tax_year}-{strategies[tax_year-1]}-{strategies[tax_year]}" \
+                    f"{bep_suffix}{ttest_suffix}{options_suffix}.csv"
 
     df_results.to_csv(
-        f"{output_path}results-{output_filename_suffix}",
+        f"{output_path}{date_prefix}-results-{filename_base}",
         index=False)
 
     pairings_df = pd.DataFrame(pairing_rows)
     if not pairings_df.empty:
         pairings_df["DateTime"] = pairings_df["DateTime"].astype(str)
         pairings_df.to_csv(
-            f"{output_path}pairings-{output_filename_suffix}",
+            f"{output_path}{date_prefix}-pairings-{filename_base}",
             index=False)
         print(f"Exported {len(pairings_df)} pairing rows.")
 
