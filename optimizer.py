@@ -171,6 +171,8 @@ def optimize_transaction_pairing(
 
     Long-only results remain byte-for-byte identical to the historical
     implementation; short selling now works deterministically.
+
+    Initially written by GPT o3.
     """
     warn_about_default_strategy(trans, strategies)
 
@@ -181,13 +183,12 @@ def optimize_transaction_pairing(
     # Process chronologically
     for t in sorted(trans, key=lambda x: x.time):
 
-        # -------------------------------------------------------------------
         # SELL: first close longs with the original machinery
-        # -------------------------------------------------------------------
         if t.is_sale:
             try:
                 buy_records = find_buys(t, trans, strategies)   # unchanged call
             except ValueError:
+                # TODO: Resolve this HACK. Add some status reporting.
                 print(f"Could not find a buy transaction for {t}, openning short.")
                 buy_records = []
 
@@ -196,33 +197,31 @@ def optimize_transaction_pairing(
             excess_qty  = total_qty - matched_qty  # may be zero
 
             # Record the long close (even if partially matched)
-            sr = SaleRecord(t, buy_records)
-            sale_records.append(sr)
-            sale_map[t] = sr
+            sale_rec = SaleRecord(t, buy_records)
+            sale_records.append(sale_rec)
+            sale_map[t] = sale_rec
 
             # Any excess opens / enlarges a short position
             if excess_qty:
                 open_shorts.append(_OpenShort(t, excess_qty))
 
-        # -------------------------------------------------------------------
         # BUY: cover outstanding shorts FIFO, then leave the rest as a long
-        # -------------------------------------------------------------------
         else:
             remaining = t.count
 
             while remaining and open_shorts:
-                short_lot = open_shorts[0]          # FIFO
+                short_lot = open_shorts[0]  # Always FIFO for short covers.
                 qty = min(remaining, short_lot.remaining)
 
                 fee_used = t.consume_shares(qty)
-                br = BuyRecord(t, qty, fee_used, is_short_cover=True)
+                buy_rec = BuyRecord(t, qty, fee_used, is_short_cover=True)
 
-                sr = sale_map.get(short_lot.tx)
-                if sr is None:                      # should not generally happen
-                    sr = SaleRecord(short_lot.tx, [])
-                    sale_records.append(sr)
-                    sale_map[short_lot.tx] = sr
-                sr.append_buy_record(br)
+                sale_rec = sale_map.get(short_lot.tx)
+                if sale_rec is None:  # should not generally happen
+                    sale_rec = SaleRecord(short_lot.tx, [])
+                    sale_records.append(sale_rec)
+                    sale_map[short_lot.tx] = sale_rec
+                sale_rec.append_buy_record(buy_rec)
 
                 short_lot.remaining -= qty
                 remaining -= qty
@@ -238,9 +237,7 @@ def optimize_transaction_pairing(
 
     return sale_records
 
-# ---------------------------------------------------------------------------
 # Tax calculation: use the true closing year of each position
-# ---------------------------------------------------------------------------
 def calculate_tax(
     sale_records: List[SaleRecord],
     tax_year: int,
