@@ -213,6 +213,7 @@ class SaleRecord:
         total_income = Decimal(0)
         total_cost   = Decimal(0)
         total_fees   = Decimal(0)
+        included_count = 0
 
         for br in self.buys:
             # Skip buy-sell pair if the buy is a short cover before the tax year.
@@ -244,11 +245,12 @@ class SaleRecord:
             total_income += pair_income
             total_cost   += br.cost_tc
             total_fees   += br.fees_tc
+            included_count += br._count_consumed
 
         # final tallies
         self._income_tc = total_income
         self._cost_tc   = total_cost
         self._fees_tc   = total_fees + (
-            Decimal(0) if not self.buys  # Don't add fee for dangling short
+            Decimal(0) if included_count == 0  # Skip fee for dangling short or if the time test excludes all.
             else self.sale_t.fee * unified_fx_rate(self.sale_t.time.year, self.sale_t.fee_currency)
         )
