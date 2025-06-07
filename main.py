@@ -14,7 +14,7 @@ from import_ibkr import import_ibkr_stock_transactions, import_ibkr_option_trans
 from import_utils import detect_columns
 from transaction_ibkr import convert_to_transactions_ibkr
 from corporate_action import load_stock_splits, apply_stock_splits_for_product
-from optimizer import optimize_product, print_report, calculate_totals, get_product_name, list_strategies
+from optimizer import optimize_product, print_report, calculate_totals, calculate_untaxed_totals, get_product_name, list_strategies
 from transaction import SaleRecord, Transaction
 
 
@@ -188,8 +188,10 @@ def optimize_all(
 
             current_pairing_rows = build_pairing_rows(report, id_col)
             income, cost, fees = calculate_totals(report, tax_year)
+            untaxed_count = calculate_untaxed_totals(report, tax_year)
 
-            print(f"  Income: {income}, Cost: {cost}, Profit: {income - cost}, Fees: {fees}\n")
+            print(f"  Income: {income}, Cost: {cost}, Profit: {income - cost}, Fees: {fees}"
+                  f", Untaxed count: {untaxed_count}\n")
 
         except Exception as e:
             print(f"ERROR processing product {pname}: {e}")

@@ -170,6 +170,7 @@ class SaleRecord:
         self._income_tc = None
         self._cost_tc = None
         self._fees_tc = None
+        self._untaxed_count = None  # Number of shares untaxed due to the time test.
 
         # Long positions close immediately; shorts close when the last
         # covering buy executes.  We track that moment here.
@@ -197,6 +198,10 @@ class SaleRecord:
     def fees_tc(self) -> decimal:
         return self._fees_tc
 
+    @property
+    def untaxed_count(self) -> int:
+        return self._untaxed_count
+
     def append_buy_record(self, buy_record: BuyRecord):
         self.buys.append(buy_record)
         self.close_time = max(self.close_time, buy_record.buy_t.time)
@@ -214,6 +219,7 @@ class SaleRecord:
         total_cost   = Decimal(0)
         total_fees   = Decimal(0)
         included_count = 0
+        untaxed_count = 0
 
         for buy_rec in self.buys:
             # Skip buy-sell pair if the buy is a short cover before the tax year.
@@ -240,6 +246,7 @@ class SaleRecord:
                     f", untaxed profit: {pair_profit:10.2f} CZK"
                 )
                 if enable_ttest:
+                    untaxed_count += buy_rec._count_consumed
                     continue
 
             total_income += pair_income
@@ -254,3 +261,4 @@ class SaleRecord:
         self._income_tc = total_income
         self._cost_tc   = total_cost
         self._fees_tc   = total_fees
+        self._untaxed_count = untaxed_count

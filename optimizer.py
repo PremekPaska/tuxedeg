@@ -256,7 +256,7 @@ def optimize_product(txs: List[Transaction], tax_year: int, strategies: dict[int
     return sale_records
 
 
-def calculate_totals(sale_records: List[SaleRecord], tax_year: int) -> (decimal, decimal):
+def calculate_totals(sale_records: List[SaleRecord], tax_year: int) -> (decimal, decimal, decimal):
     total_income = Decimal(0)
     total_cost = Decimal(0)
     total_fees = Decimal(0)
@@ -268,6 +268,15 @@ def calculate_totals(sale_records: List[SaleRecord], tax_year: int) -> (decimal,
 
     precision = Decimal('0.0001')
     return total_income.quantize(precision), total_cost.quantize(precision), total_fees.quantize(precision)
+
+
+def calculate_untaxed_totals(sale_records: List[SaleRecord], tax_year: int) -> int:
+    total_untaxed_count = 0
+
+    for sale in [s for s in sale_records if s.close_time.year == tax_year]:
+        total_untaxed_count += sale.untaxed_count
+
+    return total_untaxed_count
 
 
 def print_report(sale_records: List[SaleRecord]):
