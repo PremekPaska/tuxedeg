@@ -215,42 +215,42 @@ class SaleRecord:
         total_fees   = Decimal(0)
         included_count = 0
 
-        for br in self.buys:
+        for buy_rec in self.buys:
             # Skip buy-sell pair if the buy is a short cover before the tax year.
-            if br._is_short_cover and br.buy_t.time.year < tax_year:
-                print(f"Skipping short cover {br.buy_t} before tax year {tax_year}")
-                if br.buy_t.time < self.sale_t.time:
+            if buy_rec._is_short_cover and buy_rec.buy_t.time.year < tax_year:
+                print(f"Skipping short cover {buy_rec.buy_t} before tax year {tax_year}")
+                if buy_rec.buy_t.time < self.sale_t.time:
                     raise ValueError("Not a short cover! Buy transaction is before sale transaction.")
                 continue
 
-            pair_income = self._calculate_income_for_buy_sell_pair(br)
+            pair_income = self._calculate_income_for_buy_sell_pair(buy_rec)
 
             if enable_bep:  # BEP hack
-                br.buy_t._share_price = self.sale_t.bep
+                buy_rec.buy_t._share_price = self.sale_t.bep
 
-            br.calculate_cost()
+            buy_rec.calculate_cost()
 
-            ttest_passed = (self.sale_t.time - br.buy_t.time).days > 3 * 365
+            ttest_passed = (self.sale_t.time - buy_rec.buy_t.time).days > 3 * 365
             if ttest_passed:
-                br.pass_time_test()
-                pair_profit = (pair_income - br.cost_tc).quantize(Decimal("0.01"))
+                buy_rec.pass_time_test()
+                pair_profit = (pair_income - buy_rec.cost_tc).quantize(Decimal("0.01"))
                 not_applied = " (but not applied due to --no-ttest)" if not enable_ttest else ""
                 print(
-                    f"Time test passed{not_applied} for {br._count_consumed} shares bought on {br.buy_t.time}"
+                    f"Time test passed{not_applied} for {buy_rec._count_consumed} shares bought on {buy_rec.buy_t.time}"
                     f", untaxed profit: {pair_profit} CZK"
                 )
                 if enable_ttest:
                     continue
 
             total_income += pair_income
-            total_cost   += br.cost_tc
-            total_fees   += br.fees_tc
-            included_count += br._count_consumed
+            total_cost   += buy_rec.cost_tc
+            total_fees   += buy_rec.fees_tc
+            included_count += buy_rec._count_consumed
 
-        # final tallies
+        # Final tallies
+        if included_count > 0:
+            total_fees += self.sale_t.fee * unified_fx_rate(self.sale_t.time.year, self.sale_t.fee_currency)
+
         self._income_tc = total_income
         self._cost_tc   = total_cost
-        self._fees_tc   = total_fees + (
-            Decimal(0) if included_count == 0  # Skip fee for dangling short or if the time test excludes all.
-            else self.sale_t.fee * unified_fx_rate(self.sale_t.time.year, self.sale_t.fee_currency)
-        )
+        self._fees_tc   = total_fees
