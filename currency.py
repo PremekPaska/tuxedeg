@@ -2,7 +2,7 @@ import decimal
 from decimal import Decimal
 
 FIRST_YEAR = 2017
-LAST_YEAR = 2024
+LAST_YEAR = 2025
 
 
 # sources
@@ -22,7 +22,8 @@ def unified_fx_rate(year: int, from_curr: str, to_curr: str = 'CZK') -> decimal:
             Decimal('21.72'),
             Decimal('23.41'),
             Decimal('22.14'),
-            Decimal('23.28')   # LAST_YEAR
+            Decimal('23.28'),
+            Decimal('22.30'),   # LAST_YEAR; TODO: Update!
         ]
     elif from_curr == 'EUR':
         rates = [
@@ -33,7 +34,8 @@ def unified_fx_rate(year: int, from_curr: str, to_curr: str = 'CZK') -> decimal:
             Decimal('25.65'),
             Decimal('24.54'),
             Decimal('23.97'),
-            Decimal('25.16')   # LAST_YEAR
+            Decimal('25.16'),
+            Decimal('25.00'),   # LAST_YEAR; TODO: Update!
         ]
     elif from_curr == 'CAD':
         rates = [
