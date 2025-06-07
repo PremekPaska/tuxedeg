@@ -236,8 +236,8 @@ class SaleRecord:
                 pair_profit = (pair_income - buy_rec.cost_tc).quantize(Decimal("0.01"))
                 not_applied = " (but not applied due to --no-ttest)" if not enable_ttest else ""
                 print(
-                    f"Time test passed{not_applied} for {buy_rec._count_consumed} shares bought on {buy_rec.buy_t.time}"
-                    f", untaxed profit: {pair_profit} CZK"
+                    f"Time test passed{not_applied} for {buy_rec._count_consumed:3} shares bought on {buy_rec.buy_t.time}"
+                    f", untaxed profit: {pair_profit:10.2f} CZK"
                 )
                 if enable_ttest:
                     continue
