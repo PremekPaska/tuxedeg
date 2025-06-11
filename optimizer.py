@@ -7,8 +7,9 @@ from dataclasses import dataclass
 from transaction import Transaction, BuyRecord, SaleRecord
 
 
+# TODO: Rename min_cost to min_cost0, or mark it as deprecated.
 def list_strategies() -> List[str]:
-    return ["fifo", "lifo", "max_cost", "min_cost"]
+    return ["fifo", "lifo", "max_cost", "min_cost", "micol"]
 
 
 def find_buys_fifo(sale_t: Transaction, trans: List[Transaction]) -> List[BuyRecord]:
@@ -43,8 +44,6 @@ def find_buys_lifo(sale_t: Transaction, trans: List[Transaction]) -> List[BuyRec
 
 
 def is_better_cost_pair(buy_t: Transaction, t: Transaction) -> bool:
-    if t is None:
-        raise ValueError("Transaction parameter 't' must not be None!")
     if buy_t is None:
         return True
     day_diff = abs((buy_t.time - t.time).days)
@@ -54,8 +53,6 @@ def is_better_cost_pair(buy_t: Transaction, t: Transaction) -> bool:
 
 
 def is_lower_cost_pair(buy_t: Transaction, t: Transaction) -> bool:
-    if t is None:
-        raise ValueError("Transaction parameter 't' must not be None!")
     if buy_t is None:
         return True
     day_diff = abs((buy_t.time - t.time).days)
@@ -64,7 +61,18 @@ def is_lower_cost_pair(buy_t: Transaction, t: Transaction) -> bool:
         or t.share_price < buy_t.share_price * Decimal('0.75')
 
 
-# Take cost function as a parameter.
+# This version of min_cost eats much less shares eligible for the time test
+# pairing strategy 'micol' (min cost lifo) is much closer to lifo than min_cost
+def is_much_lower_cost_pair(buy_t: Transaction, t: Transaction) -> bool:
+    if buy_t is None:
+        return True
+    day_diff = abs((buy_t.time - t.time).days)
+    return (day_diff < 20 and t.share_price < buy_t.share_price * Decimal('0.97')) \
+        or (day_diff < 75 and t.share_price < buy_t.share_price * Decimal('0.75')) \
+        or t.share_price < buy_t.share_price * Decimal('0.085')
+
+
+# Takes cost function as a parameter.
 def find_buys_generic_lifo(sale_t: Transaction, trans: List[Transaction],
                            is_better_pair: Callable[[Transaction, Transaction], bool]) -> List[BuyRecord]:
     remaining_sold_count = -sale_t.count
@@ -96,6 +104,10 @@ def find_buys_max_cost(sale_t: Transaction, trans: List[Transaction]) -> List[Bu
 
 def find_buys_min_cost(sale_t: Transaction, trans: List[Transaction]) -> List[BuyRecord]:
     return find_buys_generic_lifo(sale_t, trans, is_lower_cost_pair)
+
+
+def find_buys_micol(sale_t: Transaction, trans: List[Transaction]) -> List[BuyRecord]:
+    return find_buys_generic_lifo(sale_t, trans, is_much_lower_cost_pair)
 
 
 def add_buy_record(buy_records, buy_t, remaining_sold_count):
