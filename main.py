@@ -256,6 +256,7 @@ def optimize_all(
     total_fees = Decimal(total_fees).quantize(Decimal('0.01'))
 
     print()
+    print(f"Asset type: {'Stocks' if not options else 'Options'}")
     print(f"Pairing strategies: {strategies}")
     if enable_bep:
         print("BEP (break-even price) used for cost calculations.")
