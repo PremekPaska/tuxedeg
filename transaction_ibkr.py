@@ -25,7 +25,8 @@ def convert_to_transactions_ibkr(
 
         fee = -row["Comm/Fee"]
         if fee < 0:
-            raise ValueError("Unexpected negative fee!")
+            print(f"Warning: Negative fee: {fee}, Symbol: {symbol}, Date/Time: {row['Date/Time']}, Price: {row['T. Price']}")
+            # raise ValueError("Unexpected negative fee!")
 
         txs.append(Transaction(
             time=row["Date/Time"],
