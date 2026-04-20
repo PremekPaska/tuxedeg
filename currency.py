@@ -21,9 +21,10 @@ def unified_fx_rate(year: int, from_curr: str, to_curr: str = 'CZK') -> decimal:
             Decimal('23.14'),  # 2020
             Decimal('21.72'),
             Decimal('23.41'),
-            Decimal('22.14'),
+            Decimal('22.14'),  # 2023
             Decimal('23.28'),
-            Decimal('22.00'),   # LAST_YEAR; TODO: Update!
+            Decimal('21.84'),
+            Decimal('22.00'),  # LAST_YEAR; TODO: Update!
         ]
     elif from_curr == 'EUR':
         rates = [
@@ -33,9 +34,10 @@ def unified_fx_rate(year: int, from_curr: str, to_curr: str = 'CZK') -> decimal:
             Decimal('26.50'),  # 2020
             Decimal('25.65'),
             Decimal('24.54'),
-            Decimal('23.97'),
+            Decimal('23.97'),  # 2023
             Decimal('25.16'),
-            Decimal('24.55'),   # LAST_YEAR; TODO: Update!
+            Decimal('24.66'),
+            Decimal('24.50'),   # LAST_YEAR; TODO: Update!
         ]
     elif from_curr == 'CAD':
         rates = [
@@ -45,8 +47,10 @@ def unified_fx_rate(year: int, from_curr: str, to_curr: str = 'CZK') -> decimal:
             Decimal('17.23'),  # 2020
             Decimal('17.33'),
             Decimal('17.93'),
-            Decimal('16.40'),
-            Decimal('16.96')   # LAST_YEAR
+            Decimal('16.40'),  # 2023
+            Decimal('16.96'),
+            Decimal('15.61'),
+            Decimal('15.50'),   # LAST_YEAR; (Placeholder)
         ]
     else:
         raise ValueError(f"Unsupported source currency: {from_curr}")
