@@ -130,6 +130,16 @@ def build_pairing_rows(report: List[SaleRecord], id_col: str) -> list[dict]:
     return rows
 
 
+def compose_notes(enable_ttest: bool) -> str:
+    notes = ""
+    if enable_ttest:
+        notes += "Time test (TT) is enabled.\n"
+        notes += "  The 'Untaxed count' printout shows the number of shares untaxed due to the time test."
+    else:
+        notes += "Time test (TT) is *disabled!*"
+    return notes
+
+
 def optimize_all(
     df_trans: DataFrame,
     tax_year: int,
@@ -256,8 +266,10 @@ def optimize_all(
     total_fees = Decimal(total_fees).quantize(Decimal('0.01'))
 
     print()
+    print(compose_notes(enable_ttest), "\n")
     print(f"Asset type: {'Stocks' if not options else 'Options'}")
     print(f"Pairing strategies: {strategies}")
+    print(f"Tax year: {tax_year}")
     if enable_bep:
         print("BEP (break-even price) used for cost calculations.")
     print()
