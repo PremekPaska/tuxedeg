@@ -2,7 +2,7 @@ import decimal
 from decimal import Decimal
 
 FIRST_YEAR = 2017
-LAST_YEAR = 2025
+LAST_YEAR = 2026
 
 
 # sources
@@ -50,7 +50,7 @@ def unified_fx_rate(year: int, from_curr: str, to_curr: str = 'CZK') -> decimal:
             Decimal('16.40'),  # 2023
             Decimal('16.96'),
             Decimal('15.61'),
-            Decimal('15.50'),   # LAST_YEAR; (Placeholder)
+            Decimal('15.50'),   # LAST_YEAR; (Placeholder value)
         ]
     else:
         raise ValueError(f"Unsupported source currency: {from_curr}")
