@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(.venv/bin/python -m pytest tests/test_import_ibkr.py -x)"
+      "Bash(.venv/bin/python -m pytest tests/test_import_ibkr.py -x)",
+      "Bash(python -m pytest tests/ -x -q)",
+      "Bash(python -m unittest discover tests -v)",
+      "Bash(.venv/bin/python -m unittest discover tests)"
     ]
   }
 }
