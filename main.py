@@ -14,7 +14,7 @@ from import_ibkr import import_ibkr_stock_transactions, import_ibkr_option_trans
 from import_utils import detect_columns
 from transaction_ibkr import convert_to_transactions_ibkr
 from corporate_action import load_stock_splits, apply_stock_splits_for_product
-from optimizer import optimize_product, print_report, calculate_totals, calculate_untaxed_totals, get_product_name, list_strategies
+from optimizer import optimize_product, print_report, calculate_totals, calculate_untaxed_totals, calculate_expired_long_totals, get_product_name, list_strategies
 from transaction import SaleRecord, Transaction
 
 
@@ -165,8 +165,9 @@ def optimize_all(
         print(f"Processing only specified symbols: {', '.join(selected_symbols)}")
         print(f"Selected {len(products)} products to process.")
 
-    df_results = DataFrame(columns=["Product", id_col, "Status", "Income", "Cost", "Profit", "Fees"])
+    df_results = DataFrame(columns=["Product", id_col, "Status", "Income", "Cost", "Profit", "Fees", "ExpiredLongCost"])
     total_income = total_cost = total_fees = Decimal(0)
+    total_expired_cost = Decimal(0)
     error_count = 0
 
     # Collect detailed pairing rows for audit purposes.
@@ -190,6 +191,7 @@ def optimize_all(
         income = Decimal(0)
         cost = Decimal(0)
         fees = Decimal(0)
+        expired_cost = Decimal(0)
         error_occurred_for_product = False
 
         try:
@@ -198,10 +200,11 @@ def optimize_all(
 
             current_pairing_rows = build_pairing_rows(report, id_col)
             income, cost, fees = calculate_totals(report, tax_year)
+            expired_cost = calculate_expired_long_totals(report, tax_year)
             untaxed_count = calculate_untaxed_totals(report, tax_year)
 
             print(f"  Income: {income}, Cost: {cost}, Profit: {income - cost}, Fees: {fees}"
-                  f", Untaxed count: {untaxed_count}\n")
+                  f", Untaxed count: {untaxed_count}, Expired long cost: {expired_cost}\n")
 
         except Exception as e:
             print(f"ERROR processing product {pname}: {e}")
@@ -225,14 +228,16 @@ def optimize_all(
             "Cost": cost,
             "Profit": income - cost,
             "Fees": fees,
+            "ExpiredLongCost": expired_cost,
         }
-        
-        new_row_df = DataFrame([row]) 
-        df_results = pd_concat([df_results, new_row_df], ignore_index=True) 
+
+        new_row_df = DataFrame([row])
+        df_results = pd_concat([df_results, new_row_df], ignore_index=True)
 
         total_income += income
         total_cost += cost
         total_fees += fees
+        total_expired_cost += expired_cost
 
     print()
     pd.set_option('display.max_rows', None)
@@ -264,6 +269,7 @@ def optimize_all(
     total_income = Decimal(total_income).quantize(Decimal('0.01'))
     total_cost = Decimal(total_cost).quantize(Decimal('0.01'))
     total_fees = Decimal(total_fees).quantize(Decimal('0.01'))
+    total_expired_cost = Decimal(total_expired_cost).quantize(Decimal('0.01'))
 
     print()
     print(compose_notes(enable_ttest), "\n")
@@ -276,6 +282,7 @@ def optimize_all(
     print(f"Total income: {total_income}")
     print(f"Total cost  : {total_cost}")
     print(f"Total fees  : {total_fees}")
+    print(f"Expired long cost (informational, not subtracted): {total_expired_cost}")
 
     total_profit = total_income - total_cost - total_fees
     print()

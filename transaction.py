@@ -211,6 +211,10 @@ class SaleRecord:
     def append_buy_record(self, buy_record: BuyRecord):
         self.buys.append(buy_record)
         self.close_time = max(self.close_time, buy_record.buy_t.time)
+
+    @property
+    def is_expired_long(self) -> bool:
+        return self.sale_t.expired_worthless and not any(br._is_short_cover for br in self.buys)
     
     def _calculate_income_for_buy_sell_pair(self, buy_record: BuyRecord):
         sale_fx_rate = unified_fx_rate(self.sale_t.time.year, self.sale_t.currency)

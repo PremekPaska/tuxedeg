@@ -282,6 +282,16 @@ def calculate_totals(sale_records: List[SaleRecord], tax_year: int) -> (decimal,
     return total_income.quantize(precision), total_cost.quantize(precision), total_fees.quantize(precision)
 
 
+def calculate_expired_long_totals(sale_records: List[SaleRecord], tax_year: int) -> decimal:
+    total_expired_cost = Decimal(0)
+    for sale in [s for s in sale_records if s.close_time.year == tax_year and s.is_expired_long]:
+        if sale.cost_tc is not None:
+            total_expired_cost += sale.cost_tc
+
+    precision = Decimal('0.0001')
+    return total_expired_cost.quantize(precision)
+
+
 def calculate_untaxed_totals(sale_records: List[SaleRecord], tax_year: int) -> int:
     total_untaxed_count = 0
 
