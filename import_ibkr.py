@@ -28,6 +28,7 @@ KEEP_COLS: Final[list[str]] = [
     "Quantity",
     "T. Price",
     "Comm/Fee",
+    "Code",
 ]
 
 # === helper functions ===
@@ -84,7 +85,8 @@ def _parse_one_csv(path: Path, asset_category: str) -> pd.DataFrame:
         dtype={
             "Quantity": "float64",  # Could be Int64, but floats would handle fractional shares.
             "T. Price": "float64",
-            "Comm/Fee": "float64"},
+            "Comm/Fee": "float64",
+            "Code": "string"},
     )
     df["Date/Time"] = pd.to_datetime(
         df["Date/Time"], format="%Y-%m-%d, %H:%M:%S", errors="coerce"

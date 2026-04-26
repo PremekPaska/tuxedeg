@@ -28,7 +28,11 @@ def convert_to_transactions_ibkr(
             print(f"Warning: Negative fee: {fee}, Symbol: {symbol}, Date/Time: {row['Date/Time']}, Price: {row['T. Price']}")
             # raise ValueError("Unexpected negative fee!")
 
-        txs.append(Transaction(
+        code = row["Code"] if "Code" in row else ""
+        code_tokens = str(code).split(";") if code is not None else []
+        expired_worthless = "Ep" in code_tokens
+
+        tx = Transaction(
             time=row["Date/Time"],
             product_name=symbol,  # For now use symbol as product name
             isin=symbol,          # For now use symbol as ISIN
@@ -38,6 +42,11 @@ def convert_to_transactions_ibkr(
             fee=fee,
             fee_currency=row["Currency"],
             option_contract=options,
-        ))
+            expired_worthless=expired_worthless,
+        )
+        txs.append(tx)
+
+        if expired_worthless and tx.is_sale:
+            print(f"  EXPIRED LONG OPTION: {symbol}, {row['Date/Time']}, qty={tx.count}, price={tx.share_price}")
 
     return txs

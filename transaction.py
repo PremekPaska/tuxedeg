@@ -13,7 +13,8 @@ TSLA_SPLIT = datetime(2022, 8, 25)
 
 class Transaction:
     def __init__(self, time: datetime, product_name: str, isin: str, count: int, share_price: decimal, currency: str,
-                 fee: decimal, fee_currency: str, option_contract: bool = False):
+                 fee: decimal, fee_currency: str, option_contract: bool = False,
+                 expired_worthless: bool = False):
         self._time = time
         self._product_name = product_name
         self.isin = isin  # TODO: rename to product_id
@@ -29,6 +30,7 @@ class Transaction:
         self._bep = None
 
         self._multiplier = Decimal(1) if not option_contract else Decimal(100)
+        self._expired_worthless = expired_worthless
 
     def __str__(self):
         return f"{self._time}, {self._product_name}, {self._count}, {self.isin}, {self._share_price}, fee: {self._fee}"
@@ -78,6 +80,10 @@ class Transaction:
     @property
     def bep(self) -> decimal:
         return self._bep
+
+    @property
+    def expired_worthless(self) -> bool:
+        return self._expired_worthless
     
     def set_bep(self, bep: decimal):
         self._bep = bep
