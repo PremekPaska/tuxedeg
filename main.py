@@ -151,6 +151,7 @@ def optimize_all(
     enable_ttest: bool = True,
     options: bool = False,
     symbols_filter_str: str = None,
+    sort_by_profit: bool = False,
 ) -> None:
     id_col, date_col, product_col = detect_columns(df_trans)
 
@@ -241,6 +242,8 @@ def optimize_all(
 
     print()
     pd.set_option('display.max_rows', None)
+    if sort_by_profit:
+        df_results = df_results.sort_values('Profit')
     print(df_results)
 
     # Export aggregated results and detailed pairings to CSV
@@ -365,6 +368,7 @@ def main():
     parser.add_argument('--no-ttest', action='store_true', dest='disable_ttest', help='Disable time test (it is ON by default; skipping P&L from sales after 3 years)')
     parser.add_argument('-o', '--options', action='store_true', help='Import options trades')
     parser.add_argument('--symbols', type=str, help='Comma-separated list of symbols to process')
+    parser.add_argument('--sort-profit', action='store_true', help='Sort results table by profit (ascending)')
     parser.add_argument('files', nargs='+', help='Files to process')
     args = parser.parse_args()
 
@@ -404,7 +408,8 @@ def main():
         enable_bep=args.bep,
         enable_ttest=not args.disable_ttest,
         options=args.options,
-        symbols_filter_str=args.symbols)
+        symbols_filter_str=args.symbols,
+        sort_by_profit=args.sort_profit)
 
     print()
     print("Processed file(s):", args.files)
