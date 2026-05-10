@@ -152,6 +152,7 @@ def optimize_all(
     options: bool = False,
     symbols_filter_str: str = None,
     sort_by_profit: bool = False,
+    group_by_underlying: bool = False,
 ) -> None:
     id_col, date_col, product_col = detect_columns(df_trans)
 
@@ -246,6 +247,24 @@ def optimize_all(
         df_results = df_results.sort_values('Profit')
     print(df_results)
 
+    if options and group_by_underlying:
+        df_results["Underlying"] = df_results[id_col].str.split(n=1).str[0]
+        agg_cols = ["Income", "Cost", "Profit", "Fees", "ExpiredLongCost"]
+        df_underlying = (
+            df_results.groupby("Underlying")[agg_cols]
+            .sum()
+            .reset_index()
+        )
+        contracts = df_results.groupby("Underlying")[id_col].count().rename("Contracts")
+        df_underlying = df_underlying.join(contracts, on="Underlying")
+        if sort_by_profit:
+            df_underlying = df_underlying.sort_values("Profit")
+        else:
+            df_underlying = df_underlying.sort_values("Underlying")
+        print()
+        print("Results by underlying:")
+        print(df_underlying.to_string(index=False))
+
     # Export aggregated results and detailed pairings to CSV
     output_path = "outputs/"
     os.makedirs(output_path, exist_ok=True)
@@ -267,6 +286,11 @@ def optimize_all(
             f"{output_path}{date_prefix}-pairings-{filename_base}",
             index=False)
         print(f"Exported {len(pairings_df)} pairing rows.")
+
+    if options and group_by_underlying:
+        df_underlying.to_csv(
+            f"{output_path}{date_prefix}-by-underlying-{filename_base}",
+            index=False)
 
     # Round to 2 decimal places
     total_income = Decimal(total_income).quantize(Decimal('0.01'))
@@ -369,6 +393,7 @@ def main():
     parser.add_argument('-o', '--options', action='store_true', help='Import options trades')
     parser.add_argument('--symbols', type=str, help='Comma-separated list of symbols to process')
     parser.add_argument('--sort-profit', action='store_true', help='Sort results table by profit (ascending)')
+    parser.add_argument('--group', action='store_true', help='For options: also print and export results aggregated by underlying symbol (ignored otherwise)')
     parser.add_argument('files', nargs='+', help='Files to process')
     args = parser.parse_args()
 
@@ -409,7 +434,8 @@ def main():
         enable_ttest=not args.disable_ttest,
         options=args.options,
         symbols_filter_str=args.symbols,
-        sort_by_profit=args.sort_profit)
+        sort_by_profit=args.sort_profit,
+        group_by_underlying=args.group)
 
     print()
     print("Processed file(s):", args.files)
