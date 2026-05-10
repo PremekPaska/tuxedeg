@@ -167,7 +167,7 @@ def optimize_all(
         print(f"Processing only specified symbols: {', '.join(selected_symbols)}")
         print(f"Selected {len(products)} products to process.")
 
-    df_results = DataFrame(columns=["Product", id_col, "Status", "Income", "Cost", "Profit", "Fees", "ExpiredLongCost"])
+    df_results = DataFrame(columns=["Product", id_col, "Status", "Income", "Cost", "Profit", "Fees", "ExpiredLongs"])
     total_income = total_cost = total_fees = Decimal(0)
     total_expired_cost = Decimal(0)
     error_count = 0
@@ -230,7 +230,7 @@ def optimize_all(
             "Cost": cost,
             "Profit": income - cost,
             "Fees": fees,
-            "ExpiredLongCost": expired_cost,
+            "ExpiredLongs": expired_cost,
         }
 
         new_row_df = DataFrame([row])
@@ -245,11 +245,14 @@ def optimize_all(
     pd.set_option('display.max_rows', None)
     if sort_by_profit:
         df_results = df_results.sort_values('Profit')
-    print(df_results)
+    df_display = df_results.drop(columns=[id_col]) if id_col != "ISIN" else df_results
+    if not options:
+        df_display = df_display.drop(columns=["ExpiredLongs"])
+    print(df_display)
 
     if options and group_by_underlying:
         df_results["Underlying"] = df_results[id_col].str.split(n=1).str[0]
-        agg_cols = ["Income", "Cost", "Profit", "Fees", "ExpiredLongCost"]
+        agg_cols = ["Income", "Cost", "Profit", "Fees", "ExpiredLongs"]
         df_underlying = (
             df_results.groupby("Underlying")[agg_cols]
             .sum()
