@@ -248,7 +248,12 @@ def optimize_all(
     df_display = df_results.drop(columns=[id_col]) if id_col != "ISIN" else df_results
     if not options:
         df_display = df_display.drop(columns=["ExpiredLongs"])
-    print(df_display)
+    numeric_cols = ["Income", "Cost", "Profit", "Fees", "ExpiredLongs"]
+    df_print = df_display.copy()
+    for col in numeric_cols:
+        if col in df_print.columns:
+            df_print[col] = df_print[col].apply(float)
+    print(df_print.to_string(float_format=lambda x: f"{x:.2f}"))
 
     if options and group_by_underlying:
         df_results["Underlying"] = df_results[id_col].str.split(n=1).str[0]
@@ -266,7 +271,10 @@ def optimize_all(
             df_underlying = df_underlying.sort_values("Underlying")
         print()
         print("Results by underlying:")
-        print(df_underlying.to_string(index=False))
+        df_underlying_print = df_underlying.copy()
+        for col in agg_cols:
+            df_underlying_print[col] = df_underlying_print[col].apply(float)
+        print(df_underlying_print.to_string(index=False, float_format=lambda x: f"{x:.2f}"))
 
     # Export aggregated results and detailed pairings to CSV
     output_path = "outputs/"
