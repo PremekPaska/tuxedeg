@@ -321,7 +321,8 @@ def optimize_all(
     print(f"Total income: {total_income}")
     print(f"Total cost  : {total_cost}")
     print(f"Total fees  : {total_fees}")
-    print(f"Expired long cost (informational, not subtracted): {total_expired_cost}")
+    if options:
+        print(f"Expired long cost (informational, not subtracted): {total_expired_cost}")
 
     total_profit = total_income - total_cost - total_fees
     print()
