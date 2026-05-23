@@ -1,6 +1,7 @@
 from decimal import Decimal
 import argparse
 import os
+import sys
 import json
 from pathlib import Path
 import datetime
@@ -385,9 +386,15 @@ def setup_strategies(args) -> Dict[int, str]:
         return strategies
     elif args.config:
         print(f"Loading strategies from {args.config}")
-        return load_strategies(Path(args.config))
+        strategies = load_strategies(Path(args.config))
     else:
-        return load_strategies(Path("config/strategies.json"))
+        strategies = load_strategies(Path("config/strategies.json"))
+
+    for year in [args.year - 1, args.year]:
+        if year not in strategies:
+            print(f"ERROR: Year {year} not found in strategies config. Please add an entry for {year}.")
+            sys.exit(1)
+    return strategies
 
 
 def main():
@@ -421,6 +428,13 @@ def main():
 
     os.chdir(os.path.dirname(__file__))
     account_code = detect_account_code(args)  # Used in output file names.
+
+    # pairing strategies for each tax year
+    strategies = setup_strategies(args)
+
+    # load corporate actions (stock splits)
+    splits_df = load_stock_splits("config/corporate_actions.csv") if not args.no_split else None
+
     if args.deg:
         # Import from one or more Degiro CSV files
         df_list = [import_transactions(f) for f in args.files]
@@ -431,12 +445,6 @@ def main():
     else:
         # Import stocks from one or more IBKR CSV files
         df_transactions = import_ibkr_stock_transactions(args.files)
-
-    # pairing strategies for each tax year
-    strategies = setup_strategies(args)
-
-    # load corporate actions (stock splits)
-    splits_df = load_stock_splits("config/corporate_actions.csv") if not args.no_split else None
 
     # *** main processing ***
     optimize_all(
