@@ -20,11 +20,20 @@ def merge_date_time(date_string: str, time_string: str) -> datetime:
     return datetime.strptime(date_string + ' ' + time_string, '%d-%m-%Y %H:%M')
 
 
-# English: Date,Time,Product,ISIN,Reference,Venue,Quantity,Price,,Local value,,Value,,Exchange rate,
-#   Transaction and/or third,,Total,,Order ID
-# Czech: Datum,Čas,Produkt,ISIN,Reference,Venue,Počet,Cena,,Hodnota v domácí měně,,Hodnota,,Směnný kurz,
+# Current English: Date,Time,Product,ISIN,Reference exchange,Venue,Quantity,Price,,Local value,,Value EUR,
+#   Exchange rate,AutoFX Fee,Transaction and/or third party fees EUR,Total EUR,Order ID
+# Old Czech: Datum,Čas,Produkt,ISIN,Reference,Venue,Počet,Cena,,Hodnota v domácí měně,,Hodnota,,Směnný kurz,
 #   Transaction and/or third,,Celkem,,ID objednávky
-def rename_columns_to_english(df: DataFrame):
+
+_OLD_TO_NEW_COLUMN_NAMES = {
+    'Transaction and/or third': 'Transaction and/or third party fees EUR',
+    'Value': 'Value EUR',
+    'Total': 'Total EUR',
+    'Reference': 'Reference exchange',
+}
+
+
+def normalize_column_names(df: DataFrame):
     # Detect language, rename all columns to English
     if 'Datum' in df.columns:
         print("Renaming Czech columns to English.")
@@ -36,16 +45,18 @@ def rename_columns_to_english(df: DataFrame):
             'Počet': 'Quantity',
             'Cena': 'Price',
             'Hodnota v domácí měně': 'Local value',
-            'Hodnota': 'Value',
+            'Hodnota': 'Value EUR',
             'Směnný kurz': 'Exchange rate',
-            'Celkem': 'Total',
+            'Celkem': 'Total EUR',
             'ID objednávky': 'Order ID'
         }, inplace=True)
+    # Normalize old English names to current names (handles old exports)
+    df.rename(columns=_OLD_TO_NEW_COLUMN_NAMES, inplace=True)
 
 
 REQUIRED_COLUMNS = [
     'Date', 'Time', 'Product', 'ISIN', 'Order ID',
-    'Transaction and/or third', 'Quantity', 'Price',
+    'Transaction and/or third party fees EUR', 'Quantity', 'Price',
 ]
 
 
@@ -67,7 +78,7 @@ def import_transactions(file_name: str):
     pd.set_option('display.max_columns', 12)
     pd.set_option('display.width', 200)
 
-    rename_columns_to_english(df)
+    normalize_column_names(df)
     validate_columns(df, file_name)
 
     print(f"Imported transactions before filtering: {df.shape[0]}")
@@ -81,7 +92,7 @@ def import_transactions(file_name: str):
         print(f"Transactions after dropping null Date: {df.shape[0]}\n")
 
     # Drop also stock split transactions
-    df_split = df[(df['Order ID'].isnull() & df['Transaction and/or third'].isnull())]
+    df_split = df[(df['Order ID'].isnull() & df['Transaction and/or third party fees EUR'].isnull())]
     if df_split.shape[0] > 0:
         print(f"*** Dropping {df_split.shape[0]} transactions without Order ID & Fee (stock splits). ***")
         df = df.drop(df_split.index)  # Drop the exact same rows that were identified in df_split
@@ -127,7 +138,6 @@ def convert_to_transactions_deg(df_trans: DataFrame, product_isin: str, tax_year
     print(f"Filtered {df_product.shape[0]} transaction(s) of product {product_names[0]}, based on ISIN: {product_isin}")
 
     currency_idx = df_product.columns.get_loc('Price') + 2  # row has one more column ("index") at the beginning
-    fee_curr_idx = df_product.columns.get_loc('Transaction and/or third') + 2
     transactions = []
     for _, row in df_product.reset_index().iterrows():
         if row['DateTime'].year > tax_year:
@@ -137,10 +147,7 @@ def convert_to_transactions_deg(df_trans: DataFrame, product_isin: str, tax_year
             print(f"!! Skipping transaction: {row['DateTime']}, {row['Product']}, {row['ISIN']}")
             continue
 
-        if row.iloc[fee_curr_idx] != FEE_CURRENCY and not math.isnan(row.iloc[fee_curr_idx]):
-            raise ValueError("Unexpected fee currency!")
-        
-        fee = -row['Transaction and/or third']  # Fee is negative in Degiro exports
+        fee = -row['Transaction and/or third party fees EUR']  # Fee is negative in Degiro exports
         if fee < 0:
             raise ValueError("Unexpected negative fee!")
 
