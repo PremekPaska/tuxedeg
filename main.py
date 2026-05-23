@@ -2,6 +2,7 @@ from decimal import Decimal
 import argparse
 import os
 import sys
+import traceback
 import json
 from pathlib import Path
 import datetime
@@ -211,6 +212,7 @@ def optimize_all(
 
         except Exception as e:
             print(f"ERROR processing product {pname}: {e}")
+            traceback.print_exc()
             print(f"  Recording zero income/cost for this product and continuing with others.\n")
             error_occurred_for_product = True
             error_count += 1

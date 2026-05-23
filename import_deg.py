@@ -10,6 +10,7 @@ from transaction import Transaction
 
 
 FEE_CURRENCY = 'EUR'
+TRANSACTION_FEE_COLUMN = 'Transaction and/or third party fees EUR'
 
 
 def eu_str_to_date(date_string: str) -> datetime:
@@ -26,7 +27,7 @@ def merge_date_time(date_string: str, time_string: str) -> datetime:
 #   Transaction and/or third,,Celkem,,ID objednávky
 
 _OLD_TO_NEW_COLUMN_NAMES = {
-    'Transaction and/or third': 'Transaction and/or third party fees EUR',
+    'Transaction and/or third': TRANSACTION_FEE_COLUMN,
     'Value': 'Value EUR',
     'Total': 'Total EUR',
     'Reference': 'Reference exchange',
@@ -56,7 +57,7 @@ def normalize_column_names(df: DataFrame):
 
 REQUIRED_COLUMNS = [
     'Date', 'Time', 'Product', 'ISIN', 'Order ID',
-    'Transaction and/or third party fees EUR', 'Quantity', 'Price',
+    TRANSACTION_FEE_COLUMN, 'Quantity', 'Price',
 ]
 
 
@@ -71,7 +72,14 @@ def validate_columns(df: DataFrame, file_name: str):
 
 def import_transactions(file_name: str):
     print(f"Importing Degiro file: {file_name}")
-    df = pd.read_csv(file_name, encoding="utf8")
+
+    # New Degiro exports use comma as the decimal separator; old exports use a period.
+    # Detect from the header before parsing data.
+    header_cols = pd.read_csv(file_name, encoding="utf8", nrows=0).columns
+    is_new_format = TRANSACTION_FEE_COLUMN in header_cols
+    decimal_sep = ',' if is_new_format else '.'
+
+    df = pd.read_csv(file_name, encoding="utf8", decimal=decimal_sep)
     print(df.columns)
     print(df.shape[0])
 
@@ -92,7 +100,7 @@ def import_transactions(file_name: str):
         print(f"Transactions after dropping null Date: {df.shape[0]}\n")
 
     # Drop also stock split transactions
-    df_split = df[(df['Order ID'].isnull() & df['Transaction and/or third party fees EUR'].isnull())]
+    df_split = df[(df['Order ID'].isnull() & df[TRANSACTION_FEE_COLUMN].isnull())]
     if df_split.shape[0] > 0:
         print(f"*** Dropping {df_split.shape[0]} transactions without Order ID & Fee (stock splits). ***")
         df = df.drop(df_split.index)  # Drop the exact same rows that were identified in df_split
@@ -147,7 +155,7 @@ def convert_to_transactions_deg(df_trans: DataFrame, product_isin: str, tax_year
             print(f"!! Skipping transaction: {row['DateTime']}, {row['Product']}, {row['ISIN']}")
             continue
 
-        fee = -row['Transaction and/or third party fees EUR']  # Fee is negative in Degiro exports
+        fee = -row[TRANSACTION_FEE_COLUMN]  # Fee is negative in Degiro exports
         if fee < 0:
             raise ValueError("Unexpected negative fee!")
 
