@@ -43,17 +43,32 @@ def rename_columns_to_english(df: DataFrame):
         }, inplace=True)
 
 
+REQUIRED_COLUMNS = [
+    'Date', 'Time', 'Product', 'ISIN', 'Order ID',
+    'Transaction and/or third', 'Quantity', 'Price',
+]
+
+
+def validate_columns(df: DataFrame, file_name: str):
+    missing = [col for col in REQUIRED_COLUMNS if col not in df.columns]
+    if missing:
+        raise ValueError(
+            f"Column(s) not found in '{file_name}': {missing}\n\n"
+            f"Check column names in the input CSV file. Available columns: {list(df.columns)}"
+        )
+
+
 def import_transactions(file_name: str):
+    print(f"Importing Degiro file: {file_name}")
     df = pd.read_csv(file_name, encoding="utf8")
     print(df.columns)
     print(df.shape[0])
-    # print(df.dtypes)
-    # print(df.head())
 
     pd.set_option('display.max_columns', 12)
     pd.set_option('display.width', 200)
 
     rename_columns_to_english(df)
+    validate_columns(df, file_name)
 
     print(f"Imported transactions before filtering: {df.shape[0]}")
 
@@ -74,7 +89,7 @@ def import_transactions(file_name: str):
         print("Dropped transactions:")
         df_to_print = df_split.copy()
         df_to_print['Product'] = df_to_print['Product'].apply(lambda x: (x[:30] + '~') if len(str(x)) > 30 else x)
-        columns_to_show = ['Date', 'Time', 'Product', 'ISIN', 'Quantity', 'Price', 'Value', 'Exchange rate', 'Total']
+        columns_to_show = ['Date', 'Time', 'Product', 'ISIN', 'Quantity', 'Price']
         print(df_to_print[columns_to_show], "\n")
 
     df['DateTime'] = df.apply(lambda row: merge_date_time(row['Date'], row['Time']), axis=1)

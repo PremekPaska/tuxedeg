@@ -98,6 +98,7 @@ def import_ibkr_transactions(paths: Iterable[str | Path], asset_category: str) -
     frames: list[pd.DataFrame] = []
     for p in paths:
         path = Path(p).expanduser()
+        print(f"Importing IBKR file: {path}")
         logging.info("Importing %s", path)
         frames.append(_parse_one_csv(path, asset_category))
     return pd.concat(frames, ignore_index=True)[KEEP_COLS]
