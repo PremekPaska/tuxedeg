@@ -8,7 +8,7 @@ from currency import unified_fx_rate
 from import_deg import import_transactions, convert_to_transactions_deg
 from import_utils import get_product_id_by_prefix
 from optimizer import optimize_transaction_pairing, is_better_cost_pair, calculate_tax, optimize_product, \
-    calculate_totals, calculate_break_even_prices
+    calculate_totals, calculate_break_even_prices, calculate_ttc_totals
 from tests.test_transaction import create_t
 from transaction import Transaction
 
@@ -112,6 +112,16 @@ class OptimizerTestCase(unittest.TestCase):
 
         self.assertEqual(Decimal('0.50') * unified_fx_rate(self.TAX_YEAR, 'EUR') \
                        + Decimal('0.50') * unified_fx_rate(self.TAX_YEAR - 2, 'EUR'), report[0].fees_tc)
+
+    def test_ttc_totals(self):
+        """Sold Time Test Candidate share count for different month thresholds."""
+        trans = scenario_time_test()  # 5 shares held ~3y+1d, 3 shares held ~2y+1d
+        report = optimize_transaction_pairing(trans, {self.TAX_YEAR: 'fifo'})
+
+        # 12 months: both lots held > 1 year -> 8 shares
+        self.assertEqual(8, calculate_ttc_totals(report, self.TAX_YEAR, months=12))
+        # 36 months: only the 3-year lot qualifies, matching the time-test count -> 5 shares
+        self.assertEqual(5, calculate_ttc_totals(report, self.TAX_YEAR, months=36))
 
     def test_sell_multiple_buys(self):
         trans = scenario_sell_multiple_buys()

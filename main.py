@@ -16,7 +16,7 @@ from import_ibkr import import_ibkr_stock_transactions, import_ibkr_option_trans
 from import_utils import detect_columns
 from transaction_ibkr import convert_to_transactions_ibkr
 from corporate_action import load_stock_splits, apply_stock_splits_for_product
-from optimizer import optimize_product, print_report, calculate_totals, calculate_untaxed_totals, calculate_expired_long_totals, get_product_name, list_strategies
+from optimizer import optimize_product, print_report, calculate_totals, calculate_untaxed_totals, calculate_expired_long_totals, calculate_ttc_totals, get_product_name, list_strategies
 from transaction import SaleRecord, Transaction
 
 
@@ -155,6 +155,7 @@ def optimize_all(
     symbols_filter_str: str = None,
     sort_by_profit: bool = False,
     group_by_underlying: bool = False,
+    ttc_months: int = 12,
 ) -> None:
     id_col, date_col, product_col = detect_columns(df_trans)
 
@@ -169,9 +170,10 @@ def optimize_all(
         print(f"Processing only specified symbols: {', '.join(selected_symbols)}")
         print(f"Selected {len(products)} products to process.")
 
-    df_results = DataFrame(columns=["Product", id_col, "Status", "Income", "Cost", "Profit", "Fees", "ExpiredLongs"])
+    df_results = DataFrame(columns=["Product", id_col, "Status", "Income", "Cost", "Profit", "Fees", "ExpiredLongs", "SoldTtcShares"])
     total_income = total_cost = total_fees = Decimal(0)
     total_expired_cost = Decimal(0)
+    total_ttc = 0
     error_count = 0
 
     # Collect detailed pairing rows for audit purposes.
@@ -196,6 +198,7 @@ def optimize_all(
         cost = Decimal(0)
         fees = Decimal(0)
         expired_cost = Decimal(0)
+        ttc_shares = 0
         error_occurred_for_product = False
 
         try:
@@ -206,9 +209,11 @@ def optimize_all(
             income, cost, fees = calculate_totals(report, tax_year)
             expired_cost = calculate_expired_long_totals(report, tax_year)
             untaxed_count = calculate_untaxed_totals(report, tax_year)
+            ttc_shares = calculate_ttc_totals(report, tax_year, ttc_months) if not options else 0
 
             print(f"  Income: {income}, Cost: {cost}, Profit: {income - cost}, Fees: {fees}"
-                  f", Untaxed count: {untaxed_count}, Expired long cost: {expired_cost}\n")
+                  f", Untaxed count: {untaxed_count}, Expired long cost: {expired_cost}"
+                  f", SoldTtcShares: {ttc_shares}\n")
 
         except Exception as e:
             print(f"ERROR processing product {pname}: {e}")
@@ -234,6 +239,7 @@ def optimize_all(
             "Profit": income - cost,
             "Fees": fees,
             "ExpiredLongs": expired_cost,
+            "SoldTtcShares": ttc_shares,
         }
 
         new_row_df = DataFrame([row])
@@ -243,6 +249,7 @@ def optimize_all(
         total_cost += cost
         total_fees += fees
         total_expired_cost += expired_cost
+        total_ttc += ttc_shares
 
     print()
     pd.set_option('display.max_rows', None)
@@ -251,6 +258,8 @@ def optimize_all(
     df_display = df_results.drop(columns=[id_col]) if id_col != "ISIN" else df_results
     if not options:
         df_display = df_display.drop(columns=["ExpiredLongs"])
+    else:
+        df_display = df_display.drop(columns=["SoldTtcShares"])
     numeric_cols = ["Income", "Cost", "Profit", "Fees", "ExpiredLongs"]
     df_print = df_display.copy()
     for col in numeric_cols:
@@ -325,6 +334,8 @@ def optimize_all(
     print(f"Total fees  : {total_fees}")
     if options:
         print(f"Expired long cost (informational, not subtracted): {total_expired_cost}")
+    else:
+        print(f"Time Test Candidate shares sold (held > {ttc_months} months): {total_ttc}")
 
     total_profit = total_income - total_cost - total_fees
     print()
@@ -415,6 +426,7 @@ def main():
     parser.add_argument('--symbols', type=str, help='Comma-separated list of symbols to process')
     parser.add_argument('--sort-profit', action='store_true', help='Sort results table by profit (ascending)')
     parser.add_argument('--group', action='store_true', help='For options: also print and export results aggregated by underlying symbol (ignored otherwise)')
+    parser.add_argument('--months', type=int, default=12, help='Holding-period threshold in months for the SoldTtcShares column (Sold Time Test Candidate shares; default: 12; use 36 to match the 3-year time test)')
     parser.add_argument('files', nargs='+', help='Files to process')
     args = parser.parse_args()
 
@@ -457,7 +469,8 @@ def main():
         options=args.options,
         symbols_filter_str=args.symbols,
         sort_by_profit=args.sort_profit,
-        group_by_underlying=args.group)
+        group_by_underlying=args.group,
+        ttc_months=args.months)
 
     print()
     print("Processed file(s):", args.files)

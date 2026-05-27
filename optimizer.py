@@ -301,6 +301,20 @@ def calculate_untaxed_totals(sale_records: List[SaleRecord], tax_year: int) -> i
     return total_untaxed_count
 
 
+def calculate_ttc_totals(sale_records: List[SaleRecord], tax_year: int, months: int) -> int:
+    """Count shares sold in `tax_year` held longer than `months` months -- Time Test
+    Candidate shares. Short covers are ignored."""
+    threshold_days = months * 365 / 12
+    total = 0
+    for sale in [s for s in sale_records if s.close_time.year == tax_year]:
+        for buy_rec in sale.buys:
+            if buy_rec._is_short_cover:
+                continue
+            if (sale.sale_t.time - buy_rec.buy_t.time).days > threshold_days:
+                total += buy_rec._count_consumed
+    return total
+
+
 def print_report(sale_records: List[SaleRecord]):
     total_income = Decimal(0)
     total_cost = Decimal(0)
