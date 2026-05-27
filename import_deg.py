@@ -89,6 +89,8 @@ def import_transactions(file_name: str):
 
     normalize_column_names(df)
     validate_columns(df, file_name)
+    if is_new_format and AUTO_FX_FEE_COLUMN not in df.columns:
+        raise ValueError(f"'{AUTO_FX_FEE_COLUMN}' column missing in new-format file '{file_name}'.")
 
     print(f"Imported transactions before filtering: {df.shape[0]}")
 
