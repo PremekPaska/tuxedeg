@@ -11,6 +11,7 @@ from transaction import Transaction
 
 FEE_CURRENCY = 'EUR'
 TRANSACTION_FEE_COLUMN = 'Transaction and/or third party fees EUR'
+AUTO_FX_FEE_COLUMN = 'AutoFX Fee'
 
 
 def eu_str_to_date(date_string: str) -> datetime:
@@ -158,6 +159,12 @@ def convert_to_transactions_deg(df_trans: DataFrame, product_isin: str, tax_year
         fee = -row[TRANSACTION_FEE_COLUMN]  # Fee is negative in Degiro exports
         if fee < 0:
             raise ValueError("Unexpected negative fee!")
+        if AUTO_FX_FEE_COLUMN in df_product.columns:
+            autofx_fee = row[AUTO_FX_FEE_COLUMN]
+            if pd.notna(autofx_fee):
+                if autofx_fee > 0:
+                    raise ValueError(f"Unexpected positive AutoFX Fee: {autofx_fee}")
+                fee += -autofx_fee
 
         transactions.append(Transaction(
             time=row['DateTime'],
