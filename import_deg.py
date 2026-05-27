@@ -148,6 +148,8 @@ def convert_to_transactions_deg(df_trans: DataFrame, product_isin: str, tax_year
 
     currency_idx = df_product.columns.get_loc('Price') + 2  # row has one more column ("index") at the beginning
     transactions = []
+    total_transaction_fees = 0.0
+    total_autofx_fees = 0.0
     for _, row in df_product.reset_index().iterrows():
         if row['DateTime'].year > tax_year:
             break
@@ -156,14 +158,17 @@ def convert_to_transactions_deg(df_trans: DataFrame, product_isin: str, tax_year
             print(f"!! Skipping transaction: {row['DateTime']}, {row['Product']}, {row['ISIN']}")
             continue
 
-        fee = -row[TRANSACTION_FEE_COLUMN]  # Fee is negative in Degiro exports
+        raw_fee = row[TRANSACTION_FEE_COLUMN]
+        fee = 0.0 if pd.isna(raw_fee) else -raw_fee  # Fee is negative in Degiro exports
         if fee < 0:
             raise ValueError("Unexpected negative fee!")
+        total_transaction_fees += fee
         if AUTO_FX_FEE_COLUMN in df_product.columns:
             autofx_fee = row[AUTO_FX_FEE_COLUMN]
             if pd.notna(autofx_fee):
                 if autofx_fee > 0:
                     raise ValueError(f"Unexpected positive AutoFX Fee: {autofx_fee}")
+                total_autofx_fees += -autofx_fee
                 fee += -autofx_fee
 
         transactions.append(Transaction(
@@ -177,4 +182,8 @@ def convert_to_transactions_deg(df_trans: DataFrame, product_isin: str, tax_year
             fee_currency=FEE_CURRENCY
         ))
 
+    print(
+        f"Total {total_transaction_fees:.2f} {FEE_CURRENCY} transaction fees and "
+        f"{total_autofx_fees:.2f} {FEE_CURRENCY} AutoFX fees recorded for {product_names[0]}."
+    )
     return transactions
