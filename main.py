@@ -386,23 +386,22 @@ def load_strategies(path: Path) -> Dict[int, str]:
 
 
 def setup_strategies(args) -> Dict[int, str]:
-    # Check that only one of the options was selected.
-    if sum([bool(args.fifo), bool(args.strategy), bool(args.config)]) > 1:
-        raise ValueError("Only one of --fifo, --strategy or --config can be specified")
+    # --fifo and --strategy both override the target year; only one makes sense.
+    if args.fifo and args.strategy:
+        raise ValueError("Only one of --fifo or --strategy can be specified")
 
+    # Load the base config (custom path or default); it covers all prior years.
+    config_path = Path(args.config) if args.config else Path("config/strategies.json")
+    print(f"Loading strategies from {config_path}")
+    strategies = load_strategies(config_path)
+
+    # --strategy / --fifo override ONLY the target year; prior years use the config.
     if args.fifo or args.strategy:
-        if args.strategy and args.strategy not in list_strategies():
+        strategy = "fifo" if args.fifo else args.strategy
+        if strategy not in list_strategies():
             print(f"Available strategies: {list_strategies()}")
-            raise ValueError(f"Unknown strategy: {args.strategy}")
-
-        strategies = {args.year: "fifo"} if args.fifo else {args.year: args.strategy}
-        strategies[args.year - 1] = 'fifo'  # For the output filename; always fifo for previous years.
-        return strategies
-    elif args.config:
-        print(f"Loading strategies from {args.config}")
-        strategies = load_strategies(Path(args.config))
-    else:
-        strategies = load_strategies(Path("config/strategies.json"))
+            raise ValueError(f"Unknown strategy: {strategy}")
+        strategies[args.year] = strategy
 
     for year in [args.year - 1, args.year]:
         if year not in strategies:
@@ -416,9 +415,9 @@ def main():
     parser.add_argument('--deg', action='store_true', help='Use Degiro data')
     parser.add_argument('--ibkr', action='store_true', help='Use IBKR data')
     parser.add_argument('--year', type=int, help='Tax year')
-    parser.add_argument('--strategy', type=str, help='Pairing strategy for target year (' + ', '.join(list_strategies()) + '), uses fifo for previous years. Defaults to config/strategies.json if not specified.')
+    parser.add_argument('--strategy', type=str, help='Pairing strategy for the target year (' + ', '.join(list_strategies()) + '), overriding the config for that year only. Previous years still use the config. Can be combined with --config.')
     parser.add_argument('--fifo', action='store_true', help='Shortcut for --strategy fifo')
-    parser.add_argument('--config', type=str, help='Path to strategies JSON file, default: config/strategies.json')
+    parser.add_argument('--config', type=str, help='Path to strategies JSON file used for all years, default: config/strategies.json')
     parser.add_argument('--no-split', action='store_true', help='Disable loading and applying stock splits')
     parser.add_argument('--bep', action='store_true', help='Enable break-even prices calculation')
     parser.add_argument('--no-ttest', action='store_true', dest='disable_ttest', help='Disable time test (it is ON by default; skipping P&L from sales after 3 years)')
