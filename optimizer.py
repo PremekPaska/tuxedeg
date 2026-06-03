@@ -177,6 +177,21 @@ class _PairingStats:
     """Running totals for the short-selling status report."""
     opened: int = 0        # short shares opened (sale qty not covered by a prior long)
     covered: int = 0       # short shares closed by a later covering buy
+    partial_fills: int = 0  # sells that closed some longs AND opened a short
+
+
+def _report_partial_fill(sale_t: Transaction, buy_records: List[BuyRecord],
+                         matched_qty: int, excess_qty: int) -> None:
+    """Loudly flag a sell that was split between closing longs and opening a short.
+
+    This is the case the allow_partial fix changed: the matched long lots (listed
+    here) used to be discarded. `Transaction.__str__` carries date/product/count/price.
+    """
+    print(f">>> PARTIAL FILL: sell closed {matched_qty} long + opened {excess_qty} short")
+    print(f"      sell        : {sale_t}")
+    print(f"      longs closed :")
+    for br in buy_records:  # at SELL time every record here is a long close
+        print(f"        - {br.buy_t}  ({br._count_consumed} consumed)")
 
 
 def optimize_transaction_pairing(
@@ -233,7 +248,11 @@ def optimize_transaction_pairing(
             if excess_qty:
                 open_shorts.append(_OpenShort(t, excess_qty))
                 stats.opened += excess_qty
-                print(f"Opened short of {excess_qty} shares from {t}")
+                if matched_qty:  # partial fill: closed some longs AND opened a short
+                    stats.partial_fills += 1
+                    _report_partial_fill(t, buy_records, matched_qty, excess_qty)
+                else:
+                    print(f"Opened short of {excess_qty} shares from {t}")
 
         # BUY: cover outstanding shorts FIFO, then leave the rest as a long
         else:
@@ -263,7 +282,8 @@ def optimize_transaction_pairing(
             # No extra action needed: they will be paired by find_buys later.
 
     if stats.opened:
-        print(f"Short-selling summary: opened {stats.opened} share(s), covered {stats.covered}.")
+        print(f"Short-selling summary: opened {stats.opened} share(s), covered {stats.covered}"
+              f", partial fills: {stats.partial_fills}.")
     if open_shorts:
         leftover = sum(s.remaining for s in open_shorts)
         print(f"Warning: {leftover} short share(s) remain uncovered after pairing:")
