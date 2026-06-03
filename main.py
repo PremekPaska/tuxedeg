@@ -159,6 +159,10 @@ def optimize_all(
 ) -> None:
     id_col, date_col, product_col = detect_columns(df_trans)
 
+    # Degiro (ISIN) is long-only: an unpairable sell is a data error that must
+    # surface, not silently open a short. IBKR (Symbol) keeps short selling.
+    allow_partial = id_col != "ISIN"
+
     products = get_unique_product_ids(
         df_trans, tax_year, id_col=id_col, date_col=date_col, product_col=product_col
     )
@@ -203,7 +207,8 @@ def optimize_all(
 
         try:
             txs = build_transactions(df_trans, pid, tax_year, splits_df, id_col=id_col, options=options)
-            report = optimize_product(txs, tax_year, strategies, enable_bep, enable_ttest)
+            report = optimize_product(txs, tax_year, strategies, enable_bep, enable_ttest,
+                                      allow_partial=allow_partial)
 
             current_pairing_rows = build_pairing_rows(report, id_col)
             income, cost, fees = calculate_totals(report, tax_year)

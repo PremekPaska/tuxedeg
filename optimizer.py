@@ -182,6 +182,7 @@ class _PairingStats:
 def optimize_transaction_pairing(
     trans: List[Transaction],
     strategies: Dict[int, str],
+    allow_partial: bool = False,
 ) -> List[SaleRecord]:
     """
     • When a SELL closes an existing long, use the legacy find_buys logic.
@@ -193,6 +194,11 @@ def optimize_transaction_pairing(
 
     Long-only results remain byte-for-byte identical to the historical
     implementation; short selling now works deterministically.
+
+    `allow_partial` controls short selling and defaults to False (strict, long-only):
+    a SELL that cannot be fully paired against prior BUYs raises, so the data problem
+    surfaces instead of becoming a phantom short -- this is what Degiro wants. Pass
+    True (IBKR) to instead record the matched longs and open a short for the remainder.
 
     Initially written by GPT o3.
     """
@@ -211,7 +217,8 @@ def optimize_transaction_pairing(
             # allow_partial=True returns whatever longs were matched instead of
             # raising, so the unmatched remainder can open a short. The matched
             # buys are recorded either way (no consumed shares are lost).
-            buy_records = find_buys(t, trans, strategies, allow_partial=True)
+            # allow_partial=False raises on an unpairable sell (Degiro is long-only).
+            buy_records = find_buys(t, trans, strategies, allow_partial=allow_partial)
 
             matched_qty = sum(br._count_consumed for br in buy_records)
             total_qty   = -t.count          # positive number of shares sold
@@ -276,10 +283,10 @@ def calculate_tax(
         sale.calculate_income_and_cost(tax_year, enable_bep, enable_ttest)
 
 
-def optimize_product(txs: List[Transaction], tax_year: int, strategies: dict[int,str] = None, enable_bep: bool = False, enable_ttest: bool = False) -> List[SaleRecord]:
+def optimize_product(txs: List[Transaction], tax_year: int, strategies: dict[int,str] = None, enable_bep: bool = False, enable_ttest: bool = False, allow_partial: bool = False) -> List[SaleRecord]:
     if enable_bep:
         calculate_break_even_prices(txs)
-    sale_records = optimize_transaction_pairing(txs, strategies)
+    sale_records = optimize_transaction_pairing(txs, strategies, allow_partial=allow_partial)
     calculate_tax(sale_records, tax_year, enable_bep, enable_ttest)
     return sale_records
 

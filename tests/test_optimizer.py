@@ -361,7 +361,7 @@ class OptimizerShortSellingTestCase(unittest.TestCase):
         short_open = make_tx("2024-01-02", -100, price=100.0)
         cover_buy  = make_tx("2024-01-05",  100, price=150.0)
 
-        records = optimize_transaction_pairing([short_open, cover_buy], self.STRATEGIES)
+        records = optimize_transaction_pairing([short_open, cover_buy], self.STRATEGIES, allow_partial=True)
         self.assertEqual(len(records), 1)
 
         short_record = records[0]
@@ -394,6 +394,7 @@ class OptimizerShortSellingTestCase(unittest.TestCase):
         records = optimize_transaction_pairing(
             [first_short, second_short, first_cover, final_cover],
             self.STRATEGIES,
+            allow_partial=True,
         )
         self.assertEqual(len(records), 2)
 
@@ -432,6 +433,7 @@ class OptimizerShortSellingTestCase(unittest.TestCase):
         records = optimize_transaction_pairing(
             [initial_short, partial_cover, deepen_short, final_cover],
             self.STRATEGIES,
+            allow_partial=True,
         )
         self.assertEqual(len(records), 2)
 
@@ -473,6 +475,7 @@ class OptimizerShortSellingTestCase(unittest.TestCase):
         sale_records = optimize_transaction_pairing(
             transactions,
             self.STRATEGIES,
+            allow_partial=True,
         )
 
         self.assertEqual(len(sale_records), 2, "Expected two sale records.")
@@ -514,7 +517,7 @@ class OptimizerShortSellingTestCase(unittest.TestCase):
         sell       = make_tx("2024-01-04", -100, price=Decimal("60.0"))
         cover_buy  = make_tx("2024-01-06",   70, price=Decimal("40.0"))
 
-        records = optimize_transaction_pairing([long_buy, sell, cover_buy], self.STRATEGIES)
+        records = optimize_transaction_pairing([long_buy, sell, cover_buy], self.STRATEGIES, allow_partial=True)
 
         # One sale record (the sell); the cover buy is appended to it.
         self.assertEqual(len(records), 1)
@@ -537,6 +540,24 @@ class OptimizerShortSellingTestCase(unittest.TestCase):
         self.assertEqual(income, Decimal(100 * 60) * self.fx_rate)
         self.assertEqual(cost, Decimal(30 * 50 + 70 * 40) * self.fx_rate)
         self.assertEqual(fees, Decimal(0))
+
+    # ------------------------------------------------------------------ #
+    def test_degiro_unpairable_sell_raises(self):
+        """
+        With allow_partial=False (Degiro is long-only), a sell that cannot be
+        fully paired against prior buys must raise instead of opening a short --
+        so the data problem surfaces rather than becoming a phantom short.
+        """
+        # Pure short: a sell with no prior buy at all.
+        pure_short = make_tx("2024-01-02", -100, price=Decimal("60.0"))
+        with self.assertRaises(ValueError):
+            optimize_transaction_pairing([pure_short], self.STRATEGIES, allow_partial=False)
+
+        # Long-then-short cross: 30 long held, sell 100 (30 pair, 70 cannot).
+        long_buy = make_tx("2024-01-02",   30, price=Decimal("50.0"))
+        sell     = make_tx("2024-01-04", -100, price=Decimal("60.0"))
+        with self.assertRaises(ValueError):
+            optimize_transaction_pairing([long_buy, sell], self.STRATEGIES, allow_partial=False)
 
 
 if __name__ == '__main__':
