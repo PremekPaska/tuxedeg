@@ -495,6 +495,49 @@ class OptimizerShortSellingTestCase(unittest.TestCase):
         expected_profit_sr2_tc = Decimal("0.00")
         self.assertEqual(sr2.profit_tc, expected_profit_sr2_tc, f"Profit (TC) for second sale (open short) was {sr2.profit_tc}, expected {expected_profit_sr2_tc}")
 
+    # ------------------------------------------------------------------ #
+    def test_sell_closes_long_then_opens_short(self):
+        """
+        Regression for the old all-or-nothing find_buys HACK.
+
+        BUY  30 @ $50 → hold 30 long
+        SELL 100 @ $60 → close the 30 long (taxable!) AND open a 70 short
+        BUY  70 @ $40 → cover the 70 short
+
+        The single sell must split into a 30-share long close plus a 70-share
+        short. Previously find_buys consumed the 30 buy and then raised, the
+        caller discarded the partial match (buy_records=[]) and opened a short
+        for the full 100, so the long-close P&L was lost and 30 shares were left
+        permanently uncovered.
+        """
+        long_buy   = make_tx("2024-01-02",   30, price=Decimal("50.0"))
+        sell       = make_tx("2024-01-04", -100, price=Decimal("60.0"))
+        cover_buy  = make_tx("2024-01-06",   70, price=Decimal("40.0"))
+
+        records = optimize_transaction_pairing([long_buy, sell, cover_buy], self.STRATEGIES)
+
+        # One sale record (the sell); the cover buy is appended to it.
+        self.assertEqual(len(records), 1)
+        rec = records[0]
+        self.assertIs(rec.sale_t, sell)
+
+        long_qty  = sum(br._count_consumed for br in rec.buys if not br._is_short_cover)
+        short_qty = sum(br._count_consumed for br in rec.buys if br._is_short_cover)
+        self.assertEqual(long_qty, 30, "30 shares should close the existing long")
+        self.assertEqual(short_qty, 70, "70 shares should be covered as a short")
+        self.assertEqual(long_buy.remaining_count, 0, "the long buy must be fully consumed, not leaked")
+        self.assertEqual(cover_buy.remaining_count, 0)
+
+        # Short closes when the covering buy executes.
+        self.assertEqual(rec.close_time, cover_buy.time)
+
+        calculate_tax(records, self.TAX_YEAR)
+        income, cost, fees = calculate_totals(records, self.TAX_YEAR)
+        # Income: all 100 shares sold at $60. Cost: 30 @ $50 (long) + 70 @ $40 (cover).
+        self.assertEqual(income, Decimal(100 * 60) * self.fx_rate)
+        self.assertEqual(cost, Decimal(30 * 50 + 70 * 40) * self.fx_rate)
+        self.assertEqual(fees, Decimal(0))
+
 
 if __name__ == '__main__':
     unittest.main()

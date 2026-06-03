@@ -12,7 +12,8 @@ def list_strategies() -> List[str]:
     return ["fifo", "lifo", "max_cost", "min_cost", "micol"]
 
 
-def find_buys_fifo(sale_t: Transaction, trans: List[Transaction]) -> List[BuyRecord]:
+def find_buys_fifo(sale_t: Transaction, trans: List[Transaction],
+                   allow_partial: bool = False) -> List[BuyRecord]:
     remaining_sold_count = -sale_t.count
 
     buy_records = []
@@ -21,14 +22,14 @@ def find_buys_fifo(sale_t: Transaction, trans: List[Transaction]) -> List[BuyRec
         if remaining_sold_count == 0:
             break
 
-    if remaining_sold_count != 0:
-        print(f"Still remaining sold count to pair: {remaining_sold_count} for {sale_t}")
-        raise ValueError("Could not pair transactions!")
+    if remaining_sold_count != 0 and not allow_partial:
+        raise ValueError(f"Could not pair {remaining_sold_count} shares for {sale_t}")
 
-    return buy_records
+    return buy_records  # may be a partial match when allow_partial=True (the rest is a short)
 
 
-def find_buys_lifo(sale_t: Transaction, trans: List[Transaction]) -> List[BuyRecord]:
+def find_buys_lifo(sale_t: Transaction, trans: List[Transaction],
+                   allow_partial: bool = False) -> List[BuyRecord]:
     remaining_sold_count = -sale_t.count
 
     buy_records = []
@@ -37,8 +38,8 @@ def find_buys_lifo(sale_t: Transaction, trans: List[Transaction]) -> List[BuyRec
         if remaining_sold_count == 0:
             break
 
-    if remaining_sold_count != 0:
-        raise ValueError("Could not pair transactions!")
+    if remaining_sold_count != 0 and not allow_partial:
+        raise ValueError(f"Could not pair {remaining_sold_count} shares for {sale_t}")
 
     return buy_records
 
@@ -74,7 +75,8 @@ def is_much_lower_cost_pair(buy_t: Transaction, t: Transaction) -> bool:
 
 # Takes cost function as a parameter.
 def find_buys_generic_lifo(sale_t: Transaction, trans: List[Transaction],
-                           is_better_pair: Callable[[Transaction, Transaction], bool]) -> List[BuyRecord]:
+                           is_better_pair: Callable[[Transaction, Transaction], bool],
+                           allow_partial: bool = False) -> List[BuyRecord]:
     remaining_sold_count = -sale_t.count
 
     buy_records = []
@@ -85,29 +87,29 @@ def find_buys_generic_lifo(sale_t: Transaction, trans: List[Transaction],
                 buy_t = t
 
         if buy_t is None:
-            print(f"Could not find a buy transaction for {sale_t}")
-            raise ValueError("Could not pair transactions!")
+            break  # no buy left to pair; the rest is a short when allow_partial=True
 
         remaining_sold_count = add_buy_record(buy_records, buy_t, remaining_sold_count)
-        if remaining_sold_count == 0:
-            break
 
-    if remaining_sold_count != 0:
-        raise ValueError("Could not pair transactions!")
+    if remaining_sold_count != 0 and not allow_partial:
+        raise ValueError(f"Could not pair {remaining_sold_count} shares for {sale_t}")
 
     return buy_records
 
 
-def find_buys_max_cost(sale_t: Transaction, trans: List[Transaction]) -> List[BuyRecord]:
-    return find_buys_generic_lifo(sale_t, trans, is_better_cost_pair)
+def find_buys_max_cost(sale_t: Transaction, trans: List[Transaction],
+                       allow_partial: bool = False) -> List[BuyRecord]:
+    return find_buys_generic_lifo(sale_t, trans, is_better_cost_pair, allow_partial)
 
 
-def find_buys_min_cost(sale_t: Transaction, trans: List[Transaction]) -> List[BuyRecord]:
-    return find_buys_generic_lifo(sale_t, trans, is_lower_cost_pair)
+def find_buys_min_cost(sale_t: Transaction, trans: List[Transaction],
+                       allow_partial: bool = False) -> List[BuyRecord]:
+    return find_buys_generic_lifo(sale_t, trans, is_lower_cost_pair, allow_partial)
 
 
-def find_buys_micol(sale_t: Transaction, trans: List[Transaction]) -> List[BuyRecord]:
-    return find_buys_generic_lifo(sale_t, trans, is_much_lower_cost_pair)
+def find_buys_micol(sale_t: Transaction, trans: List[Transaction],
+                    allow_partial: bool = False) -> List[BuyRecord]:
+    return find_buys_generic_lifo(sale_t, trans, is_much_lower_cost_pair, allow_partial)
 
 
 def add_buy_record(buy_records, buy_t, remaining_sold_count):
@@ -126,7 +128,8 @@ def add_buy_record(buy_records, buy_t, remaining_sold_count):
     return remaining_sold_count
 
 
-def find_buys(sale_t: Transaction, trans: List[Transaction], strategies: dict[int, str]) -> List[BuyRecord]:
+def find_buys(sale_t: Transaction, trans: List[Transaction], strategies: dict[int, str],
+              allow_partial: bool = False) -> List[BuyRecord]:
     # The strategy must be specified for every year since the first year is specified
     if sale_t.time.year > max(strategies.keys()):
         raise ValueError("No strategy specified for this year!")
@@ -136,7 +139,7 @@ def find_buys(sale_t: Transaction, trans: List[Transaction], strategies: dict[in
 
     # use reflection to call the correct method
     method = globals()['find_buys_' + method_suffix]
-    return method(sale_t, trans)
+    return method(sale_t, trans, allow_partial=allow_partial)
 
 
 def calculate_break_even_prices(txs: List[Transaction]):
@@ -169,6 +172,13 @@ class _OpenShort:
     remaining: int         # positive number of shares still open
 
 
+@dataclass
+class _PairingStats:
+    """Running totals for the short-selling status report."""
+    opened: int = 0        # short shares opened (sale qty not covered by a prior long)
+    covered: int = 0       # short shares closed by a later covering buy
+
+
 def optimize_transaction_pairing(
     trans: List[Transaction],
     strategies: Dict[int, str],
@@ -191,18 +201,17 @@ def optimize_transaction_pairing(
     sale_records: List[SaleRecord] = []
     sale_map: Dict[Transaction, SaleRecord] = {}
     open_shorts: deque[_OpenShort] = deque()        # FIFO queue of short lots
+    stats = _PairingStats()
 
     # Process chronologically
     for t in sorted(trans, key=lambda x: x.time):
 
-        # SELL: first close longs with the original machinery
+        # SELL: close as many longs as possible; any uncovered quantity is a short.
         if t.is_sale:
-            try:
-                buy_records = find_buys(t, trans, strategies)   # unchanged call
-            except ValueError:
-                # TODO: Resolve this HACK. Add some status reporting.
-                print(f"Could not find a buy transaction for {t}, openning short.")
-                buy_records = []
+            # allow_partial=True returns whatever longs were matched instead of
+            # raising, so the unmatched remainder can open a short. The matched
+            # buys are recorded either way (no consumed shares are lost).
+            buy_records = find_buys(t, trans, strategies, allow_partial=True)
 
             matched_qty = sum(br._count_consumed for br in buy_records)
             total_qty   = -t.count          # positive number of shares sold
@@ -216,6 +225,8 @@ def optimize_transaction_pairing(
             # Any excess opens / enlarges a short position
             if excess_qty:
                 open_shorts.append(_OpenShort(t, excess_qty))
+                stats.opened += excess_qty
+                print(f"Opened short of {excess_qty} shares from {t}")
 
         # BUY: cover outstanding shorts FIFO, then leave the rest as a long
         else:
@@ -237,15 +248,20 @@ def optimize_transaction_pairing(
 
                 short_lot.remaining -= qty
                 remaining -= qty
+                stats.covered += qty
                 if short_lot.remaining == 0:
                     open_shorts.popleft()
 
             # Any *remaining* shares now form / enlarge a long position.
             # No extra action needed: they will be paired by find_buys later.
 
+    if stats.opened:
+        print(f"Short-selling summary: opened {stats.opened} share(s), covered {stats.covered}.")
     if open_shorts:
-        print("Warning: Unmatched open short positions remain after pairing.")
-        # TODO: Add some status reporting.
+        leftover = sum(s.remaining for s in open_shorts)
+        print(f"Warning: {leftover} short share(s) remain uncovered after pairing:")
+        for s in open_shorts:
+            print(f"  - {s.remaining} uncovered from {s.tx}")
 
     return sale_records
 
