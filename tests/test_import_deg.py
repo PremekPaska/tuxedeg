@@ -1,9 +1,10 @@
 import unittest
 import os
+import tempfile
 
 from decimal import Decimal
 
-from import_deg import import_transactions, convert_to_transactions_deg
+from import_deg import import_transactions, convert_to_transactions_deg, detect_decimal_separator, TRANSACTION_FEE_COLUMN
 from import_utils import get_product_id_by_prefix
 from optimizer import optimize_product, calculate_totals
 
@@ -63,6 +64,65 @@ class ImportTestCase(unittest.TestCase):
         self.assertEqual(Decimal('93774.7573'), income)
         self.assertEqual(Decimal('76584.4204'), cost)
         self.assertEqual(Decimal('593.3456'), fees)
+
+
+class DecimalSeparatorTestCase(unittest.TestCase):
+    """The decimal separator is locale-dependent and must be sniffed from the
+    data, not the (always-English) column names. Regression for the Irish export
+    that uses '.' decimals + ',' thousands under new-format headers."""
+
+    # New-format headers (Irish locale): period decimals, comma thousands. The
+    # "1,234.5600" price exercises the thousands separator; the "-2.00" fee used
+    # to be left as the string '-2.00', crashing on `-raw_fee`.
+    HEADER = (
+        "Date,Time,Product,ISIN,Reference exchange,Venue,Quantity,Price,,Local value,,"
+        "Value EUR,Exchange rate,AutoFX Fee,Transaction and/or third party fees EUR,Total EUR,Order ID,\n"
+    )
+    # period decimals + comma thousands (Irish locale)
+    IRISH_CSV = HEADER + (
+        '10-01-2025,20:31,TEST CORP,US0000000001,NSY,XNAS,5,"1,234.5600",USD,"-6,172.80",USD,'
+        '-6028.00,1.0239,-2.91,-2.00,-6030.91,uuid-0001,\n'
+    )
+    # comma decimals + period thousands, numeric fields quoted (Czech locale)
+    CZECH_CSV = HEADER + (
+        '10-01-2025,20:31,TEST CORP,US0000000001,NSY,XNAS,5,"1.234,5600",USD,"-6.172,80",USD,'
+        '"-6028,00","1,0239","-2,91","-2,00","-6030,91",uuid-0001,\n'
+    )
+
+    def setUp(self):
+        if not os.path.exists('test_data'):
+            os.chdir(os.path.dirname(__file__))
+
+    def _assert_parsed(self, csv_text, expected_sep):
+        with tempfile.NamedTemporaryFile('w', suffix='.csv', encoding='utf8', delete=False) as f:
+            f.write(csv_text)
+            path = f.name
+        self.addCleanup(os.unlink, path)
+
+        self.assertEqual(expected_sep, detect_decimal_separator(path))
+
+        df = import_transactions(path)
+        # The fee column must be numeric, not left as strings like '-2.00' / '-2,00'.
+        self.assertTrue(df[TRANSACTION_FEE_COLUMN].dtype.kind in 'fi')
+
+        product_id = get_product_id_by_prefix(df, "TEST CORP", id_col="ISIN")
+        transactions = convert_to_transactions_deg(df, product_id, 2025)
+        self.assertEqual(1, len(transactions))
+        tx = transactions[0]
+        # Fee is flipped to positive and combined with AutoFX: 2.00 + 2.91 = 4.91.
+        self.assertEqual(Decimal('2.00') + Decimal('2.91'), tx.fee)
+        # Thousands separator parsed: price -> 1234.56, not 1.2345 or a string.
+        self.assertEqual(Decimal('1234.5600').quantize(Decimal('0.000001')), tx.share_price)
+
+    def test_detect_on_fixtures(self):
+        self.assertEqual('.', detect_decimal_separator("test_data/Transactions-deg-en-2021.csv"))
+        self.assertEqual('.', detect_decimal_separator("test_data/Transactions-deg-cz-2019.csv"))
+
+    def test_irish_period_decimal_comma_thousands(self):
+        self._assert_parsed(self.IRISH_CSV, '.')
+
+    def test_czech_comma_decimal_period_thousands(self):
+        self._assert_parsed(self.CZECH_CSV, ',')
 
 
 if __name__ == '__main__':

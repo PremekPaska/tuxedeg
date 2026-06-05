@@ -5,7 +5,9 @@
       "Bash(python -m pytest tests/ -x -q)",
       "Bash(python -m unittest discover tests -v)",
       "Bash(.venv/bin/python -m unittest discover tests)",
-      "Bash(.venv/bin/python -m pytest tests/ -q)"
+      "Bash(.venv/bin/python -m pytest tests/ -q)",
+      "Bash(.venv/bin/python -m pytest tests/ -x -q)",
+      "Bash(.venv/bin/python -m pytest tests/test_import_deg.py -q)"
     ]
   }
 }

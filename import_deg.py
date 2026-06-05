@@ -71,16 +71,47 @@ def validate_columns(df: DataFrame, file_name: str):
         )
 
 
+def detect_decimal_separator(file_name: str) -> str:
+    """Sniff the decimal separator ('.' or ',') from the data itself.
+
+    The column *names* don't tell us: Degiro uses the same English headers for
+    both the comma-decimal locale (e.g. Czech: "57,6000", "-2,00") and the
+    period-decimal locale (e.g. Irish: "31.3400", "-2.00", with "," as the
+    thousands separator). We read the 'Exchange rate' column, which is always a
+    plain ratio (~1.x, never a thousands separator), and look at its punctuation.
+    Falls back to 'Price' and finally to '.'.
+    """
+    sample = pd.read_csv(file_name, encoding="utf8", nrows=50, dtype=str)
+    normalize_column_names(sample)
+    for col in ('Exchange rate', 'Price'):
+        if col not in sample.columns:
+            continue
+        for value in sample[col].dropna():
+            text = str(value).strip()
+            has_comma, has_dot = ',' in text, '.' in text
+            if has_comma and has_dot:
+                # Both present (thousands + decimal): the rightmost is the decimal.
+                return ',' if text.rfind(',') > text.rfind('.') else '.'
+            if has_comma:
+                return ','
+            if has_dot:
+                return '.'
+    return '.'
+
+
 def import_transactions(file_name: str):
     print(f"Importing Degiro file: {file_name}")
 
-    # New Degiro exports use comma as the decimal separator; old exports use a period.
-    # Detect from the header before parsing data.
+    # The decimal separator depends on the export's locale, not on the column
+    # naming, so sniff it from the data. Whichever char is the decimal point, the
+    # other one is the thousands separator (e.g. "-8,103.06" / "1.152,00").
     header_cols = pd.read_csv(file_name, encoding="utf8", nrows=0).columns
     is_new_format = TRANSACTION_FEE_COLUMN in header_cols
-    decimal_sep = ',' if is_new_format else '.'
+    decimal_sep = detect_decimal_separator(file_name)
+    thousands_sep = '.' if decimal_sep == ',' else ','
+    print(f"Detected decimal separator '{decimal_sep}', thousands separator '{thousands_sep}'.")
 
-    df = pd.read_csv(file_name, encoding="utf8", decimal=decimal_sep)
+    df = pd.read_csv(file_name, encoding="utf8", decimal=decimal_sep, thousands=thousands_sep)
     print(df.columns)
     print(df.shape[0])
 
