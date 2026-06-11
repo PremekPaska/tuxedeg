@@ -1,7 +1,7 @@
 import decimal
 from decimal import Decimal
 from typing import List, Callable, Dict
-from collections import deque
+from collections import deque, defaultdict
 from dataclasses import dataclass
 
 from transaction import Transaction, BuyRecord, SaleRecord
@@ -221,6 +221,10 @@ def optimize_transaction_pairing(
 
     sale_records: List[SaleRecord] = []
     sale_map: Dict[Transaction, SaleRecord] = {}
+    # Covers from a later year than the sale go into separate per-year records,
+    # keyed by (short sale, cover year), so every record closes within a single
+    # year and the close_time.year == tax_year filters tax each pair exactly once.
+    spill_map: Dict[tuple, SaleRecord] = {}
     open_shorts: deque[_OpenShort] = deque()        # FIFO queue of short lots
     stats = _PairingStats()
 
@@ -270,6 +274,18 @@ def optimize_transaction_pairing(
                     sale_rec = SaleRecord(short_lot.tx, [])
                     sale_records.append(sale_rec)
                     sale_map[short_lot.tx] = sale_rec
+
+                # A cover in a later year must not drag the record's close_time
+                # (and thus the tax year of the already-matched pairs) forward:
+                # route it into the spillover record for that year instead.
+                if t.time.year > short_lot.tx.time.year:
+                    key = (short_lot.tx, t.time.year)
+                    sale_rec = spill_map.get(key)
+                    if sale_rec is None:
+                        sale_rec = SaleRecord(short_lot.tx, [], is_spillover=True)
+                        sale_records.append(sale_rec)
+                        spill_map[key] = sale_rec
+
                 sale_rec.append_buy_record(buy_rec)
 
                 short_lot.remaining -= qty
@@ -280,6 +296,19 @@ def optimize_transaction_pairing(
 
             # Any *remaining* shares now form / enlarge a long position.
             # No extra action needed: they will be paired by find_buys later.
+
+    # When a sale's pairings are split across several per-year records, the sale
+    # fee must still be counted exactly once: the earliest non-empty record owns
+    # it. The result is the same whether the later years' data is present or not
+    # (the importer cuts off rows after the tax year).
+    records_by_sale: Dict[Transaction, List[SaleRecord]] = defaultdict(list)
+    for rec in sale_records:
+        records_by_sale[rec.sale_t].append(rec)
+    for recs in records_by_sale.values():
+        non_empty = [r for r in recs if r.buys]
+        owner = min(non_empty, key=lambda r: r.close_time) if non_empty else recs[0]
+        for rec in recs:
+            rec.owns_sale_fee = rec is owner
 
     if stats.opened:
         print(f"Short-selling summary: opened {stats.opened} share(s), covered {stats.covered}"

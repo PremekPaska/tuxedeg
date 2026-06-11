@@ -308,16 +308,14 @@ class PairingStrategiesTestCase(unittest.TestCase):
         self.assertEqual(Decimal('63322.7934'), cost)
         self.assertEqual(Decimal('593.3456'), fees)
     
-    # TODO:
-    # Test the situation that short opens and partially closes before tax year.
-    # Test that the profit calculation correctly includes/excludes buy-sell pairs based on close_time.
-    # Test the situation when a sale swings from a long directly to short position and vice versa.
+    # Cross-year short scenarios are covered in OptimizerShortSellingTestCase below.
 
 def make_tx(
     ts: str | datetime,
     qty: int,
     *,
     price: decimal = 10.0,
+    fee: decimal = 0,
     product: str = "TEST",
     isin: str = "TEST123",
     currency: str = "USD",
@@ -340,7 +338,7 @@ def make_tx(
         count=qty,
         share_price=price,
         currency=currency,
-        fee=0,
+        fee=fee,
         fee_currency=currency,
     )
 
@@ -542,6 +540,111 @@ class OptimizerShortSellingTestCase(unittest.TestCase):
         self.assertEqual(fees, Decimal(0))
 
     # ------------------------------------------------------------------ #
+    def test_partial_fill_across_years(self):
+        """
+        BUY  60 @ $50 (2023) → hold 60 long
+        SELL 100 @ $60 (2023, fee $2) → close the 60 long AND open a 40 short
+        BUY  40 @ $40 (2024) → cover the short
+
+        The long close must be taxed in 2023 (the year the cash was received),
+        the short cover in 2024 -- each pair exactly once, the sale fee exactly
+        once (it belongs to the earliest non-empty record, here the long close).
+        """
+        strategies = {2023: "fifo", 2024: "fifo"}
+        long_buy = make_tx("2023-06-01", 60, price=Decimal("50.0"))
+        sell     = make_tx("2023-11-01", -100, price=Decimal("60.0"), fee=Decimal("2.0"))
+        cover    = make_tx("2024-03-01", 40, price=Decimal("40.0"))
+
+        records = optimize_transaction_pairing([long_buy, sell, cover], strategies, allow_partial=True)
+        self.assertEqual(2, len(records))
+
+        rec_2023 = next(r for r in records if r.close_time.year == 2023)
+        rec_2024 = next(r for r in records if r.close_time.year == 2024)
+        self.assertIs(rec_2023.sale_t, sell)
+        self.assertIs(rec_2024.sale_t, sell)
+        self.assertTrue(rec_2024.is_spillover)
+        self.assertEqual(60, sum(br._count_consumed for br in rec_2023.buys))
+        self.assertEqual(40, sum(br._count_consumed for br in rec_2024.buys))
+
+        fx23 = unified_fx_rate(2023, 'USD')
+        fx24 = unified_fx_rate(2024, 'USD')
+
+        calculate_tax(records, 2023)
+        income, cost, fees = calculate_totals(records, 2023)
+        self.assertEqual(Decimal(60 * 60) * fx23, income)
+        self.assertEqual(Decimal(60 * 50) * fx23, cost)
+        self.assertEqual(Decimal("2.0") * fx23, fees)
+
+        calculate_tax(records, 2024)
+        income, cost, fees = calculate_totals(records, 2024)
+        self.assertEqual(Decimal(40 * 60) * fx23, income)  # income at sale-year FX
+        self.assertEqual(Decimal(40 * 40) * fx24, cost)
+        self.assertEqual(Decimal(0), fees)  # sale fee already counted in 2023
+
+    def test_partial_fill_truncated_data_matches_full_data(self):
+        """
+        Same as test_partial_fill_across_years but without the 2024 cover, the
+        way a --year 2023 run sees the data (the importer cuts off later rows).
+        The 2023 totals must be identical either way -- previously the long
+        close was taxed in 2023 from truncated data and again in 2024 from full
+        data (double taxation across filings).
+        """
+        strategies = {2023: "fifo", 2024: "fifo"}
+        long_buy = make_tx("2023-06-01", 60, price=Decimal("50.0"))
+        sell     = make_tx("2023-11-01", -100, price=Decimal("60.0"), fee=Decimal("2.0"))
+
+        records = optimize_transaction_pairing([long_buy, sell], strategies, allow_partial=True)
+        self.assertEqual(1, len(records))
+
+        fx23 = unified_fx_rate(2023, 'USD')
+        calculate_tax(records, 2023)
+        income, cost, fees = calculate_totals(records, 2023)
+        self.assertEqual(Decimal(60 * 60) * fx23, income)
+        self.assertEqual(Decimal(60 * 50) * fx23, cost)
+        self.assertEqual(Decimal("2.0") * fx23, fees)
+
+    def test_short_covered_across_years(self):
+        """
+        SELL 100 @ $100 (2022, fee $3) → open short
+        BUY   50 @  $80 (2023) → cover half
+        BUY   50 @  $70 (2024) → cover the rest
+
+        Each cover is taxed in its own year (previously the 2023 half was lost:
+        excluded from 2023 by close_time and skipped in 2024 as a prior-year
+        cover). Income is valued at the sale-year FX rate; the sale fee goes
+        once to the earliest non-empty record (2023).
+        """
+        strategies = {2022: "fifo", 2023: "fifo", 2024: "fifo"}
+        short   = make_tx("2022-06-01", -100, price=Decimal("100.0"), fee=Decimal("3.0"))
+        cover23 = make_tx("2023-05-01", 50, price=Decimal("80.0"))
+        cover24 = make_tx("2024-05-01", 50, price=Decimal("70.0"))
+
+        records = optimize_transaction_pairing([short, cover23, cover24], strategies, allow_partial=True)
+        # Sell-time record (empty) + one spillover per cover year.
+        self.assertEqual(3, len(records))
+
+        fx22 = unified_fx_rate(2022, 'USD')
+        fx23 = unified_fx_rate(2023, 'USD')
+        fx24 = unified_fx_rate(2024, 'USD')
+
+        calculate_tax(records, 2022)
+        income, cost, fees = calculate_totals(records, 2022)
+        self.assertEqual(Decimal(0), income)
+        self.assertEqual(Decimal(0), cost)
+        self.assertEqual(Decimal(0), fees)
+
+        calculate_tax(records, 2023)
+        income, cost, fees = calculate_totals(records, 2023)
+        self.assertEqual(Decimal(50 * 100) * fx22, income)
+        self.assertEqual(Decimal(50 * 80) * fx23, cost)
+        self.assertEqual(Decimal("3.0") * fx22, fees)  # sale fee at sale-year FX
+
+        calculate_tax(records, 2024)
+        income, cost, fees = calculate_totals(records, 2024)
+        self.assertEqual(Decimal(50 * 100) * fx22, income)
+        self.assertEqual(Decimal(50 * 70) * fx24, cost)
+        self.assertEqual(Decimal(0), fees)
+
     def test_degiro_unpairable_sell_raises(self):
         """
         With allow_partial=False (Degiro is long-only), a sell that cannot be

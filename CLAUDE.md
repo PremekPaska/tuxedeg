@@ -19,7 +19,10 @@ table + CSV and the console summary.
   `load_strategies()` (year→strategy map); `detect_account_code()`.
 - **`optimizer.py`** — pairing + aggregation. `optimize_product()` = `optimize_transaction_pairing()`
   (matches buys to sells via the selected strategy) + `calculate_tax()` (which calls
-  `SaleRecord.calculate_income_and_cost`). Strategies live in `find_buys_*` (fifo, lifo,
+  `SaleRecord.calculate_income_and_cost`). Every `SaleRecord` closes within a single
+  year: short covers from a later year than the sale go into per-year *spillover*
+  records (`is_spillover`), and the earliest non-empty record per sale owns the sale
+  fee (`owns_sale_fee`) so it is counted exactly once. Strategies live in `find_buys_*` (fifo, lifo,
   max_cost, min_cost, micol), dispatched by `find_buys()`. Per-product aggregators that read
   a `List[SaleRecord]` and filter on `close_time.year == tax_year`: `calculate_totals`
   (income/cost/fees), `calculate_expired_long_totals`, `calculate_untaxed_totals`,

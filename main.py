@@ -95,7 +95,11 @@ def build_pairing_rows(report: List[SaleRecord], id_col: str) -> list[dict]:
         close_t = sale.sale_t
         pair_id = f"{close_t.time.isoformat()}_{idx}"
 
-        # Closing side
+        # Closing side. A spillover record covers only part of the sale in a
+        # later year, so report just its covered quantity; the sell-time record
+        # keeps the sale's full quantity as before.
+        close_qty = -sum(br._count_consumed for br in sale.buys) if sale.is_spillover \
+            else close_t.count
         rows.append({
             "PairID": pair_id,
             "Side": "close",
@@ -103,7 +107,7 @@ def build_pairing_rows(report: List[SaleRecord], id_col: str) -> list[dict]:
             "CloseTime" : sale.close_time if sale.close_time != close_t.time else "",
             "Product": close_t.product_name,
             id_col: _id_value(close_t),
-            "Quantity": close_t.count,
+            "Quantity": close_qty,
             "SplitRatio": close_t.split_ratio,
             "SharePrice": close_t.share_price,
             "Currency": close_t.currency,

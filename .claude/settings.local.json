@@ -7,7 +7,9 @@
       "Bash(.venv/bin/python -m unittest discover tests)",
       "Bash(.venv/bin/python -m pytest tests/ -q)",
       "Bash(.venv/bin/python -m pytest tests/ -x -q)",
-      "Bash(.venv/bin/python -m pytest tests/test_import_deg.py -q)"
+      "Bash(.venv/bin/python -m pytest tests/test_import_deg.py -q)",
+      "Bash(.venv/bin/python main.py --deg --year 2019 --config /tmp/strat.json tests/test_data/Transactions-deg-cz-2019.csv)",
+      "Bash(echo \"exit=$?\")"
     ]
   }
 }

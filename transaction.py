@@ -169,9 +169,15 @@ class BuyRecord:
 
 
 class SaleRecord:
-    def __init__(self, sale_t: Transaction, buy_records: List[BuyRecord]):
+    def __init__(self, sale_t: Transaction, buy_records: List[BuyRecord], is_spillover: bool = False):
         self.sale_t = sale_t
         self.buys = buy_records
+        # A spillover record holds covers from a later year than its sale, so
+        # the original record's close year (and tax year) stays put. Several
+        # records may then share one sale_t; only the fee owner (assigned by
+        # the optimizer, earliest non-empty record) counts the sale fee.
+        self.is_spillover = is_spillover
+        self.owns_sale_fee = True
         self._fx_rate = None
         self._income_tc = None
         self._cost_tc = None
@@ -232,13 +238,8 @@ class SaleRecord:
         untaxed_count = 0
 
         for buy_rec in self.buys:
-            # Skip buy-sell pair if the buy is a short cover before the tax year.
-            if buy_rec._is_short_cover and buy_rec.buy_t.time.year < tax_year:
-                print(f"Skipping short cover {buy_rec.buy_t} before tax year {tax_year}")
-                if buy_rec.buy_t.time < self.sale_t.time:
-                    raise ValueError("Not a short cover! Buy transaction is before sale transaction.")
-                continue
-
+            # Covers from a year before the record's close year cannot occur here:
+            # the optimizer routes cross-year covers into per-year spillover records.
             pair_income = self._calculate_income_for_buy_sell_pair(buy_rec)
 
             if enable_bep:  # BEP hack
@@ -265,7 +266,7 @@ class SaleRecord:
             included_count += buy_rec._count_consumed
 
         # Final tallies
-        if included_count > 0:
+        if included_count > 0 and self.owns_sale_fee:
             total_fees += self.sale_t.fee * unified_fx_rate(self.sale_t.time.year, self.sale_t.fee_currency)
 
         self._income_tc = total_income
