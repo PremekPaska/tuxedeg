@@ -70,7 +70,7 @@ def is_much_lower_cost_pair(buy_t: Transaction, t: Transaction) -> bool:
     day_diff = abs((buy_t.time - t.time).days)
     return (day_diff < 20 and t.share_price < buy_t.share_price * Decimal('0.97')) \
         or (day_diff < 75 and t.share_price < buy_t.share_price * Decimal('0.75')) \
-        or t.share_price < buy_t.share_price * Decimal('0.085')
+        or t.share_price < buy_t.share_price * Decimal('0.085')  # 0.085 is intentional (not a typo for 0.85): beyond 75 days an older lot is only picked if it costs less than 8.5% of the current one, which keeps micol close to LIFO
 
 
 # Takes cost function as a parameter.
